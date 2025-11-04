@@ -12,6 +12,8 @@ defmodule Studtasks.Courses.Task do
     field :assignee_id, :binary_id
     field :parent_id, :binary_id
     field :user_id, :binary_id
+    field :status, :string, default: "backlog"
+    field :due_date, :date
 
     belongs_to :course_group, Studtasks.Courses.CourseGroup, define_field: false
     belongs_to :creator, Studtasks.Accounts.User, define_field: false, foreign_key: :creator_id
