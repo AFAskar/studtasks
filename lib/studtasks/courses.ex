@@ -78,6 +78,94 @@ defmodule Studtasks.Courses do
   end
 
   @doc """
+  Gets a course_group by id without membership enforcement.
+
+  Raises if not found. Use this for pages that may be visible to non-members,
+  while guarding any mutations separately.
+  """
+  def get_course_group_public!(id) do
+    Repo.get!(CourseGroup, id)
+  end
+
+  @doc """
+  Returns true if the given scope's user is the owner of the group.
+  """
+  def group_owner?(%Scope{} = scope, %CourseGroup{} = group), do: group.user_id == scope.user.id
+
+  @doc """
+  Returns true if the given scope's user is a member (or owner) of the group.
+  """
+  def group_member?(%Scope{} = scope, group_id) do
+    import Ecto.Query
+
+    owner? =
+      from(g in CourseGroup,
+        where: g.id == ^group_id and g.user_id == ^scope.user.id,
+        select: g.id
+      )
+      |> Repo.one()
+
+    if owner? do
+      true
+    else
+      from(m in Studtasks.Courses.GroupMembership,
+        where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id,
+        select: m.id
+      )
+      |> Repo.one()
+      |> is_binary()
+    end
+  end
+
+  @doc """
+  Lists memberships for a given group with the associated users preloaded.
+  """
+  def list_group_memberships(group_id) do
+    alias Studtasks.Courses.GroupMembership
+
+    GroupMembership
+    |> where([m], m.course_group_id == ^group_id)
+    |> preload(:user)
+    |> Repo.all()
+  end
+
+  @doc """
+  Sets the role of a membership. Only the group owner can change roles.
+  """
+  def set_group_membership_role(%Scope{} = scope, group_id, user_id, role) do
+    alias Studtasks.Courses.GroupMembership
+
+    group = get_course_group_public!(group_id)
+    true = group.user_id == scope.user.id
+
+    with %GroupMembership{} = mem <-
+           Repo.get_by!(GroupMembership, course_group_id: group_id, user_id: user_id),
+         changeset <- Ecto.Changeset.change(mem, role: role),
+         {:ok, updated} <- Repo.update(changeset) do
+      broadcast_course_group(scope, {:updated, group})
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Removes a user from the group. Only the group owner can remove members.
+  The owner cannot remove themselves via membership (owners are not members).
+  """
+  def remove_group_member(%Scope{} = scope, group_id, user_id) do
+    alias Studtasks.Courses.GroupMembership
+
+    group = get_course_group_public!(group_id)
+    true = group.user_id == scope.user.id
+
+    with %GroupMembership{} = mem <-
+           Repo.get_by!(GroupMembership, course_group_id: group_id, user_id: user_id),
+         {:ok, _} <- Repo.delete(mem) do
+      broadcast_course_group(scope, {:updated, group})
+      :ok
+    end
+  end
+
+  @doc """
   Ensures the given user is a member of the group. Idempotent.
   """
   def ensure_group_membership(%Scope{} = scope, group_id, role \\ "member") do
