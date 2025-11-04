@@ -143,7 +143,15 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     group = Courses.get_course_group_public!(id)
     is_owner = Courses.group_owner?(scope, group)
     is_member = is_owner or Courses.group_member?(scope, id)
-    memberships = if is_owner, do: Courses.list_group_memberships(id), else: []
+
+    memberships =
+      if is_owner do
+        Courses.list_group_memberships(id) |> Enum.reject(&(&1.role == "owner"))
+      else
+        []
+      end
+
+    owner_user = Courses.get_group_owner_user(id)
 
     {:ok,
      socket
@@ -155,7 +163,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
      |> assign(:is_member, is_member)
      |> assign(:show_join_banner, not is_member)
      |> assign(:memberships, memberships)
-     |> assign(:owner_name, scope.user.name || scope.user.email)}
+     |> assign(:owner_name, owner_user && (owner_user.name || owner_user.email))}
   end
 
   @impl true

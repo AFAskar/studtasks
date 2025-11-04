@@ -55,3 +55,9 @@ The UI must include:
 - Data visualization of completed tasks per course.
 - Drag-and-drop ordering of tasks.
 - Offline capability (using service workers).
+
+next prmot
+
+when creating a new task the only option in assignee is unassigned
+
+change "assignee" to "assigned to" in the UI,

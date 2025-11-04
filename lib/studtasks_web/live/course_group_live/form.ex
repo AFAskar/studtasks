@@ -49,7 +49,7 @@ defmodule StudtasksWeb.CourseGroupLive.Form do
   end
 
   defp apply_action(socket, :new, _params) do
-    course_group = %CourseGroup{user_id: socket.assigns.current_scope.user.id}
+    course_group = %CourseGroup{}
 
     socket
     |> assign(:page_title, "New Course group")

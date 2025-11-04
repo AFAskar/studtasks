@@ -40,7 +40,7 @@ defmodule Studtasks.CoursesTest do
 
       assert course_group.name == "some name"
       assert course_group.description == "some description"
-      assert course_group.user_id == scope.user.id
+      assert Courses.group_owner?(scope, course_group)
     end
 
     test "create_course_group/2 with invalid data returns error changeset" do

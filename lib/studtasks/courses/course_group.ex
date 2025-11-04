@@ -8,10 +8,8 @@ defmodule Studtasks.Courses.CourseGroup do
     field :name, :string
     field :description, :string
     field :creator_id, :binary_id
-    field :user_id, :binary_id
 
     belongs_to :creator, Studtasks.Accounts.User, define_field: false, foreign_key: :creator_id
-    belongs_to :owner, Studtasks.Accounts.User, define_field: false, foreign_key: :user_id
     has_many :tasks, Studtasks.Courses.Task
     has_many :group_memberships, Studtasks.Courses.GroupMembership
 
@@ -28,7 +26,6 @@ defmodule Studtasks.Courses.CourseGroup do
     |> cast(attrs, [:name, :description, :creator_id])
     |> validate_required([:name, :description])
     |> maybe_put_creator(user_scope)
-    |> put_change(:user_id, user_scope.user.id)
   end
 
   defp maybe_put_creator(changeset, user_scope) do

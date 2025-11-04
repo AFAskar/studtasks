@@ -46,7 +46,7 @@ defmodule Studtasks.Courses do
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
-      where: g.user_id == ^scope.user.id or not is_nil(m.id),
+      where: not is_nil(m.id),
       distinct: true
     )
     |> Repo.all()
@@ -72,7 +72,7 @@ defmodule Studtasks.Courses do
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
-      where: g.id == ^id and (g.user_id == ^scope.user.id or not is_nil(m.id))
+      where: g.id == ^id and not is_nil(m.id)
     )
     |> Repo.one!()
   end
@@ -90,7 +90,16 @@ defmodule Studtasks.Courses do
   @doc """
   Returns true if the given scope's user is the owner of the group.
   """
-  def group_owner?(%Scope{} = scope, %CourseGroup{} = group), do: group.user_id == scope.user.id
+  def group_owner?(%Scope{} = scope, %CourseGroup{} = group) do
+    import Ecto.Query
+
+    from(m in Studtasks.Courses.GroupMembership,
+      where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "owner",
+      select: m.id
+    )
+    |> Repo.one()
+    |> is_binary()
+  end
 
   @doc """
   Returns true if the given scope's user is a member (or owner) of the group.
@@ -98,23 +107,12 @@ defmodule Studtasks.Courses do
   def group_member?(%Scope{} = scope, group_id) do
     import Ecto.Query
 
-    owner? =
-      from(g in CourseGroup,
-        where: g.id == ^group_id and g.user_id == ^scope.user.id,
-        select: g.id
-      )
-      |> Repo.one()
-
-    if owner? do
-      true
-    else
-      from(m in Studtasks.Courses.GroupMembership,
-        where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id,
-        select: m.id
-      )
-      |> Repo.one()
-      |> is_binary()
-    end
+    from(m in Studtasks.Courses.GroupMembership,
+      where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id,
+      select: m.id
+    )
+    |> Repo.one()
+    |> is_binary()
   end
 
   @doc """
@@ -135,14 +133,13 @@ defmodule Studtasks.Courses do
   def set_group_membership_role(%Scope{} = scope, group_id, user_id, role) do
     alias Studtasks.Courses.GroupMembership
 
-    group = get_course_group_public!(group_id)
-    true = group.user_id == scope.user.id
+    true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
            Repo.get_by!(GroupMembership, course_group_id: group_id, user_id: user_id),
          changeset <- Ecto.Changeset.change(mem, role: role),
          {:ok, updated} <- Repo.update(changeset) do
-      broadcast_course_group(scope, {:updated, group})
+      broadcast_course_group(scope, {:updated, get_course_group_public!(group_id)})
       {:ok, updated}
     end
   end
@@ -154,13 +151,12 @@ defmodule Studtasks.Courses do
   def remove_group_member(%Scope{} = scope, group_id, user_id) do
     alias Studtasks.Courses.GroupMembership
 
-    group = get_course_group_public!(group_id)
-    true = group.user_id == scope.user.id
+    true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
            Repo.get_by!(GroupMembership, course_group_id: group_id, user_id: user_id),
          {:ok, _} <- Repo.delete(mem) do
-      broadcast_course_group(scope, {:updated, group})
+      broadcast_course_group(scope, {:updated, get_course_group_public!(group_id)})
       :ok
     end
   end
@@ -196,7 +192,8 @@ defmodule Studtasks.Courses do
     with {:ok, course_group = %CourseGroup{}} <-
            %CourseGroup{}
            |> CourseGroup.changeset(attrs, scope)
-           |> Repo.insert() do
+           |> Repo.insert(),
+         {:ok, _} <- ensure_group_membership(scope, course_group.id, "owner") do
       broadcast_course_group(scope, {:created, course_group})
       {:ok, course_group}
     end
@@ -215,7 +212,7 @@ defmodule Studtasks.Courses do
 
   """
   def update_course_group(%Scope{} = scope, %CourseGroup{} = course_group, attrs) do
-    true = course_group.user_id == scope.user.id
+    true = owner_membership?(scope, course_group.id)
 
     with {:ok, course_group = %CourseGroup{}} <-
            course_group
@@ -239,12 +236,22 @@ defmodule Studtasks.Courses do
 
   """
   def delete_course_group(%Scope{} = scope, %CourseGroup{} = course_group) do
-    true = course_group.user_id == scope.user.id
+    true = owner_membership?(scope, course_group.id)
 
-    with {:ok, course_group = %CourseGroup{}} <-
-           Repo.delete(course_group) do
-      broadcast_course_group(scope, {:deleted, course_group})
-      {:ok, course_group}
+    Repo.transaction(fn ->
+      from(m in Studtasks.Courses.GroupMembership, where: m.course_group_id == ^course_group.id)
+      |> Repo.delete_all()
+
+      from(t in Studtasks.Courses.Task, where: t.course_group_id == ^course_group.id)
+      |> Repo.delete_all()
+
+      {:ok, deleted} = Repo.delete(course_group)
+      broadcast_course_group(scope, {:deleted, deleted})
+      deleted
+    end)
+    |> case do
+      {:ok, deleted} -> {:ok, deleted}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -258,9 +265,41 @@ defmodule Studtasks.Courses do
 
   """
   def change_course_group(%Scope{} = scope, %CourseGroup{} = course_group, attrs \\ %{}) do
-    true = course_group.user_id == scope.user.id
+    # Only enforce ownership when editing an existing record
+    if is_nil(course_group.id) do
+      CourseGroup.changeset(course_group, attrs, scope)
+    else
+      true = owner_membership?(scope, course_group.id)
+      CourseGroup.changeset(course_group, attrs, scope)
+    end
+  end
 
-    CourseGroup.changeset(course_group, attrs, scope)
+  @doc """
+  Returns the owner user for a group, or nil if not set.
+  """
+  def get_group_owner_user(group_id) do
+    import Ecto.Query
+    alias Studtasks.Courses.GroupMembership
+    alias Studtasks.Accounts.User
+
+    from(m in GroupMembership,
+      join: u in User,
+      on: u.id == m.user_id,
+      where: m.course_group_id == ^group_id and m.role == "owner",
+      select: u
+    )
+    |> Repo.one()
+  end
+
+  defp owner_membership?(%Scope{} = scope, group_id) do
+    import Ecto.Query
+
+    from(m in Studtasks.Courses.GroupMembership,
+      where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id and m.role == "owner",
+      select: m.id
+    )
+    |> Repo.one()
+    |> is_binary()
   end
 
   alias Studtasks.Courses.Task
@@ -343,6 +382,7 @@ defmodule Studtasks.Courses do
   """
   def get_task_in_group!(%Scope{} = scope, id, course_group_id) do
     Repo.get_by!(Task, id: id, user_id: scope.user.id, course_group_id: course_group_id)
+    |> Repo.preload([:assignee])
   end
 
   @doc """
