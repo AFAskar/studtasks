@@ -61,4 +61,4 @@ mix phx.gen.live Courses CourseGroup course_groups name:string description:strin
 
 mix phx.gen.live Courses Task tasks name:string description:string course_group:references:course_groups creator:references:users assignor:references:users assignee:references:users
 
-mix phx.gen.schema Courses.Membership memberships user_id:references:users course_group_id:references:course_groups role:string
+mix phx.gen.schema Courses.GroupMembership group_memberships user_id:references:users course_group_id:references:course_groups role:string
