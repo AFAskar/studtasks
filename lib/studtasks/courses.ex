@@ -41,7 +41,15 @@ defmodule Studtasks.Courses do
 
   """
   def list_course_groups(%Scope{} = scope) do
-    Repo.all_by(CourseGroup, user_id: scope.user.id)
+    import Ecto.Query
+
+    from(g in CourseGroup,
+      left_join: m in Studtasks.Courses.GroupMembership,
+      on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
+      where: g.user_id == ^scope.user.id or not is_nil(m.id),
+      distinct: true
+    )
+    |> Repo.all()
   end
 
   @doc """
@@ -59,7 +67,29 @@ defmodule Studtasks.Courses do
 
   """
   def get_course_group!(%Scope{} = scope, id) do
-    Repo.get_by!(CourseGroup, id: id, user_id: scope.user.id)
+    import Ecto.Query
+
+    from(g in CourseGroup,
+      left_join: m in Studtasks.Courses.GroupMembership,
+      on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
+      where: g.id == ^id and (g.user_id == ^scope.user.id or not is_nil(m.id))
+    )
+    |> Repo.one!()
+  end
+
+  @doc """
+  Ensures the given user is a member of the group. Idempotent.
+  """
+  def ensure_group_membership(%Scope{} = scope, group_id, role \\ "member") do
+    alias Studtasks.Courses.GroupMembership
+
+    %GroupMembership{}
+    |> GroupMembership.changeset(%{
+      user_id: scope.user.id,
+      course_group_id: group_id,
+      role: role
+    })
+    |> Repo.insert(on_conflict: :nothing, conflict_target: [:course_group_id, :user_id])
   end
 
   @doc """

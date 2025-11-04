@@ -2,6 +2,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
   use StudtasksWeb, :live_view
 
   alias Studtasks.Courses
+  alias Phoenix.HTML
 
   @impl true
   def render(assigns) do
@@ -11,17 +12,33 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
         Course group {@course_group.id}
         <:subtitle>This is a course_group record from your database.</:subtitle>
         <:actions>
-          <.button navigate={~p"/course_groups"}>
+          <.button navigate={~p"/groups"}>
             <.icon name="hero-arrow-left" />
           </.button>
           <.button navigate={~p"/groups/#{@course_group}/tasks"}>
             <.icon name="hero-list-bullet" /> View tasks
           </.button>
-          <.button variant="primary" navigate={~p"/course_groups/#{@course_group}/edit?return_to=show"}>
+          <.button variant="primary" navigate={~p"/groups/#{@course_group}/edit?return_to=show"}>
             <.icon name="hero-pencil-square" /> Edit course_group
           </.button>
         </:actions>
       </.header>
+      <div class="mt-6 card p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold">Invite members</h3>
+          <.button size="sm" phx-click="generate_invite">Generate link</.button>
+        </div>
+        <%= if @invite_url do %>
+          <div class="space-y-2">
+            <p class="text-sm break-all"><strong>Invite link:</strong> {@invite_url}</p>
+            <div class="border rounded p-3 bg-base-200" phx-no-curly-interpolation>
+              {@invite_qr_svg}
+            </div>
+          </div>
+        <% else %>
+          <p class="text-sm opacity-70">No invite generated yet. Click “Generate link”.</p>
+        <% end %>
+      </div>
 
       <.list>
         <:item title="Name">{@course_group.name}</:item>
@@ -40,6 +57,8 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     {:ok,
      socket
      |> assign(:page_title, "Show Course group")
+     |> assign(:invite_url, nil)
+     |> assign(:invite_qr_svg, nil)
      |> assign(:course_group, Courses.get_course_group!(socket.assigns.current_scope, id))}
   end
 
@@ -58,11 +77,30 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     {:noreply,
      socket
      |> put_flash(:error, "The current course_group was deleted.")
-     |> push_navigate(to: ~p"/course_groups")}
+  |> push_navigate(to: ~p"/groups")}
   end
 
   def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
       when type in [:created, :updated, :deleted] do
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("generate_invite", _params, socket) do
+    token = Phoenix.Token.sign(StudtasksWeb.Endpoint, "group_invite", socket.assigns.course_group.id)
+    url = StudtasksWeb.Endpoint.url() <> ~p"/invites/groups/#{token}"
+
+    # Generate QR SVG with Eqrcode (if available)
+    qr_svg =
+      try do
+        url
+        |> EQRCode.encode()
+        |> EQRCode.svg(viewbox: true)
+        |> then(&HTML.raw(&1))
+      rescue
+        _ -> HTML.raw("<p>QR code unavailable.</p>")
+      end
+
+    {:noreply, assign(socket, invite_url: url, invite_qr_svg: qr_svg)}
   end
 end

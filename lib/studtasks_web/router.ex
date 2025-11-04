@@ -55,11 +55,11 @@ defmodule StudtasksWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
-      # Course groups (requires authentication)
-      live "/course_groups", CourseGroupLive.Index, :index
-      live "/course_groups/new", CourseGroupLive.Form, :new
-      live "/course_groups/:id", CourseGroupLive.Show, :show
-      live "/course_groups/:id/edit", CourseGroupLive.Form, :edit
+  # Course groups (requires authentication)
+  live "/groups", CourseGroupLive.Index, :index
+  live "/groups/new", CourseGroupLive.Form, :new
+  live "/groups/:id", CourseGroupLive.Show, :show
+  live "/groups/:id/edit", CourseGroupLive.Form, :edit
 
       # Tasks nested under groups (requires authentication)
       live "/groups/:group_id/tasks", TaskLive.Index, :index
@@ -79,6 +79,8 @@ defmodule StudtasksWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+      # Group invite page (works with or without auth)
+      live "/invites/groups/:token", GroupInviteLive, :show
     end
 
     post "/users/log-in", UserSessionController, :create

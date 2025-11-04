@@ -10,7 +10,7 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
       <.header>
         Listing Course groups
         <:actions>
-          <.button variant="primary" navigate={~p"/course_groups/new"}>
+          <.button variant="primary" navigate={~p"/groups/new"}>
             <.icon name="hero-plus" /> New Course group
           </.button>
         </:actions>
@@ -19,15 +19,15 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
       <.table
         id="course_groups"
         rows={@streams.course_groups}
-        row_click={fn {_id, course_group} -> JS.navigate(~p"/course_groups/#{course_group}") end}
+        row_click={fn {_id, course_group} -> JS.navigate(~p"/groups/#{course_group}") end}
       >
         <:col :let={{_id, course_group}} label="Name">{course_group.name}</:col>
         <:col :let={{_id, course_group}} label="Description">{course_group.description}</:col>
         <:action :let={{_id, course_group}}>
           <div class="sr-only">
-            <.link navigate={~p"/course_groups/#{course_group}"}>Show</.link>
+            <.link navigate={~p"/groups/#{course_group}"}>Show</.link>
           </div>
-          <.link navigate={~p"/course_groups/#{course_group}/edit"}>Edit</.link>
+          <.link navigate={~p"/groups/#{course_group}/edit"}>Edit</.link>
         </:action>
         <:action :let={{id, course_group}}>
           <.link
