@@ -17,23 +17,23 @@ defmodule StudtasksWeb.TaskLiveTest do
   end
 
   describe "Index" do
-    setup [:create_task]
+  setup [:create_task]
 
     test "lists all tasks", %{conn: conn, task: task} do
-      {:ok, _index_live, html} = live(conn, ~p"/tasks")
+      {:ok, _index_live, html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       assert html =~ "Listing Tasks"
       assert html =~ task.name
     end
 
-    test "saves new task", %{conn: conn} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+    test "saves new task", %{conn: conn, task: task} do
+      {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       assert {:ok, form_live, _} =
                index_live
                |> element("a", "New Task")
                |> render_click()
-               |> follow_redirect(conn, ~p"/tasks/new")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/new")
 
       assert render(form_live) =~ "New Task"
 
@@ -45,7 +45,7 @@ defmodule StudtasksWeb.TaskLiveTest do
                form_live
                |> form("#task-form", task: @create_attrs)
                |> render_submit()
-               |> follow_redirect(conn, ~p"/tasks")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       html = render(index_live)
       assert html =~ "Task created successfully"
@@ -53,13 +53,13 @@ defmodule StudtasksWeb.TaskLiveTest do
     end
 
     test "updates task in listing", %{conn: conn, task: task} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+      {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       assert {:ok, form_live, _html} =
                index_live
                |> element("#tasks-#{task.id} a", "Edit")
                |> render_click()
-               |> follow_redirect(conn, ~p"/tasks/#{task}/edit")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit")
 
       assert render(form_live) =~ "Edit Task"
 
@@ -71,7 +71,7 @@ defmodule StudtasksWeb.TaskLiveTest do
                form_live
                |> form("#task-form", task: @update_attrs)
                |> render_submit()
-               |> follow_redirect(conn, ~p"/tasks")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       html = render(index_live)
       assert html =~ "Task updated successfully"
@@ -79,7 +79,7 @@ defmodule StudtasksWeb.TaskLiveTest do
     end
 
     test "deletes task in listing", %{conn: conn, task: task} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+      {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
       assert index_live |> element("#tasks-#{task.id} a", "Delete") |> render_click()
       refute has_element?(index_live, "#tasks-#{task.id}")
@@ -90,20 +90,20 @@ defmodule StudtasksWeb.TaskLiveTest do
     setup [:create_task]
 
     test "displays task", %{conn: conn, task: task} do
-      {:ok, _show_live, html} = live(conn, ~p"/tasks/#{task}")
+      {:ok, _show_live, html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}")
 
       assert html =~ "Show Task"
       assert html =~ task.name
     end
 
     test "updates task and returns to show", %{conn: conn, task: task} do
-      {:ok, show_live, _html} = live(conn, ~p"/tasks/#{task}")
+      {:ok, show_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}")
 
       assert {:ok, form_live, _} =
                show_live
                |> element("a", "Edit")
                |> render_click()
-               |> follow_redirect(conn, ~p"/tasks/#{task}/edit?return_to=show")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit?return_to=show")
 
       assert render(form_live) =~ "Edit Task"
 
@@ -115,7 +115,7 @@ defmodule StudtasksWeb.TaskLiveTest do
                form_live
                |> form("#task-form", task: @update_attrs)
                |> render_submit()
-               |> follow_redirect(conn, ~p"/tasks/#{task}")
+               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}")
 
       html = render(show_live)
       assert html =~ "Task updated successfully"

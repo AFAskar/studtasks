@@ -119,8 +119,10 @@ defmodule Studtasks.CoursesTest do
     test "create_task/2 with valid data creates a task" do
       valid_attrs = %{name: "some name", description: "some description"}
       scope = user_scope_fixture()
+      course_group = course_group_fixture(scope)
 
-      assert {:ok, %Task{} = task} = Courses.create_task(scope, valid_attrs)
+      assert {:ok, %Task{} = task} =
+               Courses.create_task(scope, Map.put(valid_attrs, :course_group_id, course_group.id))
       assert task.name == "some name"
       assert task.description == "some description"
       assert task.user_id == scope.user.id
