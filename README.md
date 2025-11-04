@@ -21,7 +21,7 @@ User has many CourseGroups
 // Membership
 CourseGroup has many Users
 CourseGroup has many Tasks
-Tasks have 3 Users (1 creator ,1 assignee and 1 assignor)
+Tasks have 3 Users (1 creator ,1 assignee)
 
 ### Features
 
@@ -57,8 +57,9 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 - Forum: <https://elixirforum.com/c/phoenix-forum>
 - Source: <https://github.com/phoenixframework/phoenix>
 
-mix phx.gen.live Courses CourseGroup course_groups name:string description:string creator:references:users
+mix phx.gen.live Courses CourseGroup course_groups name:string description:string creator_id:references:users
 
-mix phx.gen.live Courses Task tasks name:string description:string course_group:references:course_groups creator:references:users assignor:references:users assignee:references:users
+tasks are accessed at /groups/:id/tasks
+mix phx.gen.live Courses Task tasks name:string description:string course_group_id:references:course_groups creator_id:references:users assignee_id:references:users parent_id:references:tasks
 
 mix phx.gen.schema Courses.GroupMembership group_memberships user_id:references:users course_group_id:references:course_groups role:string

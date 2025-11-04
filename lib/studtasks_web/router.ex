@@ -54,6 +54,18 @@ defmodule StudtasksWeb.Router do
       on_mount: [{StudtasksWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+
+      # Course groups (requires authentication)
+      live "/course_groups", CourseGroupLive.Index, :index
+      live "/course_groups/new", CourseGroupLive.Form, :new
+      live "/course_groups/:id", CourseGroupLive.Show, :show
+      live "/course_groups/:id/edit", CourseGroupLive.Form, :edit
+
+      # Tasks nested under groups (requires authentication)
+      live "/groups/:group_id/tasks", TaskLive.Index, :index
+      live "/groups/:group_id/tasks/new", TaskLive.Form, :new
+      live "/groups/:group_id/tasks/:id", TaskLive.Show, :show
+      live "/groups/:group_id/tasks/:id/edit", TaskLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
