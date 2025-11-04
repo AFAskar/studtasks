@@ -3,6 +3,8 @@ defmodule StudtasksWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+    body = html_response(conn, 200)
+    assert body =~ "nadhem"
+    assert body =~ "Organize your course projects and assignments"
   end
 end
