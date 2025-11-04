@@ -19,7 +19,9 @@ defmodule StudtasksWeb.GroupInviteLive do
         <p class="opacity-80">{@group.description}</p>
 
         <%= if @current_scope.user do %>
-          <.button phx-click="accept" phx-disable-with="Joining..." variant="primary">Join group</.button>
+          <.button phx-click="accept" phx-disable-with="Joining..." variant="primary">
+            Join group
+          </.button>
         <% else %>
           <div class="alert">
             Please log in to accept the invite, then revisit this link.
@@ -50,7 +52,8 @@ defmodule StudtasksWeb.GroupInviteLive do
   def handle_event("accept", _params, socket) do
     with %Studtasks.Accounts.Scope{user: user} <- socket.assigns.current_scope,
          true <- not is_nil(user),
-         {:ok, _} <- Courses.ensure_group_membership(socket.assigns.current_scope, socket.assigns.group.id) do
+         {:ok, _} <-
+           Courses.ensure_group_membership(socket.assigns.current_scope, socket.assigns.group.id) do
       {:noreply,
        socket
        |> put_flash(:info, "You have joined the group.")

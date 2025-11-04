@@ -35,7 +35,7 @@ defmodule StudtasksWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
+    <header class="navbar px-4 sm:px-6 lg:px-8 border-b">
       <div class="flex-1">
         <.link navigate={~p"/"} class="flex-1 flex w-fit items-center gap-3">
           <img src={~p"/images/logo.svg"} width="36" />
@@ -58,10 +58,15 @@ defmodule StudtasksWeb.Layouts do
               <div class="dropdown dropdown-end">
                 <div tabindex="0" role="button" class="btn btn-ghost gap-2">
                   <.icon name="hero-user-circle" class="size-5 opacity-80" />
-                  <span class="truncate max-w-[12rem] hidden sm:inline">{@current_scope.user.email}</span>
+                  <span class="truncate max-w-[12rem] hidden sm:inline">
+                    {@current_scope.user.email}
+                  </span>
                   <.icon name="hero-chevron-down" class="size-4 opacity-70" />
                 </div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow">
+                <ul
+                  tabindex="0"
+                  class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
+                >
                   <li>
                     <.link navigate={~p"/users/settings"}>{gettext("Settings")}</.link>
                   </li>
@@ -73,7 +78,9 @@ defmodule StudtasksWeb.Layouts do
             </li>
           <% else %>
             <li>
-              <.link navigate={~p"/users/register"} class="btn btn-ghost">{gettext("Register")}</.link>
+              <.link navigate={~p"/users/register"} class="btn btn-ghost">
+                {gettext("Register")}
+              </.link>
             </li>
             <li>
               <.link navigate={~p"/users/log-in"} class="btn btn-primary">{gettext("Log in")}</.link>
@@ -83,8 +90,8 @@ defmodule StudtasksWeb.Layouts do
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class="px-4 py-6 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl space-y-4">
         {render_slot(@inner_block)}
       </div>
     </main>

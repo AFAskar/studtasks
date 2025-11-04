@@ -18,7 +18,9 @@ defmodule StudtasksWeb.TaskLive.Form do
         <.input field={@form[:description]} type="text" label="Description" />
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Task</.button>
-          <.button navigate={return_path(@current_scope, @course_group, @return_to, @task)}>Cancel</.button>
+          <.button navigate={return_path(@current_scope, @course_group, @return_to, @task)}>
+            Cancel
+          </.button>
         </footer>
       </.form>
     </Layouts.app>
@@ -57,7 +59,9 @@ defmodule StudtasksWeb.TaskLive.Form do
 
   @impl true
   def handle_event("validate", %{"task" => task_params}, socket) do
-    changeset = Courses.change_task(socket.assigns.current_scope, socket.assigns.task, task_params)
+    changeset =
+      Courses.change_task(socket.assigns.current_scope, socket.assigns.task, task_params)
+
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -72,7 +76,13 @@ defmodule StudtasksWeb.TaskLive.Form do
          socket
          |> put_flash(:info, "Task updated successfully")
          |> push_navigate(
-           to: return_path(socket.assigns.current_scope, socket.assigns.course_group, socket.assigns.return_to, task)
+           to:
+             return_path(
+               socket.assigns.current_scope,
+               socket.assigns.course_group,
+               socket.assigns.return_to,
+               task
+             )
          )}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -89,7 +99,13 @@ defmodule StudtasksWeb.TaskLive.Form do
          socket
          |> put_flash(:info, "Task created successfully")
          |> push_navigate(
-           to: return_path(socket.assigns.current_scope, socket.assigns.course_group, socket.assigns.return_to, task)
+           to:
+             return_path(
+               socket.assigns.current_scope,
+               socket.assigns.course_group,
+               socket.assigns.return_to,
+               task
+             )
          )}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -98,5 +114,7 @@ defmodule StudtasksWeb.TaskLive.Form do
   end
 
   defp return_path(_scope, course_group, "index", _task), do: ~p"/groups/#{course_group}/tasks"
-  defp return_path(_scope, course_group, "show", task), do: ~p"/groups/#{course_group}/tasks/#{task}"
+
+  defp return_path(_scope, course_group, "show", task),
+    do: ~p"/groups/#{course_group}/tasks/#{task}"
 end

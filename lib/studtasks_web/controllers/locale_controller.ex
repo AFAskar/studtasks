@@ -5,6 +5,7 @@ defmodule StudtasksWeb.LocaleController do
 
   def update(conn, %{"locale" => locale}) do
     locale = if locale in @locales, do: locale, else: "en"
+
     conn
     |> put_session(:locale, locale)
     |> redirect(to: get_referer(conn) || ~p"/")

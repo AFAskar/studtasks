@@ -13,7 +13,7 @@ defmodule Studtasks.Courses.Task do
     field :parent_id, :binary_id
     field :user_id, :binary_id
 
-  belongs_to :course_group, Studtasks.Courses.CourseGroup, define_field: false
+    belongs_to :course_group, Studtasks.Courses.CourseGroup, define_field: false
     belongs_to :creator, Studtasks.Accounts.User, define_field: false, foreign_key: :creator_id
     belongs_to :assignee, Studtasks.Accounts.User, define_field: false, foreign_key: :assignee_id
     belongs_to :parent, __MODULE__, define_field: false, foreign_key: :parent_id

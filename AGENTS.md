@@ -34,6 +34,7 @@ This is a web application written using the Phoenix web framework.
   - You cannot reference an external vendor'd script `src` or link `href` in the layouts
   - You must import the vendor deps into app.js and app.css to use them
   - **Never write inline <script>custom js</script> tags within templates**
+- use DaisyUI for Components
 - Use [Colocated JS/Hooks](https://hexdocs.pm/phoenix_live_view/Phoenix.LiveView.ColocatedJS.html)
 
 ### UI/UX & design guidelines

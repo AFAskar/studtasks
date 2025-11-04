@@ -14,6 +14,7 @@ defmodule Studtasks.Courses.CourseGroup do
     belongs_to :owner, Studtasks.Accounts.User, define_field: false, foreign_key: :user_id
     has_many :tasks, Studtasks.Courses.Task
     has_many :group_memberships, Studtasks.Courses.GroupMembership
+
     many_to_many :users, Studtasks.Accounts.User,
       join_through: Studtasks.Courses.GroupMembership,
       join_keys: [course_group_id: :id, user_id: :id]

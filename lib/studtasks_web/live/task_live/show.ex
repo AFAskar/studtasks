@@ -14,7 +14,10 @@ defmodule StudtasksWeb.TaskLive.Show do
           <.button navigate={~p"/groups/#{@course_group}/tasks"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/groups/#{@course_group}/tasks/#{@task}/edit?return_to=show"}>
+          <.button
+            variant="primary"
+            navigate={~p"/groups/#{@course_group}/tasks/#{@task}/edit?return_to=show"}
+          >
             <.icon name="hero-pencil-square" /> Edit task
           </.button>
         </:actions>

@@ -25,14 +25,19 @@ defmodule Studtasks.CoursesTest do
       course_group = course_group_fixture(scope)
       other_scope = user_scope_fixture()
       assert Courses.get_course_group!(scope, course_group.id) == course_group
-      assert_raise Ecto.NoResultsError, fn -> Courses.get_course_group!(other_scope, course_group.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Courses.get_course_group!(other_scope, course_group.id)
+      end
     end
 
     test "create_course_group/2 with valid data creates a course_group" do
       valid_attrs = %{name: "some name", description: "some description"}
       scope = user_scope_fixture()
 
-      assert {:ok, %CourseGroup{} = course_group} = Courses.create_course_group(scope, valid_attrs)
+      assert {:ok, %CourseGroup{} = course_group} =
+               Courses.create_course_group(scope, valid_attrs)
+
       assert course_group.name == "some name"
       assert course_group.description == "some description"
       assert course_group.user_id == scope.user.id
@@ -48,7 +53,9 @@ defmodule Studtasks.CoursesTest do
       course_group = course_group_fixture(scope)
       update_attrs = %{name: "some updated name", description: "some updated description"}
 
-      assert {:ok, %CourseGroup{} = course_group} = Courses.update_course_group(scope, course_group, update_attrs)
+      assert {:ok, %CourseGroup{} = course_group} =
+               Courses.update_course_group(scope, course_group, update_attrs)
+
       assert course_group.name == "some updated name"
       assert course_group.description == "some updated description"
     end
@@ -66,7 +73,10 @@ defmodule Studtasks.CoursesTest do
     test "update_course_group/3 with invalid data returns error changeset" do
       scope = user_scope_fixture()
       course_group = course_group_fixture(scope)
-      assert {:error, %Ecto.Changeset{}} = Courses.update_course_group(scope, course_group, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Courses.update_course_group(scope, course_group, @invalid_attrs)
+
       assert course_group == Courses.get_course_group!(scope, course_group.id)
     end
 
@@ -74,7 +84,10 @@ defmodule Studtasks.CoursesTest do
       scope = user_scope_fixture()
       course_group = course_group_fixture(scope)
       assert {:ok, %CourseGroup{}} = Courses.delete_course_group(scope, course_group)
-      assert_raise Ecto.NoResultsError, fn -> Courses.get_course_group!(scope, course_group.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Courses.get_course_group!(scope, course_group.id)
+      end
     end
 
     test "delete_course_group/2 with invalid scope raises" do
@@ -123,6 +136,7 @@ defmodule Studtasks.CoursesTest do
 
       assert {:ok, %Task{} = task} =
                Courses.create_task(scope, Map.put(valid_attrs, :course_group_id, course_group.id))
+
       assert task.name == "some name"
       assert task.description == "some description"
       assert task.user_id == scope.user.id

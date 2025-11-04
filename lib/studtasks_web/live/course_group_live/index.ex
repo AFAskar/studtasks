@@ -65,7 +65,8 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
   @impl true
   def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
       when type in [:created, :updated, :deleted] do
-    {:noreply, stream(socket, :course_groups, list_course_groups(socket.assigns.current_scope), reset: true)}
+    {:noreply,
+     stream(socket, :course_groups, list_course_groups(socket.assigns.current_scope), reset: true)}
   end
 
   defp list_course_groups(current_scope) do

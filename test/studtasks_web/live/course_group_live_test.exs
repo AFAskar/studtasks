@@ -20,14 +20,14 @@ defmodule StudtasksWeb.CourseGroupLiveTest do
     setup [:create_course_group]
 
     test "lists all course_groups", %{conn: conn, course_group: course_group} do
-  {:ok, _index_live, html} = live(conn, ~p"/groups")
+      {:ok, _index_live, html} = live(conn, ~p"/groups")
 
       assert html =~ "Listing Course groups"
       assert html =~ course_group.name
     end
 
     test "saves new course_group", %{conn: conn} do
-  {:ok, index_live, _html} = live(conn, ~p"/groups")
+      {:ok, index_live, _html} = live(conn, ~p"/groups")
 
       assert {:ok, form_live, _} =
                index_live
@@ -53,7 +53,7 @@ defmodule StudtasksWeb.CourseGroupLiveTest do
     end
 
     test "updates course_group in listing", %{conn: conn, course_group: course_group} do
-  {:ok, index_live, _html} = live(conn, ~p"/groups")
+      {:ok, index_live, _html} = live(conn, ~p"/groups")
 
       assert {:ok, form_live, _html} =
                index_live
@@ -79,9 +79,12 @@ defmodule StudtasksWeb.CourseGroupLiveTest do
     end
 
     test "deletes course_group in listing", %{conn: conn, course_group: course_group} do
-  {:ok, index_live, _html} = live(conn, ~p"/groups")
+      {:ok, index_live, _html} = live(conn, ~p"/groups")
 
-      assert index_live |> element("#course_groups-#{course_group.id} a", "Delete") |> render_click()
+      assert index_live
+             |> element("#course_groups-#{course_group.id} a", "Delete")
+             |> render_click()
+
       refute has_element?(index_live, "#course_groups-#{course_group.id}")
     end
   end
@@ -90,14 +93,14 @@ defmodule StudtasksWeb.CourseGroupLiveTest do
     setup [:create_course_group]
 
     test "displays course_group", %{conn: conn, course_group: course_group} do
-  {:ok, _show_live, html} = live(conn, ~p"/groups/#{course_group}")
+      {:ok, _show_live, html} = live(conn, ~p"/groups/#{course_group}")
 
       assert html =~ "Show Course group"
       assert html =~ course_group.name
     end
 
     test "updates course_group and returns to show", %{conn: conn, course_group: course_group} do
-  {:ok, show_live, _html} = live(conn, ~p"/groups/#{course_group}")
+      {:ok, show_live, _html} = live(conn, ~p"/groups/#{course_group}")
 
       assert {:ok, form_live, _} =
                show_live

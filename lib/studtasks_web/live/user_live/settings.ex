@@ -122,9 +122,9 @@ defmodule StudtasksWeb.UserLive.Settings do
       |> assign(:current_email, user.email)
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
-  |> assign(:name_form, to_form(name_changeset))
-  |> assign(:trigger_submit, false)
-  |> assign(:locale, session["locale"] || "en")
+      |> assign(:name_form, to_form(name_changeset))
+      |> assign(:trigger_submit, false)
+      |> assign(:locale, session["locale"] || "en")
 
     {:ok, socket}
   end

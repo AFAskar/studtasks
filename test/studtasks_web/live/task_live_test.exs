@@ -17,7 +17,7 @@ defmodule StudtasksWeb.TaskLiveTest do
   end
 
   describe "Index" do
-  setup [:create_task]
+    setup [:create_task]
 
     test "lists all tasks", %{conn: conn, task: task} do
       {:ok, _index_live, html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
@@ -103,7 +103,10 @@ defmodule StudtasksWeb.TaskLiveTest do
                show_live
                |> element("a", "Edit")
                |> render_click()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit?return_to=show")
+               |> follow_redirect(
+                 conn,
+                 ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit?return_to=show"
+               )
 
       assert render(form_live) =~ "Edit Task"
 

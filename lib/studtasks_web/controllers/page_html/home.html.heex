@@ -1,15 +1,25 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
   <section class="mx-auto max-w-3xl text-center">
-    <div class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs opacity-80">nadhem</div>
-    <h1 class="mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight">{gettext("Organize your course projects and assignments")}</h1>
-    <p class="mt-3 text-lg opacity-80">{gettext("A simple task manager for student course groups.")}</p>
+    <div class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs opacity-80">
+      nadhem
+    </div>
+    <h1 class="mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight">
+      {gettext("Organize your course projects and assignments")}
+    </h1>
+    <p class="mt-3 text-lg opacity-80">
+      {gettext("A simple task manager for student course groups.")}
+    </p>
 
     <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
       <%= if @current_scope && @current_scope.user do %>
-        <a href={~p"/groups"} class="btn btn-primary w-full sm:w-auto">{gettext("Go to your groups")}</a>
+        <a href={~p"/groups"} class="btn btn-primary w-full sm:w-auto">
+          {gettext("Go to your groups")}
+        </a>
         <a href={~p"/groups/new"} class="btn w-full sm:w-auto">{gettext("Create a group")}</a>
       <% else %>
-        <a href={~p"/users/register"} class="btn btn-primary w-full sm:w-auto">{gettext("Get started — Register")}</a>
+        <a href={~p"/users/register"} class="btn btn-primary w-full sm:w-auto">
+          {gettext("Get started — Register")}
+        </a>
         <a href={~p"/users/log-in"} class="btn w-full sm:w-auto">{gettext("Log in")}</a>
       <% end %>
     </div>
@@ -17,20 +27,34 @@
 
   <section class="mt-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div class="card p-5">
-      <div class="font-semibold flex items-center gap-2"><.icon name="hero-users" /> {gettext("Course groups")}</div>
-      <p class="opacity-75 mt-1">{gettext("Create groups for projects, assignments, labs, or study circles.")}</p>
+      <div class="font-semibold flex items-center gap-2">
+        <.icon name="hero-users" /> {gettext("Course groups")}
+      </div>
+      <p class="opacity-75 mt-1">
+        {gettext("Create groups for projects, assignments, labs, or study circles.")}
+      </p>
     </div>
     <div class="card p-5">
-      <div class="font-semibold flex items-center gap-2"><.icon name="hero-clipboard-document-check" /> {gettext("Tasks & subtasks")}</div>
+      <div class="font-semibold flex items-center gap-2">
+        <.icon name="hero-clipboard-document-check" /> {gettext("Tasks & subtasks")}
+      </div>
       <p class="opacity-75 mt-1">{gettext("Break work down and track progress as a team.")}</p>
     </div>
     <div class="card p-5">
-      <div class="font-semibold flex items-center gap-2"><.icon name="hero-qr-code" /> {gettext("Invites & QR codes")}</div>
-      <p class="opacity-75 mt-1">{gettext("Share a link or QR to onboard classmates in seconds.")}</p>
+      <div class="font-semibold flex items-center gap-2">
+        <.icon name="hero-qr-code" /> {gettext("Invites & QR codes")}
+      </div>
+      <p class="opacity-75 mt-1">
+        {gettext("Share a link or QR to onboard classmates in seconds.")}
+      </p>
     </div>
     <div class="card p-5">
-      <div class="font-semibold flex items-center gap-2"><.icon name="hero-bolt" /> {gettext("Real‑time by Phoenix LiveView")}</div>
-      <p class="opacity-75 mt-1">{gettext("Fast, collaborative UI powered by Elixir/Phoenix.")}</p>
+      <div class="font-semibold flex items-center gap-2">
+        <.icon name="hero-bolt" /> {gettext("Real‑time by Phoenix LiveView")}
+      </div>
+      <p class="opacity-75 mt-1">
+        {gettext("Fast, collaborative UI powered by Elixir/Phoenix.")}
+      </p>
     </div>
   </section>
 </Layouts.app>

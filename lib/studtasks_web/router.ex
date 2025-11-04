@@ -60,11 +60,11 @@ defmodule StudtasksWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
-  # Course groups (requires authentication)
-  live "/groups", CourseGroupLive.Index, :index
-  live "/groups/new", CourseGroupLive.Form, :new
-  live "/groups/:id", CourseGroupLive.Show, :show
-  live "/groups/:id/edit", CourseGroupLive.Form, :edit
+      # Course groups (requires authentication)
+      live "/groups", CourseGroupLive.Index, :index
+      live "/groups/new", CourseGroupLive.Form, :new
+      live "/groups/:id", CourseGroupLive.Show, :show
+      live "/groups/:id/edit", CourseGroupLive.Form, :edit
 
       # Tasks nested under groups (requires authentication)
       live "/groups/:group_id/tasks", TaskLive.Index, :index

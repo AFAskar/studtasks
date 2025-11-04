@@ -312,7 +312,8 @@ defmodule Studtasks.Courses do
   """
   def list_group_tasks(%Scope{} = scope, course_group_id) do
     from(t in Task,
-      where: t.user_id == ^scope.user.id and t.course_group_id == ^course_group_id
+      where: t.user_id == ^scope.user.id and t.course_group_id == ^course_group_id,
+      preload: [:assignee, :creator, :children]
     )
     |> Repo.all()
   end

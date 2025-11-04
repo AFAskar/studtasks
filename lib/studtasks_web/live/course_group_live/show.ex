@@ -38,7 +38,12 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
             <h3 class="text-base font-semibold">Invite members</h3>
             <div class="flex items-center gap-2">
               <.button size="sm" phx-click="generate_invite">Generate link</.button>
-              <.button size="sm" phx-hook=".CopyLink" disabled={is_nil(@invite_url)} data-clipboard-text={@invite_url}>
+              <.button
+                size="sm"
+                phx-hook=".CopyLink"
+                disabled={is_nil(@invite_url)}
+                data-clipboard-text={@invite_url}
+              >
                 <.icon name="hero-clipboard" /> Copy link
               </.button>
             </div>
@@ -75,10 +80,21 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge">{m.role}</span>
-                  <.button size="sm" variant="secondary" phx-click="membership:set_role" phx-value-user={m.user.id} phx-value-role={if m.role == "admin", do: "member", else: "admin"}>
-                    <%= if m.role == "admin", do: "Demote", else: "Promote" %>
+                  <.button
+                    size="sm"
+                    variant="secondary"
+                    phx-click="membership:set_role"
+                    phx-value-user={m.user.id}
+                    phx-value-role={if m.role == "admin", do: "member", else: "admin"}
+                  >
+                    {if m.role == "admin", do: "Demote", else: "Promote"}
                   </.button>
-                  <.button size="sm" variant="danger" phx-click="membership:remove" phx-value-user={m.user.id}>
+                  <.button
+                    size="sm"
+                    variant="danger"
+                    phx-click="membership:remove"
+                    phx-value-user={m.user.id}
+                  >
                     Remove
                   </.button>
                 </div>
@@ -157,7 +173,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     {:noreply,
      socket
      |> put_flash(:error, "The current course_group was deleted.")
-  |> push_navigate(to: ~p"/groups")}
+     |> push_navigate(to: ~p"/groups")}
   end
 
   def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
@@ -170,7 +186,9 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     if not socket.assigns.is_owner do
       {:noreply, put_flash(socket, :error, "Only the owner can generate invite links.")}
     else
-      token = Phoenix.Token.sign(StudtasksWeb.Endpoint, "group_invite", socket.assigns.course_group.id)
+      token =
+        Phoenix.Token.sign(StudtasksWeb.Endpoint, "group_invite", socket.assigns.course_group.id)
+
       url = StudtasksWeb.Endpoint.url() <> ~p"/invites/groups/#{token}"
 
       # Generate QR SVG with Eqrcode (if available)
@@ -192,6 +210,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
   def handle_event("membership:set_role", %{"user" => user_id, "role" => role}, socket) do
     group = socket.assigns.course_group
     scope = socket.assigns.current_scope
+
     with true <- socket.assigns.is_owner,
          {:ok, _} <- Courses.set_group_membership_role(scope, group.id, user_id, role) do
       {:noreply, assign(socket, :memberships, Courses.list_group_memberships(group.id))}
@@ -203,6 +222,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
   def handle_event("membership:remove", %{"user" => user_id}, socket) do
     group = socket.assigns.course_group
     scope = socket.assigns.current_scope
+
     with true <- socket.assigns.is_owner,
          :ok <- Courses.remove_group_member(scope, group.id, user_id) do
       {:noreply, assign(socket, :memberships, Courses.list_group_memberships(group.id))}

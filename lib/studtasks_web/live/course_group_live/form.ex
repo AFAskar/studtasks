@@ -42,7 +42,10 @@ defmodule StudtasksWeb.CourseGroupLive.Form do
     socket
     |> assign(:page_title, "Edit Course group")
     |> assign(:course_group, course_group)
-    |> assign(:form, to_form(Courses.change_course_group(socket.assigns.current_scope, course_group)))
+    |> assign(
+      :form,
+      to_form(Courses.change_course_group(socket.assigns.current_scope, course_group))
+    )
   end
 
   defp apply_action(socket, :new, _params) do
@@ -51,12 +54,21 @@ defmodule StudtasksWeb.CourseGroupLive.Form do
     socket
     |> assign(:page_title, "New Course group")
     |> assign(:course_group, course_group)
-    |> assign(:form, to_form(Courses.change_course_group(socket.assigns.current_scope, course_group)))
+    |> assign(
+      :form,
+      to_form(Courses.change_course_group(socket.assigns.current_scope, course_group))
+    )
   end
 
   @impl true
   def handle_event("validate", %{"course_group" => course_group_params}, socket) do
-    changeset = Courses.change_course_group(socket.assigns.current_scope, socket.assigns.course_group, course_group_params)
+    changeset =
+      Courses.change_course_group(
+        socket.assigns.current_scope,
+        socket.assigns.course_group,
+        course_group_params
+      )
+
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -65,7 +77,11 @@ defmodule StudtasksWeb.CourseGroupLive.Form do
   end
 
   defp save_course_group(socket, :edit, course_group_params) do
-    case Courses.update_course_group(socket.assigns.current_scope, socket.assigns.course_group, course_group_params) do
+    case Courses.update_course_group(
+           socket.assigns.current_scope,
+           socket.assigns.course_group,
+           course_group_params
+         ) do
       {:ok, course_group} ->
         {:noreply,
          socket

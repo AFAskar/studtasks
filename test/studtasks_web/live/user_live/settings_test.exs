@@ -12,8 +12,8 @@ defmodule StudtasksWeb.UserLive.SettingsTest do
         |> log_in_user(user_fixture())
         |> live(~p"/users/settings")
 
-  assert html =~ "Change Email"
-  assert html =~ "Change name"
+      assert html =~ "Change Email"
+      assert html =~ "Change name"
       assert html =~ "Save Password"
     end
 
@@ -110,7 +110,7 @@ defmodule StudtasksWeb.UserLive.SettingsTest do
 
       html = render_submit(form)
 
-  assert html =~ "Name changed successfully."
+      assert html =~ "Name changed successfully."
     end
 
     test "renders errors with invalid data (phx-change)", %{conn: conn} do
@@ -124,7 +124,7 @@ defmodule StudtasksWeb.UserLive.SettingsTest do
           "user" => %{"name" => "a"}
         })
 
-  assert result =~ "Change name"
+      assert result =~ "Change name"
       assert result =~ "at least 2"
     end
 
@@ -138,7 +138,7 @@ defmodule StudtasksWeb.UserLive.SettingsTest do
         })
         |> render_submit()
 
-  assert result =~ "Change name"
+      assert result =~ "Change name"
       assert result =~ "at least 2"
     end
   end
