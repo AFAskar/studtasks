@@ -2,6 +2,7 @@ defmodule StudtasksWeb.TaskLive.Index do
   use StudtasksWeb, :live_view
 
   alias Studtasks.Courses
+  alias Studtasks.Accounts
   alias Phoenix.LiveView.JS
 
   @impl true
@@ -12,6 +13,26 @@ defmodule StudtasksWeb.TaskLive.Index do
         {if @view_mode == :list, do: "Listing Tasks", else: "Tasks"}
         <:subtitle>Plan and track work for {@course_group.name || @course_group.id}</:subtitle>
         <:actions>
+          <div class="hidden lg:flex items-center gap-2 mr-2">
+            <.form
+              for={@filter_form}
+              id="task-filters"
+              phx-change="filters"
+              class="flex items-center gap-2"
+            >
+              <.input
+                type="select"
+                field={@filter_form[:assignee_id]}
+                prompt="All assignees"
+                options={@assignee_options}
+              />
+              <label class="label cursor-pointer gap-1 text-xs">
+                <.input type="checkbox" field={@filter_form[:unassigned]} /> Unassigned only
+              </label>
+              <.input type="search" field={@filter_form[:q]} placeholder="Search" />
+              <.input type="select" field={@filter_form[:sort]} options={@sort_options} />
+            </.form>
+          </div>
           <div class="join hidden sm:inline-flex">
             <.link
               patch={~p"/groups/#{@course_group}/tasks?view=list"}
@@ -42,6 +63,11 @@ defmodule StudtasksWeb.TaskLive.Index do
         >
           <:col :let={{_id, task}} label="Name">{task.name}</:col>
           <:col :let={{_id, task}} label="Description">{task.description}</:col>
+          <:col :let={{_id, task}} label="Priority">{String.capitalize(task.priority || "")}</:col>
+          <:col :let={{_id, task}} label="Status">{format_status(task.status)}</:col>
+          <:col :let={{_id, task}} label="Due">
+            {task.due_date && Calendar.strftime(task.due_date, "%b %-d")}
+          </:col>
           <:col :let={{_id, task}} label="Assignee">
             {task.assignee && (task.assignee.name || task.assignee.email)}
           </:col>
@@ -66,38 +92,23 @@ defmodule StudtasksWeb.TaskLive.Index do
           phx-hook=".Kanban"
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          <%= for {assignee_key, column} <- @board_columns do %>
+          <%= for {status, column} <- @board_columns do %>
             <div class="card bg-base-200/60 border border-base-300">
               <div class="flex items-center justify-between px-3 py-2 border-b">
                 <div class="flex items-center gap-2">
-                  <div class="avatar placeholder">
-                    <div class="w-6 rounded-full bg-neutral text-neutral-content">
-                      <span class="text-xs">
-                        {case column.assignee do
-                          nil -> "?"
-                          a -> (a.name || a.email || "?") |> String.slice(0, 1) |> String.upcase()
-                        end}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 class="text-sm font-semibold">
-                    {if column.assignee,
-                      do: column.assignee.name || column.assignee.email,
-                      else: "Unassigned"}
-                  </h3>
+                  <h3 class="text-sm font-semibold">{format_status(status)}</h3>
                   <span class="badge badge-ghost">{length(column.tasks)}</span>
                 </div>
-                <.link navigate={~p"/groups/#{@course_group}/tasks/new"} class="btn btn-xs">
+                <button
+                  class="btn btn-xs"
+                  phx-click={JS.push("open_quick_new", value: %{status: status})}
+                >
                   <.icon name="hero-plus" />
-                </.link>
+                </button>
               </div>
-              <div
-                class="p-2 min-h-64 space-y-2"
-                data-assignee={assignee_key}
-                data-drop-zone="true"
-              >
+              <div class="p-2 min-h-64 space-y-2" data-status={status} data-drop-zone="true">
                 <%= if column.tasks == [] do %>
-                  <div class="text-sm opacity-60 px-2 py-8 text-center">Drop here to assign</div>
+                  <div class="text-sm opacity-60 px-2 py-8 text-center">Drop here</div>
                 <% end %>
                 <%= for task <- column.tasks do %>
                   <div
@@ -109,30 +120,35 @@ defmodule StudtasksWeb.TaskLive.Index do
                     <div class="card-body p-3 gap-2">
                       <div class="flex items-start justify-between gap-2">
                         <h4 class="font-medium leading-5 truncate">{task.name}</h4>
-                        <div class="dropdown dropdown-end">
-                          <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
-                            <.icon name="hero-ellipsis-vertical" />
+                        <div class="flex items-center gap-1">
+                          <span class={["badge badge-xs", priority_badge_class(task.priority)]}>
+                            {String.capitalize(task.priority || "")}
+                          </span>
+                          <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
+                              <.icon name="hero-ellipsis-vertical" />
+                            </div>
+                            <ul
+                              tabindex="0"
+                              class="dropdown-content menu bg-base-100 rounded-box z-50 w-40 p-2 shadow"
+                            >
+                              <li>
+                                <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>
+                                  Open
+                                </.link>
+                              </li>
+                              <li>
+                                <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}/edit"}>
+                                  Edit
+                                </.link>
+                              </li>
+                              <li>
+                                <button phx-click={JS.push("delete", value: %{id: task.id})}>
+                                  Delete
+                                </button>
+                              </li>
+                            </ul>
                           </div>
-                          <ul
-                            tabindex="0"
-                            class="dropdown-content menu bg-base-100 rounded-box z-50 w-40 p-2 shadow"
-                          >
-                            <li>
-                              <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>
-                                Open
-                              </.link>
-                            </li>
-                            <li>
-                              <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}/edit"}>
-                                Edit
-                              </.link>
-                            </li>
-                            <li>
-                              <button phx-click={JS.push("delete", value: %{id: task.id})}>
-                                Delete
-                              </button>
-                            </li>
-                          </ul>
                         </div>
                       </div>
                       <p class="text-sm opacity-70 line-clamp-3">{task.description}</p>
@@ -156,6 +172,20 @@ defmodule StudtasksWeb.TaskLive.Index do
                               else: "Unassigned"}
                           </span>
                         </div>
+                        <div class="flex items-center gap-2">
+                          <span :if={task.due_date} class="badge badge-ghost badge-sm">
+                            <.icon name="hero-calendar" class="size-3 mr-1" />
+                            {Calendar.strftime(task.due_date, "%b %-d")}
+                          </span>
+                          <span class="badge badge-ghost badge-sm">
+                            <.icon name="hero-bars-3-bottom-left" class="size-3 mr-1" /> {length(
+                              task.children
+                            )}
+                          </span>
+                          <span class="badge badge-ghost badge-sm">
+                            <.icon name="hero-chat-bubble-left-right" class="size-3 mr-1" /> 0
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -163,6 +193,36 @@ defmodule StudtasksWeb.TaskLive.Index do
               </div>
             </div>
           <% end %>
+        </div>
+
+        <div
+          :if={@show_quick_new}
+          id="quick-new"
+          class="fixed inset-0 z-50 hidden"
+          phx-mounted={show("#quick-new")}
+          phx-remove={hide("#quick-new")}
+        >
+          <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_quick_new")} />
+          <div class="modal modal-open">
+            <div class="modal-box space-y-3">
+              <h3 class="font-bold text-lg">Quick create task</h3>
+              <.form for={@quick_form} id="quick-form" phx-submit="quick_create">
+                <.input type="text" field={@quick_form[:name]} label="Title" required />
+                <.input type="textarea" field={@quick_form[:description]} label="Description" />
+                <.input
+                  type="select"
+                  field={@quick_form[:assignee_id]}
+                  prompt="Unassigned"
+                  options={@assignee_options}
+                  label="Assignee"
+                />
+                <footer class="flex gap-2 justify-end pt-2">
+                  <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>
+                  <.button variant="primary" phx-disable-with="Creating...">Create</.button>
+                </footer>
+              </.form>
+            </div>
+          </div>
         </div>
 
         <script :type={Phoenix.LiveView.ColocatedHook} name=".Kanban">
@@ -185,8 +245,8 @@ defmodule StudtasksWeb.TaskLive.Index do
                 if(!zone) return
                 e.preventDefault()
                 const taskId = this.dragged?.dataset.taskId || e.dataTransfer?.getData("text/plain")
-                const assignee = zone.dataset.assignee || null
-                if(taskId){ this.pushEvent("kanban:move", {task_id: taskId, assignee_id: assignee}) }
+                const status = zone.dataset.status || null
+                if(taskId && status){ this.pushEvent("kanban:move", {task_id: taskId, status: status}) }
               })
             }
           }
@@ -202,21 +262,48 @@ defmodule StudtasksWeb.TaskLive.Index do
       Courses.subscribe_tasks(socket.assigns.current_scope)
     end
 
+    course_group = Courses.get_course_group!(socket.assigns.current_scope, group_id)
+
+    user_view =
+      case socket.assigns.current_scope.user.preferred_task_view do
+        "board" -> :board
+        _ -> :list
+      end
+
+    tasks = list_tasks(socket.assigns.current_scope, group_id)
+    filters = default_filters()
+    sort = "priority_desc"
+    members = Courses.list_group_memberships(group_id)
+
     {:ok,
      socket
      |> assign(:page_title, "Listing Tasks")
-     |> assign(:course_group, Courses.get_course_group!(socket.assigns.current_scope, group_id))
-     |> assign(:view_mode, :list)
-     |> assign_board(list_tasks(socket.assigns.current_scope, group_id))
-     |> stream(:tasks, list_tasks(socket.assigns.current_scope, group_id))}
+     |> assign(:course_group, course_group)
+     |> assign(:members, members)
+     |> assign(:assignee_options, assignee_options(members))
+     |> assign(:sort_options, sort_options())
+     |> assign(:filters, filters)
+     |> assign(:sort, sort)
+     |> assign(:filter_form, to_form(Map.put(filters, "sort", sort), as: :f))
+     |> assign(:view_mode, user_view)
+     |> assign(:show_quick_new, false)
+     |> assign(:quick_status, "backlog")
+     |> assign(
+       :quick_form,
+       to_form(%{"name" => nil, "description" => nil, "assignee_id" => nil}, as: :task)
+     )
+     |> assign_board(apply_filters_sort(tasks, filters, sort))
+     |> stream(:tasks, apply_filters_sort(tasks, filters, sort))}
   end
 
   @impl true
   def handle_params(%{"view" => "list"}, _uri, socket) do
+    _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "list")
     {:noreply, assign(socket, :view_mode, :list)}
   end
 
   def handle_params(%{"view" => "board"}, _uri, socket) do
+    _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "board")
     {:noreply, assign(socket, :view_mode, :board)}
   end
 
@@ -232,19 +319,79 @@ defmodule StudtasksWeb.TaskLive.Index do
     {:noreply, stream_delete(socket, :tasks, task)}
   end
 
-  def handle_event("kanban:move", %{"task_id" => id, "assignee_id" => assignee_id}, socket) do
+  def handle_event("kanban:move", %{"task_id" => id, "status" => status}, socket) do
     task = Courses.get_task!(socket.assigns.current_scope, id)
-    params = %{assignee_id: assignee_id}
+    params = %{status: status}
     {:ok, _task} = Courses.update_task(socket.assigns.current_scope, task, params)
 
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
     {:noreply, assign_board(socket, tasks)}
+  end
+
+  def handle_event("open_quick_new", %{"status" => status}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_quick_new, true)
+     |> assign(:quick_status, status)
+     |> assign(
+       :quick_form,
+       to_form(%{"name" => nil, "description" => nil, "assignee_id" => nil}, as: :task)
+     )}
+  end
+
+  def handle_event("close_quick_new", _params, socket) do
+    {:noreply, assign(socket, :show_quick_new, false)}
+  end
+
+  def handle_event("quick_create", %{"task" => params}, socket) do
+    attrs =
+      params
+      |> Map.put("course_group_id", socket.assigns.course_group.id)
+      |> Map.put("status", socket.assigns.quick_status)
+
+    case Courses.create_task(socket.assigns.current_scope, attrs) do
+      {:ok, _task} ->
+        tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+        tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+        {:noreply,
+         socket
+         |> assign(:show_quick_new, false)
+         |> assign_board(tasks)
+         |> stream(:tasks, tasks, reset: true)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, quick_form: to_form(changeset))}
+    end
+  end
+
+  def handle_event("filters", %{"f" => params}, socket) do
+    filters = %{
+      "assignee_id" => Map.get(params, "assignee_id", ""),
+      "unassigned" => truthy?(Map.get(params, "unassigned")),
+      "q" => Map.get(params, "q", ""),
+      "sort" => Map.get(params, "sort", "priority_desc")
+    }
+
+    tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    # pass sort string as needed
+    tasks = apply_filters_sort(tasks, filters, filters["sort"])
+
+    {:noreply,
+     socket
+     |> assign(:filters, filters)
+     |> assign(:sort, filters["sort"])
+     |> assign(:filter_form, to_form(filters, as: :f))
+     |> assign_board(tasks)
+     |> stream(:tasks, tasks, reset: true)}
   end
 
   @impl true
   def handle_info({type, %Studtasks.Courses.Task{}}, socket)
       when type in [:created, :updated, :deleted] do
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
 
     {:noreply,
      socket
@@ -257,22 +404,101 @@ defmodule StudtasksWeb.TaskLive.Index do
   end
 
   defp assign_board(socket, tasks) do
-    # Group tasks by assignee_id, include a nil bucket for Unassigned
-    grouped = Enum.group_by(tasks, fn t -> t.assignee_id end)
+    grouped = Enum.group_by(tasks, & &1.status)
+    statuses = ["backlog", "todo", "in_progress", "done"]
 
-    # Build columns as a keyword list preserving order: Unassigned first, then alphabetically by assignee name/email
-    assignees =
-      tasks
-      |> Enum.map(& &1.assignee)
-      |> Enum.uniq_by(&(&1 && &1.id))
-      |> Enum.reject(&is_nil/1)
-      |> Enum.sort_by(fn a -> (a.name || a.email || "") |> String.downcase() end)
-
-    columns = [
-      {nil, %{assignee: nil, tasks: Map.get(grouped, nil, [])}}
-      | Enum.map(assignees, fn a -> {a.id, %{assignee: a, tasks: Map.get(grouped, a.id, [])}} end)
-    ]
+    columns = Enum.map(statuses, fn s -> {s, %{tasks: Map.get(grouped, s, [])}} end)
 
     assign(socket, board_columns: columns)
   end
+
+  defp default_filters do
+    %{"assignee_id" => "", "unassigned" => false, "q" => "", "sort" => "priority_desc"}
+  end
+
+  # sort is stored as a string like "priority_desc"
+
+  defp assignee_options(members) do
+    members
+    |> Enum.map(&{&1.user.name || &1.user.email, &1.user.id})
+    |> Enum.sort_by(fn {name, _id} -> String.downcase(name || "") end)
+  end
+
+  defp sort_options do
+    [
+      {"Priority ↓", "priority_desc"},
+      {"Priority ↑", "priority_asc"},
+      {"Due date ↑", "due_date_asc"},
+      {"Due date ↓", "due_date_desc"},
+      {"Created ↑", "created_asc"},
+      {"Created ↓", "created_desc"}
+    ]
+  end
+
+  defp apply_filters_sort(tasks, filters, sort) do
+    tasks
+    |> Enum.filter(fn t ->
+      assignee_ok =
+        cond do
+          truthy?(filters["unassigned"]) -> is_nil(t.assignee_id)
+          filters["assignee_id"] in [nil, ""] -> true
+          true -> t.assignee_id == filters["assignee_id"]
+        end
+
+      q = (filters["q"] || "") |> String.downcase()
+
+      q_ok =
+        q == "" ||
+          String.contains?(String.downcase(t.name || ""), q) ||
+          String.contains?(String.downcase(t.description || ""), q)
+
+      assignee_ok and q_ok
+    end)
+    |> Enum.sort_by(fn t -> sort_key(t, sort) end, sort_dir(sort))
+  end
+
+  defp sort_key(t, sort) do
+    case sort do
+      "priority_desc" -> priority_rank(t.priority)
+      "priority_asc" -> priority_rank(t.priority)
+      "due_date_asc" -> t.due_date || ~D[3000-01-01]
+      "due_date_desc" -> t.due_date || ~D[1900-01-01]
+      "created_asc" -> t.inserted_at
+      "created_desc" -> t.inserted_at
+      _ -> priority_rank(t.priority)
+    end
+  end
+
+  defp sort_dir(sort) do
+    case sort do
+      "priority_desc" -> :desc
+      "priority_asc" -> :asc
+      "due_date_asc" -> :asc
+      "due_date_desc" -> :desc
+      "created_asc" -> :asc
+      "created_desc" -> :desc
+      _ -> :desc
+    end
+  end
+
+  defp priority_rank(nil), do: 1
+  defp priority_rank("low"), do: 0
+  defp priority_rank("medium"), do: 1
+  defp priority_rank("high"), do: 2
+  defp priority_rank("urgent"), do: 3
+  defp priority_rank(_), do: 1
+
+  defp format_status("in_progress"), do: "In Progress"
+  defp format_status("todo"), do: "Todo"
+  defp format_status("backlog"), do: "Backlog"
+  defp format_status("done"), do: "Done"
+  defp format_status(other) when is_binary(other), do: String.capitalize(other)
+
+  defp priority_badge_class("urgent"), do: "badge-error"
+  defp priority_badge_class("high"), do: "badge-warning"
+  defp priority_badge_class("medium"), do: "badge-info"
+  defp priority_badge_class("low"), do: "badge-ghost"
+  defp priority_badge_class(_), do: "badge-ghost"
+
+  defp truthy?(val), do: val in [true, "true", "on", 1, "1"]
 end

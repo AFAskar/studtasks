@@ -177,6 +177,17 @@ defmodule Studtasks.Accounts do
     |> update_user_and_delete_all_tokens()
   end
 
+  @doc """
+  Updates the user's preferred task view ("list" or "board").
+
+  Returns `{:ok, %User{}}` or `{:error, %Ecto.Changeset{}}`.
+  """
+  def update_preferred_task_view(%User{} = user, view) when view in ["list", "board"] do
+    user
+    |> User.preference_changeset(%{preferred_task_view: view})
+    |> Repo.update()
+  end
+
   ## Session
 
   @doc """

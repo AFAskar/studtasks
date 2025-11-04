@@ -13,6 +13,7 @@ defmodule Studtasks.Courses.Task do
     field :parent_id, :binary_id
     field :user_id, :binary_id
     field :status, :string, default: "backlog"
+    field :priority, :string, default: "medium"
     field :due_date, :date
 
     belongs_to :course_group, Studtasks.Courses.CourseGroup, define_field: false
@@ -27,8 +28,20 @@ defmodule Studtasks.Courses.Task do
   @doc false
   def changeset(task, attrs, user_scope) do
     task
-    |> cast(attrs, [:name, :description, :course_group_id, :creator_id, :assignee_id, :parent_id])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :course_group_id,
+      :creator_id,
+      :assignee_id,
+      :parent_id,
+      :status,
+      :priority,
+      :due_date
+    ])
     |> validate_required([:name, :description, :course_group_id])
+    |> validate_inclusion(:status, ["backlog", "todo", "in_progress", "done"])
+    |> validate_inclusion(:priority, ["low", "medium", "high", "urgent"])
     |> maybe_put_creator(user_scope)
     |> put_change(:user_id, user_scope.user.id)
   end

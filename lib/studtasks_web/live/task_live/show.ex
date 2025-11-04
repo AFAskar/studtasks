@@ -8,8 +8,8 @@ defmodule StudtasksWeb.TaskLive.Show do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
-        Task {@task.id}
-        <:subtitle>This is a task record from your database.</:subtitle>
+        {@task.name}
+        <:subtitle>Task details for {@course_group.name || @course_group.id}</:subtitle>
         <:actions>
           <.button navigate={~p"/groups/#{@course_group}/tasks"}>
             <.icon name="hero-arrow-left" />
@@ -24,8 +24,15 @@ defmodule StudtasksWeb.TaskLive.Show do
       </.header>
 
       <.list>
-        <:item title="Name">{@task.name}</:item>
         <:item title="Description">{@task.description}</:item>
+        <:item title="Assignee">
+          {if @task.assignee, do: @task.assignee.name || @task.assignee.email, else: "Unassigned"}
+        </:item>
+        <:item title="Status">{format_status(@task.status)}</:item>
+        <:item title="Priority">{String.capitalize(@task.priority || "")}</:item>
+        <:item title="Due date">
+          {@task.due_date && Calendar.strftime(@task.due_date, "%b %-d, %Y")}
+        </:item>
       </.list>
     </Layouts.app>
     """
@@ -66,4 +73,10 @@ defmodule StudtasksWeb.TaskLive.Show do
       when type in [:created, :updated, :deleted] do
     {:noreply, socket}
   end
+
+  defp format_status("in_progress"), do: "In Progress"
+  defp format_status("todo"), do: "Todo"
+  defp format_status("backlog"), do: "Backlog"
+  defp format_status("done"), do: "Done"
+  defp format_status(other) when is_binary(other), do: String.capitalize(other)
 end

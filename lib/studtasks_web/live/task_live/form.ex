@@ -15,7 +15,26 @@ defmodule StudtasksWeb.TaskLive.Form do
 
       <.form for={@form} id="task-form" phx-change="validate" phx-submit="save">
         <.input field={@form[:name]} type="text" label="Name" />
-        <.input field={@form[:description]} type="text" label="Description" />
+        <.input field={@form[:description]} type="textarea" label="Description" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <.input
+            field={@form[:assignee_id]}
+            type="select"
+            label="Assignee"
+            prompt="Unassigned"
+            options={@assignee_options}
+          />
+          <.input field={@form[:due_date]} type="date" label="Due date" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <.input field={@form[:status]} type="select" label="Status" options={status_options()} />
+          <.input
+            field={@form[:priority]}
+            type="select"
+            label="Priority"
+            options={priority_options()}
+          />
+        </div>
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Task</.button>
           <.button navigate={return_path(@current_scope, @course_group, @return_to, @task)}>
@@ -29,9 +48,13 @@ defmodule StudtasksWeb.TaskLive.Form do
 
   @impl true
   def mount(%{"group_id" => group_id} = params, _session, socket) do
+    group = Courses.get_course_group!(socket.assigns.current_scope, group_id)
+    members = Courses.list_group_memberships(group_id)
+
     {:ok,
      socket
-     |> assign(:course_group, Courses.get_course_group!(socket.assigns.current_scope, group_id))
+     |> assign(:course_group, group)
+     |> assign(:assignee_options, assignee_options(members))
      |> assign(:return_to, return_to(params["return_to"]))
      |> apply_action(socket.assigns.live_action, params)}
   end
@@ -117,4 +140,21 @@ defmodule StudtasksWeb.TaskLive.Form do
 
   defp return_path(_scope, course_group, "show", task),
     do: ~p"/groups/#{course_group}/tasks/#{task}"
+
+  defp assignee_options(members) do
+    members
+    |> Enum.map(&{&1.user.name || &1.user.email, &1.user.id})
+    |> Enum.sort_by(fn {name, _id} -> String.downcase(name || "") end)
+  end
+
+  defp status_options,
+    do: [
+      {"Backlog", "backlog"},
+      {"Todo", "todo"},
+      {"In Progress", "in_progress"},
+      {"Done", "done"}
+    ]
+
+  defp priority_options,
+    do: [{"Low", "low"}, {"Medium", "medium"}, {"High", "high"}, {"Urgent", "urgent"}]
 end

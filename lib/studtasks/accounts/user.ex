@@ -11,6 +11,7 @@ defmodule Studtasks.Accounts.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :preferred_task_view, :string, default: "list"
 
     timestamps(type: :utc_datetime)
   end
@@ -46,6 +47,12 @@ defmodule Studtasks.Accounts.User do
     user
     |> cast(attrs, [:name])
     |> validate_name()
+  end
+
+  def preference_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:preferred_task_view])
+    |> validate_inclusion(:preferred_task_view, ["list", "board"])
   end
 
   defp validate_email(changeset, opts) do
