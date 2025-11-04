@@ -16,10 +16,12 @@
 
 ### Schema TBD
 
-CourseGroup has many Users
+// Ownership
 User has many CourseGroups
+// Membership
+CourseGroup has many Users
 CourseGroup has many Tasks
-Tasks have 2 Users (1 assigned and 1 Creator) and 1 CourseGroup
+Tasks have 3 Users (1 creator ,1 assignee and 1 assignor)
 
 ### Features
 
@@ -49,8 +51,14 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 
 ## Learn more
 
-- Official website: https://www.phoenixframework.org/
-- Guides: https://hexdocs.pm/phoenix/overview.html
-- Docs: https://hexdocs.pm/phoenix
-- Forum: https://elixirforum.com/c/phoenix-forum
-- Source: https://github.com/phoenixframework/phoenix
+- Official website: <https://www.phoenixframework.org/>
+- Guides: <https://hexdocs.pm/phoenix/overview.html>
+- Docs: <https://hexdocs.pm/phoenix>
+- Forum: <https://elixirforum.com/c/phoenix-forum>
+- Source: <https://github.com/phoenixframework/phoenix>
+
+mix phx.gen.live Courses CourseGroup course_groups name:string description:string creator:references:users
+
+mix phx.gen.live Courses Task tasks name:string description:string course_group:references:course_groups creator:references:users assignor:references:users assignee:references:users
+
+mix phx.gen.schema Courses.Membership memberships user_id:references:users course_group_id:references:course_groups role:string
