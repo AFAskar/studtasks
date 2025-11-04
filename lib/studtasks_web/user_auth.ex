@@ -230,6 +230,15 @@ defmodule StudtasksWeb.UserAuth do
     end
   end
 
+  @doc """
+  Sets the Gettext locale for LiveViews from the session.
+  """
+  def on_mount(:set_locale, _params, session, socket) do
+    locale = session["locale"] || "en"
+    Gettext.put_locale(StudtasksWeb.Gettext, locale)
+    {:cont, Phoenix.Component.assign(socket, :locale, locale)}
+  end
+
   def on_mount(:require_sudo_mode, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 

@@ -10,6 +10,7 @@ defmodule StudtasksWeb.Router do
     plug :put_root_layout, html: {StudtasksWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug StudtasksWeb.Plugs.SetLocale
     plug :fetch_current_scope_for_user
   end
 
@@ -21,6 +22,7 @@ defmodule StudtasksWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    post "/locale", LocaleController, :update
   end
 
   # Other scopes may use custom stacks.
@@ -51,7 +53,10 @@ defmodule StudtasksWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     live_session :require_authenticated_user,
-      on_mount: [{StudtasksWeb.UserAuth, :require_authenticated}] do
+      on_mount: [
+        {StudtasksWeb.UserAuth, :require_authenticated},
+        {StudtasksWeb.UserAuth, :set_locale}
+      ] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
@@ -75,7 +80,10 @@ defmodule StudtasksWeb.Router do
     pipe_through [:browser]
 
     live_session :current_user,
-      on_mount: [{StudtasksWeb.UserAuth, :mount_current_scope}] do
+      on_mount: [
+        {StudtasksWeb.UserAuth, :mount_current_scope},
+        {StudtasksWeb.UserAuth, :set_locale}
+      ] do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new

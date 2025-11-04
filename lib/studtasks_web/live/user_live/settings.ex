@@ -80,6 +80,19 @@ defmodule StudtasksWeb.UserLive.Settings do
           Save Password
         </.button>
       </.form>
+
+      <div class="divider" />
+
+      <.form for={%{}} id="locale_form" action={~p"/locale"} method="post">
+        <label class="label mb-1">{gettext("Language")}</label>
+        <select name="locale" class="select w-full">
+          <option value="en" selected={@locale == "en"}>{gettext("English")}</option>
+          <option value="ar" selected={@locale == "ar"}>{gettext("Arabic")}</option>
+        </select>
+        <div class="mt-2">
+          <.button variant="primary">{gettext("Save language")}</.button>
+        </div>
+      </.form>
     </Layouts.app>
     """
   end
@@ -98,7 +111,7 @@ defmodule StudtasksWeb.UserLive.Settings do
     {:ok, push_navigate(socket, to: ~p"/users/settings")}
   end
 
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     user = socket.assigns.current_scope.user
     email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
@@ -109,8 +122,9 @@ defmodule StudtasksWeb.UserLive.Settings do
       |> assign(:current_email, user.email)
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
-      |> assign(:name_form, to_form(name_changeset))
-      |> assign(:trigger_submit, false)
+  |> assign(:name_form, to_form(name_changeset))
+  |> assign(:trigger_submit, false)
+  |> assign(:locale, session["locale"] || "en")
 
     {:ok, socket}
   end

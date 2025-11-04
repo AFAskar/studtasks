@@ -1,0 +1,71 @@
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=6; plural=n==0?0:n==1?1:n==2?2:n%100>=3 && n%100<=10?3:n%100>=11 && n%100<=99?4:5;\n"
+
+# Homepage strings
+msgid "Organize your course projects and assignments"
+msgstr "نظِّم مشاريعك الجامعية والواجبات"
+
+msgid "A simple task manager for student course groups."
+msgstr "مدير مهام بسيط لمجموعات مقررات الطلاب."
+
+msgid "Go to your groups"
+msgstr "اذهب إلى مجموعاتك"
+
+msgid "Create a group"
+msgstr "إنشاء مجموعة"
+
+msgid "Get started — Register"
+msgstr "ابدأ الآن — تسجيل"
+
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+msgid "Course groups"
+msgstr "مجموعات المقررات"
+
+msgid "Create groups for projects, assignments, labs, or study circles."
+msgstr "أنشئ مجموعات للمشاريع والواجبات والمعامل أو حلقات المذاكرة."
+
+msgid "Tasks & subtasks"
+msgstr "مهام ومهام فرعية"
+
+msgid "Break work down and track progress as a team."
+msgstr "قسّم العمل وتابع التقدم كفريق."
+
+msgid "Invites & QR codes"
+msgstr "دعوات ورموز QR"
+
+msgid "Share a link or QR to onboard classmates in seconds."
+msgstr "شارك رابطًا أو رمز QR لإضافة الزملاء خلال ثوانٍ."
+
+msgid "Real‑time by Phoenix LiveView"
+msgstr "تحديث فوري بواسطة Phoenix LiveView"
+
+msgid "Fast, collaborative UI powered by Elixir/Phoenix."
+msgstr "واجهة سريعة تعاونية تعمل بواسطة Elixir/Phoenix."
+
+# Header nav
+msgid "Register"
+msgstr "تسجيل"
+
+msgid "Groups"
+msgstr "المجموعات"
+
+msgid "New group"
+msgstr "مجموعة جديدة"
+
+# Settings
+msgid "Language"
+msgstr "اللغة"
+
+msgid "English"
+msgstr "الإنجليزية"
+
+msgid "Arabic"
+msgstr "العربية"
+
+msgid "Save language"
+msgstr "حفظ اللغة"

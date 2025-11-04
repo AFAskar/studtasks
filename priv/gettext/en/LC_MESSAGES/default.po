@@ -1,0 +1,71 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Homepage strings
+msgid "Organize your course projects and assignments"
+msgstr "Organize your course projects and assignments"
+
+msgid "A simple task manager for student course groups."
+msgstr "A simple task manager for student course groups."
+
+msgid "Go to your groups"
+msgstr "Go to your groups"
+
+msgid "Create a group"
+msgstr "Create a group"
+
+msgid "Get started — Register"
+msgstr "Get started — Register"
+
+msgid "Log in"
+msgstr "Log in"
+
+msgid "Course groups"
+msgstr "Course groups"
+
+msgid "Create groups for projects, assignments, labs, or study circles."
+msgstr "Create groups for projects, assignments, labs, or study circles."
+
+msgid "Tasks & subtasks"
+msgstr "Tasks & subtasks"
+
+msgid "Break work down and track progress as a team."
+msgstr "Break work down and track progress as a team."
+
+msgid "Invites & QR codes"
+msgstr "Invites & QR codes"
+
+msgid "Share a link or QR to onboard classmates in seconds."
+msgstr "Share a link or QR to onboard classmates in seconds."
+
+msgid "Real‑time by Phoenix LiveView"
+msgstr "Real‑time by Phoenix LiveView"
+
+msgid "Fast, collaborative UI powered by Elixir/Phoenix."
+msgstr "Fast, collaborative UI powered by Elixir/Phoenix."
+
+# Header nav
+msgid "Register"
+msgstr "Register"
+
+msgid "Groups"
+msgstr "Groups"
+
+msgid "New group"
+msgstr "New group"
+
+# Settings
+msgid "Language"
+msgstr "Language"
+
+msgid "English"
+msgstr "English"
+
+msgid "Arabic"
+msgstr "Arabic"
+
+msgid "Save language"
+msgstr "Save language"
