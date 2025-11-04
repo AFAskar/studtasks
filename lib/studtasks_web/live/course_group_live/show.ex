@@ -46,7 +46,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
           <%= if @invite_url do %>
             <div class="space-y-2">
               <p class="text-sm break-all"><strong>Invite link:</strong> {@invite_url}</p>
-              <div class="border rounded p-3 bg-base-200" phx-no-curly-interpolation>
+              <div class="border rounded p-3 bg-base-200">
                 {@invite_qr_svg}
               </div>
             </div>

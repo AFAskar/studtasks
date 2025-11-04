@@ -54,14 +54,22 @@ defmodule StudtasksWeb.Layouts do
             <li>
               <.link navigate={~p"/groups/new"} class="btn btn-primary">{gettext("New group")}</.link>
             </li>
-            <li class="hidden sm:block opacity-80">
-              {@current_scope.user.email}
-            </li>
             <li>
-              <.link navigate={~p"/users/settings"} class="btn btn-ghost">{gettext("Settings")}</.link>
-            </li>
-            <li>
-              <.link href={~p"/users/log-out"} method="delete" class="btn btn-ghost">{gettext("Log out")}</.link>
+              <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost gap-2">
+                  <.icon name="hero-user-circle" class="size-5 opacity-80" />
+                  <span class="truncate max-w-[12rem] hidden sm:inline">{@current_scope.user.email}</span>
+                  <.icon name="hero-chevron-down" class="size-4 opacity-70" />
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow">
+                  <li>
+                    <.link navigate={~p"/users/settings"}>{gettext("Settings")}</.link>
+                  </li>
+                  <li>
+                    <.link href={~p"/users/log-out"} method="delete">{gettext("Log out")}</.link>
+                  </li>
+                </ul>
+              </div>
             </li>
           <% else %>
             <li>
