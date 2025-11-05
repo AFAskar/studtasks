@@ -1,7 +1,7 @@
 
 == Project Architecture
 === Current Architecture
-- Kubernetes
+- Kubernetes (EKS)
 - Elixir/Phoenix
 - sqlite
 
@@ -16,12 +16,8 @@
   - Lightweight and easy to set up
   - Suitable for small to medium-sized applications.
 
-==== Diagrams
-```mermaid
-graph TD;
-    A[Kubernetes] --> B[Elixir/Phoenix];
-    B --> C[sqlite];
-```
+==== Diagram
+
 
 === Other Proposed Architectures
 
