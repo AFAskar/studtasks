@@ -14,7 +14,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <:actions>
           <div class="flex items-center gap-2">
             <span class="badge badge-ghost">Groups: {@group_count}</span>
-            <span class="badge badge-ghost">Assigned: {@assigned_count}</span>
+            <span class="badge badge-ghost">Assigned Tasks: {@assigned_count}</span>
             <.button variant="primary" phx-click={JS.push("open_new_group")}>
               <.icon name="hero-plus" /> New Group
             </.button>
@@ -376,30 +376,6 @@ defmodule StudtasksWeb.DashboardLive.Index do
   end
 
   @impl true
-  def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
-      when type in [:created, :updated, :deleted] do
-    groups = list_course_groups(socket.assigns.current_scope)
-
-    {:noreply,
-     socket
-     |> assign(:group_count, length(groups))
-     |> stream(:course_groups, groups, reset: true)}
-  end
-
-  @impl true
-  def handle_info({type, %Studtasks.Courses.Task{}}, socket)
-      when type in [:created, :updated, :deleted] do
-    {:noreply,
-     socket
-     |> assign(:assigned_tasks, Courses.list_assigned_tasks(socket.assigns.current_scope, 5))
-     |> assign(:recent_tasks, Courses.list_recent_tasks(socket.assigns.current_scope, 5))
-     |> assign(
-       :assigned_count,
-       length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
-     )}
-  end
-
-  @impl true
   def handle_event("open_group", %{"id" => id}, socket) do
     scope = socket.assigns.current_scope
     group = Courses.get_course_group!(scope, id)
@@ -507,6 +483,30 @@ defmodule StudtasksWeb.DashboardLive.Index do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :group_form, to_form(changeset))}
     end
+  end
+
+  @impl true
+  def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
+      when type in [:created, :updated, :deleted] do
+    groups = list_course_groups(socket.assigns.current_scope)
+
+    {:noreply,
+     socket
+     |> assign(:group_count, length(groups))
+     |> stream(:course_groups, groups, reset: true)}
+  end
+
+  @impl true
+  def handle_info({type, %Studtasks.Courses.Task{}}, socket)
+      when type in [:created, :updated, :deleted] do
+    {:noreply,
+     socket
+     |> assign(:assigned_tasks, Courses.list_assigned_tasks(socket.assigns.current_scope, 5))
+     |> assign(:recent_tasks, Courses.list_recent_tasks(socket.assigns.current_scope, 5))
+     |> assign(
+       :assigned_count,
+       length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
+     )}
   end
 
   defp list_course_groups(current_scope) do
