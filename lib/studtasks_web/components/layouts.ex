@@ -49,10 +49,7 @@ defmodule StudtasksWeb.Layouts do
           </li>
           <%= if @current_scope && @current_scope.user do %>
             <li>
-              <.link navigate={~p"/groups"} class="btn btn-ghost">{gettext("Groups")}</.link>
-            </li>
-            <li>
-              <.link navigate={~p"/groups/new"} class="btn btn-primary">{gettext("New group")}</.link>
+              <.link navigate={~p"/dashboard"} class="btn btn-ghost">{gettext("Dashboard")}</.link>
             </li>
             <li>
               <div class="dropdown dropdown-end">
