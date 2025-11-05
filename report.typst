@@ -55,10 +55,8 @@ Environment variables (required):
 
 Database (choose one):
 
-- Turso (recommended for prod)
-  - DATABASE_URL — libsql URL (e.g., `libsql://org-db.turso.io`)
-  - TURSO_AUTH_TOKEN — auth token for the database
-  - POOL_SIZE — e.g., 10–20
+- Neon (recommended for prod)
+  - DATABASE_URL — NEON URL
 
 - File-backed SQLite (simple single-node alternative)
   - DATABASE_PATH — absolute path to the SQLite file (e.g., `/etc/studtasks/studtasks.db`)
@@ -68,12 +66,7 @@ Mailer (prod):
 - Configure Swoosh adapter in runtime for a real provider (Resend/Mailgun/SES). Also set `config :swoosh, :api_client, Swoosh.ApiClient.Req`.
 
 Start with releases (illustrative):
-
-```bash
-MIX_ENV=prod mix release
-PHX_SERVER=true SECRET_KEY_BASE=... PHX_HOST=nadhm.example.com PORT=4000 \
-DATABASE_URL=libsql://org-db.turso.io TURSO_AUTH_TOKEN=... POOL_SIZE=15 \
-_build/prod/rel/studtasks/bin/studtasks start
+```sh
 ```
 
 == Technology Stack
@@ -81,7 +74,7 @@ _build/prod/rel/studtasks/bin/studtasks start
 - Language & Runtime: Elixir, Erlang/OTP
 - Web Framework: Phoenix 1.8 + LiveView 1.1
 - Realtime: Phoenix PubSub + LiveView
-- Database: Turso (libSQL) in production; SQLite (ecto_sqlite3) in development
+- Database: Neon (PostgreSQL) in production; SQLite (ecto_sqlite3) in development
 - Auth & Security: Argon2 (argon2_elixir), Phoenix/Plug sessions, email verification (Swoosh)
 - Email: Swoosh (dev: Local adapter at /dev/mailbox; prod: configure provider), delivered via Req client
 - HTTP Client: Req (preferred)
@@ -120,7 +113,7 @@ _build/prod/rel/studtasks/bin/studtasks start
 === Current Architecture
 
 - Elixir/Phoenix + LiveView
-- Turso (libSQL distributed SQLite) for production data, SQLite file-backed for local dev
+- Neon (PostgreSQL) for production data, SQLite file-backed for local dev
 - Kubernetes (AWS EKS)
 
 ==== Why This Architecture?
@@ -129,17 +122,17 @@ _build/prod/rel/studtasks/bin/studtasks start
   - Excellent concurrency and fault tolerance
   - LiveView for first-class realtime UX without heavy client JS
   - Built-in Pub/Sub for efficient live synchronization
-- Turso (libSQL):
-  - Serverless, globally distributed SQLite with low-latency edge access
+  - Neon
+    - Serverless, globally distributed PostgreSQL with low-latency edge access
   - Managed operations with simple connection model (DATABASE_URL + token)
   - Local dev parity via plain SQLite
 - Kubernetes (EKS):
   - Cloud-agnostic orchestration with autoscaling, rollouts, and resilience on AWS
-  - Clear separation of stateless app vs managed DB (Turso)
+  - Clear separation of stateless app vs managed DB (Neon)
 
 ==== Diagram (High-Level)
 
-- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ Turso (libSQL over network)
+- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ Neon (PostgreSQL over network)
 - Live updates flow through PubSub; forms/components use Phoenix core components
 - In dev: Ecto (Repo) ⇄ local SQLite file for simplicity
 
@@ -170,16 +163,16 @@ _build/prod/rel/studtasks/bin/studtasks start
 
 - URL: TODO — Add deployed URL here (e.g., https://nadhm.example.com)
 
-=== Quick Deploy Notes — AWS EKS + Turso
+=== Quick Deploy Notes — AWS EKS + Neon
 
 High-level checklist:
 
 1) Container image
-- Build a minimal release image (OCI/Docker) and push to Amazon ECR.
+- generate the release image `mix gen.release --docker` and push to Amazon ECR.
 
 2) Secrets & Config
-- Kubernetes Secret: `SECRET_KEY_BASE`, `TURSO_AUTH_TOKEN` (and email provider creds if any)
-- ConfigMap or env: `DATABASE_URL` (Turso libsql URL), `PHX_HOST`, `PORT`, `POOL_SIZE`
+- Kubernetes Secret: `SECRET_KEY_BASE`,  (and email provider creds if any)
+- ConfigMap or env: `DATABASE_URL` (NEON URL), `PHX_HOST`, `PORT`, `POOL_SIZE`
 
 3) Deployment & Service
 - Deployment: set `PHX_SERVER=true` and env from Secret/ConfigMap; add readiness/liveness probes
@@ -193,5 +186,5 @@ High-level checklist:
 - Centralized logs/metrics (e.g., CloudWatch), alerts
 
 Notes:
-- App is stateless; all persistence is handled by Turso. No PVC required.
-- For local dev and CI, you can run on a file-backed SQLite and switch to Turso in prod via env vars.
+- App is stateless; all persistence is handled by Neon. No PVC required.
+- For local dev and CI, you can run on a file-backed SQLite and switch to Neon in prod via env vars.
