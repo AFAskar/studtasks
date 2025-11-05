@@ -120,14 +120,14 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <.table
           id="course_groups"
           rows={@streams.course_groups}
-          row_click={
-            fn {_id, course_group} -> JS.push("open_group", value: %{id: course_group.id}) end
-          }
+          row_click={fn {_id, course_group} -> JS.navigate(~p"/groups/#{course_group}/tasks") end}
         >
           <:col :let={{_id, course_group}} label="Name">{course_group.name}</:col>
           <:col :let={{_id, course_group}} label="Description">{course_group.description}</:col>
           <:action :let={{_id, course_group}}>
-            <.link navigate={~p"/groups/#{course_group}/tasks"}>Tasks</.link>
+            <.link phx-click={JS.push("open_group", value: %{id: course_group.id})}>
+              Details
+            </.link>
           </:action>
           <:action :let={{id, course_group}}>
             <.link
@@ -299,6 +299,9 @@ defmodule StudtasksWeb.DashboardLive.Index do
        :assigned_count,
        length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
      )
+     |> assign(:show_group, false)
+     |> assign(:invite_url, nil)
+     |> assign(:invite_qr_svg, nil)
      |> assign(:show_new_group, false)
      |> assign(:group_form, new_group_form(socket.assigns.current_scope))
      |> stream(:course_groups, groups)}
