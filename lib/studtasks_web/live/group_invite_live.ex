@@ -57,7 +57,7 @@ defmodule StudtasksWeb.GroupInviteLive do
       {:noreply,
        socket
        |> put_flash(:info, "You have joined the group.")
-       |> push_navigate(to: ~p"/groups/#{socket.assigns.group}")}
+       |> push_navigate(to: ~p"/groups/#{socket.assigns.group}/tasks")}
     else
       _ -> {:noreply, put_flash(socket, :error, "Could not join the group.")}
     end

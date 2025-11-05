@@ -120,15 +120,14 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <.table
           id="course_groups"
           rows={@streams.course_groups}
-          row_click={fn {_id, course_group} -> JS.navigate(~p"/groups/#{course_group}") end}
+          row_click={
+            fn {_id, course_group} -> JS.push("open_group", value: %{id: course_group.id}) end
+          }
         >
           <:col :let={{_id, course_group}} label="Name">{course_group.name}</:col>
           <:col :let={{_id, course_group}} label="Description">{course_group.description}</:col>
           <:action :let={{_id, course_group}}>
-            <div class="sr-only">
-              <.link navigate={~p"/groups/#{course_group}"}>Show</.link>
-            </div>
-            <.link navigate={~p"/groups/#{course_group}/edit"}>Edit</.link>
+            <.link navigate={~p"/groups/#{course_group}/tasks"}>Tasks</.link>
           </:action>
           <:action :let={{id, course_group}}>
             <.link
@@ -160,6 +159,118 @@ defmodule StudtasksWeb.DashboardLive.Index do
                 <.button variant="primary" phx-disable-with="Creating...">Create</.button>
               </footer>
             </.form>
+          </div>
+        </div>
+      </div>
+      <div
+        :if={@show_group}
+        id="group-modal"
+        class="fixed inset-0 z-50 hidden"
+        phx-mounted={show("#group-modal")}
+        phx-remove={hide("#group-modal")}
+      >
+        <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_group")} />
+        <div class="modal modal-open">
+          <div class="modal-box space-y-3 max-w-3xl">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-lg">Group details</h3>
+              <.button type="button" phx-click={JS.push("close_group")}>Close</.button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <h4 class="font-semibold">Edit</h4>
+                <.form for={@group_edit_form} id="group-edit-form" phx-submit="group:update">
+                  <.input
+                    type="text"
+                    field={@group_edit_form[:name]}
+                    label="Name"
+                    disabled={!@is_owner}
+                  />
+                  <.input
+                    type="textarea"
+                    field={@group_edit_form[:description]}
+                    label="Description"
+                    disabled={!@is_owner}
+                  />
+                  <footer class="flex gap-2 justify-end pt-2">
+                    <.button :if={@is_owner} variant="primary" phx-disable-with="Saving...">
+                      Save
+                    </.button>
+                  </footer>
+                </.form>
+              </div>
+              <div class="space-y-2">
+                <h4 class="font-semibold">Invite</h4>
+                <div class="flex items-center gap-2">
+                  <.button phx-click={JS.push("group:generate_invite")} disabled={!@is_owner}>
+                    Generate link
+                  </.button>
+                  <.button
+                    phx-hook=".CopyLink"
+                    disabled={is_nil(@invite_url)}
+                    data-clipboard-text={@invite_url}
+                  >
+                    <.icon name="hero-clipboard" /> Copy link
+                  </.button>
+                </div>
+                <%= if @invite_url do %>
+                  <p class="text-sm break-all"><strong>Invite link:</strong> {@invite_url}</p>
+                  <div class="border rounded p-3 bg-base-200">{@invite_qr_svg}</div>
+                <% else %>
+                  <p class="text-sm opacity-70">No invite generated yet. Click “Generate link”.</p>
+                <% end %>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h4 class="font-semibold">Members</h4>
+              <div class="space-y-2">
+                <%= for m <- @memberships do %>
+                  <div class="flex items-center justify-between">
+                    <div class="truncate">
+                      <span class="opacity-80">{m.user.name || m.user.email}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="badge">{m.role}</span>
+                      <.button
+                        :if={@is_owner}
+                        phx-click="membership:set_role"
+                        phx-value-user={m.user.id}
+                        phx-value-role={if m.role == "admin", do: "member", else: "admin"}
+                      >
+                        {if m.role == "admin", do: "Demote", else: "Promote"}
+                      </.button>
+                      <.button
+                        :if={@is_owner}
+                        phx-click="membership:remove"
+                        phx-value-user={m.user.id}
+                      >
+                        Remove
+                      </.button>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            <script :type={Phoenix.LiveView.ColocatedHook} name=".CopyLink">
+              export default {
+                mounted(){
+                  this.handleClick = async (e) => {
+                    e.preventDefault()
+                    const text = this.el.dataset.clipboardText
+                    if(!text) return
+                    try{
+                      await navigator.clipboard.writeText(text)
+                      this.el.classList.add("btn-success")
+                      const original = this.el.innerHTML
+                      this.el.innerHTML = '<span class="inline-flex items-center gap-1">✅ Copied</span>'
+                      setTimeout(() => { this.el.innerHTML = original; this.el.classList.remove("btn-success") }, 1200)
+                    }catch(_err){ console.error("Clipboard copy failed") }
+                  }
+                  this.el.addEventListener("click", this.handleClick)
+                },
+                destroyed(){ this.el.removeEventListener("click", this.handleClick) }
+              }
+            </script>
           </div>
         </div>
       </div>
@@ -226,6 +337,77 @@ defmodule StudtasksWeb.DashboardLive.Index do
   end
 
   @impl true
+  def handle_event("open_group", %{"id" => id}, socket) do
+    scope = socket.assigns.current_scope
+    group = Courses.get_course_group!(scope, id)
+    memberships = Courses.list_group_memberships(id)
+    is_owner = Courses.group_owner?(scope, group)
+
+    {:noreply,
+     socket
+     |> assign(:show_group, true)
+     |> assign(:selected_group, group)
+     |> assign(:memberships, memberships)
+     |> assign(:is_owner, is_owner)
+     |> assign(:invite_url, nil)
+     |> assign(:invite_qr_svg, nil)
+     |> assign(:group_edit_form, group_edit_form(scope, group))}
+  end
+
+  def handle_event("close_group", _params, socket) do
+    {:noreply, assign(socket, :show_group, false)}
+  end
+
+  def handle_event("group:update", %{"course_group" => params}, socket) do
+    scope = socket.assigns.current_scope
+    group = socket.assigns.selected_group
+
+    case Courses.update_course_group(scope, group, params) do
+      {:ok, group} ->
+        groups = list_course_groups(scope)
+
+        {:noreply,
+         socket
+         |> assign(:selected_group, group)
+         |> assign(:group_edit_form, group_edit_form(scope, group))
+         |> stream(:course_groups, groups, reset: true)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :group_edit_form, to_form(changeset))}
+    end
+  end
+
+  def handle_event("group:generate_invite", _params, socket) do
+    token =
+      Phoenix.Token.sign(StudtasksWeb.Endpoint, "group_invite", socket.assigns.selected_group.id)
+
+    url = StudtasksWeb.Endpoint.url() <> ~p"/invites/groups/#{token}"
+
+    qr_svg =
+      try do
+        url |> EQRCode.encode() |> EQRCode.svg(viewbox: true) |> Phoenix.HTML.raw()
+      rescue
+        _ -> Phoenix.HTML.raw("<p>QR code unavailable.</p>")
+      end
+
+    {:noreply, assign(socket, invite_url: url, invite_qr_svg: qr_svg)}
+  end
+
+  def handle_event("membership:set_role", %{"user" => user_id, "role" => role}, socket) do
+    scope = socket.assigns.current_scope
+    group = socket.assigns.selected_group
+    {:ok, _} = Courses.set_group_membership_role(scope, group.id, user_id, role)
+    {:noreply, assign(socket, :memberships, Courses.list_group_memberships(group.id))}
+  end
+
+  def handle_event("membership:remove", %{"user" => user_id}, socket) do
+    scope = socket.assigns.current_scope
+    group = socket.assigns.selected_group
+    :ok = Courses.remove_group_member(scope, group.id, user_id)
+    {:noreply, assign(socket, :memberships, Courses.list_group_memberships(group.id))}
+  end
+
+  @impl true
   def handle_event("open_new_group", _params, socket) do
     {:noreply,
      socket
@@ -271,6 +453,11 @@ defmodule StudtasksWeb.DashboardLive.Index do
 
   defp new_group_form(scope) do
     Courses.change_course_group(scope, %Studtasks.Courses.CourseGroup{})
+    |> to_form()
+  end
+
+  defp group_edit_form(scope, group) do
+    Courses.change_course_group(scope, group)
     |> to_form()
   end
 end
