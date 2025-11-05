@@ -343,15 +343,27 @@ defmodule Studtasks.Courses do
 
   """
   def subscribe_tasks(%Scope{} = scope) do
-    key = scope.user.id
-
-    Phoenix.PubSub.subscribe(Studtasks.PubSub, "user:#{key}:tasks")
+    # Subscribe to all group task topics the user is a member of
+    list_course_groups(scope)
+    |> Enum.each(fn g -> Phoenix.PubSub.subscribe(Studtasks.PubSub, "group:#{g.id}:tasks") end)
   end
 
-  defp broadcast_task(%Scope{} = scope, message) do
-    key = scope.user.id
+  @doc """
+  Subscribe to task updates for a specific group.
+  """
+  def subscribe_group_tasks(group_id) do
+    Phoenix.PubSub.subscribe(Studtasks.PubSub, "group:#{group_id}:tasks")
+  end
 
-    Phoenix.PubSub.broadcast(Studtasks.PubSub, "user:#{key}:tasks", message)
+  defp broadcast_task(%Scope{} = _scope, message) do
+    # Broadcast to the group topic so all members receive real-time updates
+    case message do
+      {_, %Task{course_group_id: group_id}} when not is_nil(group_id) ->
+        Phoenix.PubSub.broadcast(Studtasks.PubSub, "group:#{group_id}:tasks", message)
+
+      _ ->
+        :ok
+    end
   end
 
   @doc """
@@ -377,8 +389,10 @@ defmodule Studtasks.Courses do
 
   """
   def list_group_tasks(%Scope{} = scope, course_group_id) do
+    true = group_member?(scope, course_group_id)
+
     from(t in Task,
-      where: t.user_id == ^scope.user.id and t.course_group_id == ^course_group_id,
+      where: t.course_group_id == ^course_group_id,
       preload: [:assignee, :creator, :children]
     )
     |> Repo.all()
@@ -391,8 +405,12 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_assigned_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
+    alias Studtasks.Courses.GroupMembership
+
     from(t in Task,
-      where: t.user_id == ^scope.user.id and t.assignee_id == ^scope.user.id,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
+      where: t.assignee_id == ^scope.user.id,
       preload: [:assignee, :creator, :children, :course_group],
       order_by: [desc: t.inserted_at],
       limit: ^limit
@@ -406,8 +424,11 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_recent_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
+    alias Studtasks.Courses.GroupMembership
+
     from(t in Task,
-      where: t.user_id == ^scope.user.id,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
       preload: [:assignee, :creator, :children, :course_group],
       order_by: [desc: t.inserted_at],
       limit: ^limit
@@ -419,8 +440,12 @@ defmodule Studtasks.Courses do
   Returns all tasks assigned to the current user across all groups, newest first.
   """
   def list_assigned_tasks_all(%Scope{} = scope) do
+    alias Studtasks.Courses.GroupMembership
+
     from(t in Task,
-      where: t.user_id == ^scope.user.id and t.assignee_id == ^scope.user.id,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
+      where: t.assignee_id == ^scope.user.id,
       preload: [:assignee, :creator, :children, :course_group],
       order_by: [desc: t.inserted_at]
     )
@@ -431,8 +456,11 @@ defmodule Studtasks.Courses do
   Returns all tasks for the current user across all groups, newest first.
   """
   def list_recent_tasks_all(%Scope{} = scope) do
+    alias Studtasks.Courses.GroupMembership
+
     from(t in Task,
-      where: t.user_id == ^scope.user.id,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
       preload: [:assignee, :creator, :children, :course_group],
       order_by: [desc: t.inserted_at]
     )
@@ -454,7 +482,14 @@ defmodule Studtasks.Courses do
 
   """
   def get_task!(%Scope{} = scope, id) do
-    Repo.get_by!(Task, id: id, user_id: scope.user.id)
+    alias Studtasks.Courses.GroupMembership
+
+    from(t in Task,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
+      where: t.id == ^id
+    )
+    |> Repo.one!()
   end
 
   @doc """
@@ -463,7 +498,14 @@ defmodule Studtasks.Courses do
   Raises `Ecto.NoResultsError` if not found or not owned by user.
   """
   def get_task_in_group!(%Scope{} = scope, id, course_group_id) do
-    Repo.get_by!(Task, id: id, user_id: scope.user.id, course_group_id: course_group_id)
+    alias Studtasks.Courses.GroupMembership
+
+    from(t in Task,
+      join: m in GroupMembership,
+      on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
+      where: t.id == ^id and t.course_group_id == ^course_group_id
+    )
+    |> Repo.one!()
     |> Repo.preload([:assignee])
   end
 
@@ -480,12 +522,19 @@ defmodule Studtasks.Courses do
 
   """
   def create_task(%Scope{} = scope, attrs) do
-    with {:ok, task = %Task{}} <-
-           %Task{}
-           |> Task.changeset(attrs, scope)
-           |> Repo.insert() do
-      broadcast_task(scope, {:created, task})
-      {:ok, task}
+    changeset = Task.changeset(%Task{}, attrs, scope)
+    group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
+
+    # Only enforce membership when we actually have a group_id present in the changeset
+    if not is_nil(group_id), do: true = group_member?(scope, group_id)
+
+    case Repo.insert(changeset) do
+      {:ok, task = %Task{}} ->
+        broadcast_task(scope, {:created, task})
+        {:ok, task}
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        {:error, cs}
     end
   end
 
@@ -502,7 +551,7 @@ defmodule Studtasks.Courses do
 
   """
   def update_task(%Scope{} = scope, %Task{} = task, attrs) do
-    true = task.user_id == scope.user.id
+    true = group_member?(scope, task.course_group_id)
 
     with {:ok, task = %Task{}} <-
            task
@@ -526,7 +575,7 @@ defmodule Studtasks.Courses do
 
   """
   def delete_task(%Scope{} = scope, %Task{} = task) do
-    true = task.user_id == scope.user.id
+    true = group_member?(scope, task.course_group_id)
 
     with {:ok, task = %Task{}} <-
            Repo.delete(task) do
@@ -545,7 +594,7 @@ defmodule Studtasks.Courses do
 
   """
   def change_task(%Scope{} = scope, %Task{} = task, attrs \\ %{}) do
-    true = task.user_id == scope.user.id
+    true = is_nil(task.id) or group_member?(scope, task.course_group_id)
 
     Task.changeset(task, attrs, scope)
   end

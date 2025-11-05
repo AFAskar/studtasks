@@ -62,6 +62,7 @@ defmodule StudtasksWeb.DashboardTasksLive do
   @impl true
   def mount(params, _session, socket) do
     if connected?(socket) do
+      # Subscribe to tasks across all groups the user is a member of
       Courses.subscribe_tasks(socket.assigns.current_scope)
     end
 

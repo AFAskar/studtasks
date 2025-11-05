@@ -259,7 +259,7 @@ defmodule StudtasksWeb.TaskLive.Index do
   @impl true
   def mount(%{"group_id" => group_id}, _session, socket) do
     if connected?(socket) do
-      Courses.subscribe_tasks(socket.assigns.current_scope)
+      Courses.subscribe_group_tasks(group_id)
     end
 
     course_group = Courses.get_course_group!(socket.assigns.current_scope, group_id)

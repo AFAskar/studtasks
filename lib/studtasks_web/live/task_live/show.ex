@@ -41,7 +41,7 @@ defmodule StudtasksWeb.TaskLive.Show do
   @impl true
   def mount(%{"id" => id, "group_id" => group_id}, _session, socket) do
     if connected?(socket) do
-      Courses.subscribe_tasks(socket.assigns.current_scope)
+      Courses.subscribe_group_tasks(group_id)
     end
 
     {:ok,

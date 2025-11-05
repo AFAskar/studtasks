@@ -39,7 +39,8 @@ defmodule Studtasks.Courses.Task do
       :priority,
       :due_date
     ])
-    |> validate_required([:name, :description, :course_group_id])
+    # Description is optional per requirements
+    |> validate_required([:name, :course_group_id])
     |> validate_inclusion(:status, ["backlog", "todo", "in_progress", "done"])
     |> validate_inclusion(:priority, ["low", "medium", "high", "urgent"])
     |> maybe_put_creator(user_scope)

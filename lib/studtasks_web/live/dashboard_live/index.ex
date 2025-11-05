@@ -310,6 +310,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Courses.subscribe_course_groups(socket.assigns.current_scope)
+      # Subscribe to tasks for all current groups
       Courses.subscribe_tasks(socket.assigns.current_scope)
     end
 
@@ -493,6 +494,11 @@ defmodule StudtasksWeb.DashboardLive.Index do
     {:noreply,
      socket
      |> assign(:group_count, length(groups))
+     # Re-subscribe to any new group task topics
+     |> then(fn s ->
+       Courses.subscribe_tasks(s.assigns.current_scope)
+       s
+     end)
      |> stream(:course_groups, groups, reset: true)}
   end
 
