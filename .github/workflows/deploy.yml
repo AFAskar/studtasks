@@ -43,14 +43,21 @@ jobs:
         run: |
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push image
-        shell: bash
-        env:
-          IMAGE: ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.SHORT_SHA }}
-        run: |
-          echo "Building $IMAGE"
-          docker build -t "$IMAGE" .
-          docker push "$IMAGE"
+      - name: Build and push image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          provenance: false
+          tags: |
+            ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ env.DOCKERHUB_REPO }}:main
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.DOCKERHUB_REPO }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.DOCKERHUB_REPO }}:buildcache,mode=max,compression=zstd
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
