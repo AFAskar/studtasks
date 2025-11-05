@@ -10,6 +10,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   # Default values; you can override these with GitHub Variables
@@ -58,10 +59,11 @@ jobs:
             type=gha,mode=max
             type=registry,ref=${{ env.DOCKERHUB_REPO }}:buildcache,mode=max,compression=zstd
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v3
