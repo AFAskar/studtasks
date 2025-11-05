@@ -202,42 +202,23 @@ Notes:
 
 === Example deploy with gcloud
 
-Illustrative commands (replace placeholders: `PROJECT_ID`, `REGION`, `REPO`, `SERVICE_NAME`, `YOUR_DOMAIN`). Assumes you created Secret Manager secrets `SECRET_KEY_BASE` and `DATABASE_URL` and granted the service account `roles/secretmanager.secretAccessor`:
+Illustrative commands (replace placeholders:`SERVICE_NAME`, `YOUR_DOMAIN`). Assumes you created Secret Manager secrets `SECRET_KEY_BASE` and `DATABASE_URL` and granted the service account `roles/secretmanager.secretAccessor`:
 
 ```bash
-# Build & push to Google Artifact Registry
-IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/studtasks:$(git rev-parse --short HEAD)"
-gcloud builds submit --tag "$IMAGE" --project "$PROJECT_ID"
+# Build & push to Docker Hub
+IMAGE="docker.io/abo3skr/studtasks:$(git rev-parse --short HEAD)"
+docker build -t "$IMAGE" .
+docker push "$IMAGE"
 
-# Deploy to Cloud Run
-gcloud run deploy ${SERVICE_NAME} \
+# Deploy to Cloud Run using the Docker Hub image
+gcloud run deploy "${SERVICE_NAME}" \
   --image "$IMAGE" \
-  --region "$REGION" \
+  --region "europe-west3" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars PHX_HOST=${YOUR_DOMAIN},PHX_SERVER=true \
+  --set-env-vars PHX_HOST="${YOUR_DOMAIN}",PHX_SERVER=true \
   --set-env-vars POOL_SIZE=10 \
   --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,DATABASE_URL=DATABASE_URL:latest \
   --min-instances=0 --max-instances=5 \
   --concurrency=80
-```
-
-Tip: Before deploying, create the secrets and grant access to the Cloud Run runtime service account:
-
-```bash
-# Create secrets
-gcloud secrets create SECRET_KEY_BASE --replication-policy=automatic
-gcloud secrets create DATABASE_URL --replication-policy=automatic
-
-# Add secret versions (paste your generated values)
-echo -n "$(mix phx.gen.secret)" | gcloud secrets versions add SECRET_KEY_BASE --data-file=-
-echo -n "postgres://<user>:<pass>@<host>:<port>/<db>" | gcloud secrets versions add DATABASE_URL --data-file=-
-
-# Grant access (replace with your service account email)
-gcloud secrets add-iam-policy-binding SECRET_KEY_BASE \
-  --member=serviceAccount:<SERVICE_ACCOUNT_EMAIL> \
-  --role=roles/secretmanager.secretAccessor
-gcloud secrets add-iam-policy-binding DATABASE_URL \
-  --member=serviceAccount:<SERVICE_ACCOUNT_EMAIL> \
-  --role=roles/secretmanager.secretAccessor
 ```
