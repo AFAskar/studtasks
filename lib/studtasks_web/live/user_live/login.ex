@@ -38,29 +38,6 @@ defmodule StudtasksWeb.UserLive.Login do
         <.form
           :let={f}
           for={@form}
-          id="login_form_magic"
-          action={~p"/users/log-in"}
-          phx-submit="submit_magic"
-        >
-          <.input
-            readonly={!!@current_scope}
-            field={f[:email]}
-            type="email"
-            label="Email"
-            autocomplete="username"
-            required
-            phx-mounted={JS.focus()}
-          />
-          <.button class="btn btn-primary w-full">
-            Log in with email <span aria-hidden="true">→</span>
-          </.button>
-        </.form>
-
-        <div class="divider">or</div>
-
-        <.form
-          :let={f}
-          for={@form}
           id="login_form_password"
           action={~p"/users/log-in"}
           phx-submit="submit_password"
@@ -73,6 +50,7 @@ defmodule StudtasksWeb.UserLive.Login do
             label="Email"
             autocomplete="username"
             required
+            phx-mounted={JS.focus()}
           />
           <.input
             field={@form[:password]}
@@ -85,6 +63,28 @@ defmodule StudtasksWeb.UserLive.Login do
           </.button>
           <.button class="btn btn-primary btn-soft w-full mt-2">
             Log in only this time
+          </.button>
+        </.form>
+
+        <div class="divider">or</div>
+
+        <.form
+          :let={f}
+          for={@form}
+          id="login_form_magic"
+          action={~p"/users/log-in"}
+          phx-submit="submit_magic"
+        >
+          <.input
+            readonly={!!@current_scope}
+            field={f[:email]}
+            type="email"
+            label="Email"
+            autocomplete="username"
+            required
+          />
+          <.button class="btn w-full">
+            Log in with email
           </.button>
         </.form>
       </div>
@@ -110,14 +110,21 @@ defmodule StudtasksWeb.UserLive.Login do
 
   def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
     if user = Accounts.get_user_by_email(email) do
-      Accounts.deliver_login_instructions(
-        user,
-        &url(~p"/users/log-in/#{&1}")
-      )
+      if user.confirmed_at do
+        Accounts.deliver_login_instructions(
+          user,
+          &url(~p"/users/log-in/#{&1}")
+        )
+      else
+        Accounts.deliver_user_confirmation_instructions(
+          user,
+          &url(~p"/users/confirm/#{&1}")
+        )
+      end
     end
 
     info =
-      "If your email is in our system, you will receive instructions for logging in shortly."
+      "If your email is in our system, you'll receive an email shortly with the next steps."
 
     {:noreply,
      socket

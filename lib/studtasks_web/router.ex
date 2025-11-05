@@ -85,11 +85,13 @@ defmodule StudtasksWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+      live "/users/confirm/:token", UserLive.ConfirmEmail, :new
       # Group invite page (works with or without auth)
       live "/invites/groups/:token", GroupInviteLive, :show
     end
 
     post "/users/log-in", UserSessionController, :create
+    post "/users/confirm", UserSessionController, :confirm
     delete "/users/log-out", UserSessionController, :delete
   end
 end

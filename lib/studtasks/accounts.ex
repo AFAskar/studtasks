@@ -77,6 +77,7 @@ defmodule Studtasks.Accounts do
   def register_user(attrs) do
     %User{}
     |> User.email_changeset(attrs)
+    |> User.password_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -222,6 +223,21 @@ defmodule Studtasks.Accounts do
   end
 
   @doc """
+  Gets the user_token for a given confirmation token and returns the user without consuming the token.
+
+  Returns the user if the token is valid, otherwise nil.
+  """
+  def get_user_by_confirm_token(token) do
+    with {:ok, query} <- UserToken.verify_confirm_token_query(token),
+         %UserToken{} = token_rec <- Repo.one(query),
+         %User{} = user <- Repo.get(User, token_rec.user_id) do
+      user
+    else
+      _ -> nil
+    end
+  end
+
+  @doc """
   Logs the user in by magic link.
 
   There are three cases to consider:
@@ -285,6 +301,22 @@ defmodule Studtasks.Accounts do
   end
 
   @doc """
+  Delivers email confirmation instructions to the given user.
+
+  The confirmation token is used to confirm the user's email after registration.
+  """
+  def deliver_user_confirmation_instructions(%User{} = user, confirmation_url_fun)
+      when is_function(confirmation_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "confirm")
+    Repo.insert!(user_token)
+
+    UserNotifier.deliver_user_confirmation_instructions(
+      user,
+      confirmation_url_fun.(encoded_token)
+    )
+  end
+
+  @doc """
   Delivers the magic link login instructions to the given user.
   """
   def deliver_login_instructions(%User{} = user, magic_link_url_fun)
@@ -300,6 +332,29 @@ defmodule Studtasks.Accounts do
   def delete_user_session_token(token) do
     Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
     :ok
+  end
+
+  @doc """
+  Confirms a user given a confirmation token.
+
+  If the token is valid, the user's `confirmed_at` is set and the token is deleted.
+  Returns `{:ok, user}` on success or `:error` on failure.
+  """
+  def confirm_user_by_token(token) do
+    with {:ok, query} <- UserToken.verify_confirm_token_query(token),
+         %UserToken{} = token_rec <- Repo.one(query),
+         %User{} = user <- Repo.get(User, token_rec.user_id) do
+      Repo.transact(fn ->
+        {:ok, {user, _expired}} =
+          user
+          |> User.confirm_changeset()
+          |> update_user_and_delete_all_tokens()
+
+        {:ok, user}
+      end)
+    else
+      _ -> :error
+    end
   end
 
   ## Token helper

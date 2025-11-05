@@ -38,8 +38,8 @@ defmodule Studtasks.Accounts.User do
     changeset
     |> validate_required([:name])
     |> validate_length(:name, min: 2, max: 100)
-    |> validate_format(:name, ~r/^[a-zA-Z\s'-]+$/,
-      message: "can only contain letters, spaces, apostrophes, and hyphens"
+    |> validate_format(:name, ~r/^[a-zA-Z0-9\s'-]+$/,
+      message: "can only contain letters, numbers, spaces, apostrophes, and hyphens"
     )
   end
 

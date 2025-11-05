@@ -16,7 +16,9 @@ defmodule Studtasks.AccountsFixtures do
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
       email: unique_user_email(),
-      name: valid_user_name()
+      name: valid_user_name(),
+      password: valid_user_password(),
+      password_confirmation: valid_user_password()
     })
   end
 
@@ -34,13 +36,12 @@ defmodule Studtasks.AccountsFixtures do
 
     token =
       extract_user_token(fn url ->
-        Accounts.deliver_login_instructions(user, url)
+        Accounts.deliver_user_confirmation_instructions(user, url)
       end)
 
-    {:ok, {user, _expired_tokens}} =
-      Accounts.login_user_by_magic_link(token)
+    {:ok, confirmed_user} = Accounts.confirm_user_by_token(token)
 
-    user
+    confirmed_user
   end
 
   def user_scope_fixture do

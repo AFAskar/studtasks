@@ -38,6 +38,20 @@ defmodule StudtasksWeb.UserLive.Registration do
             autocomplete="name"
             required
           />
+          <.input
+            field={@form[:password]}
+            type="password"
+            label="Password"
+            autocomplete="new-password"
+            required
+          />
+          <.input
+            field={@form[:password_confirmation]}
+            type="password"
+            label="Confirm Password"
+            autocomplete="new-password"
+            required
+          />
 
           <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
             Create an account
@@ -55,7 +69,9 @@ defmodule StudtasksWeb.UserLive.Registration do
   end
 
   def mount(_params, _session, socket) do
-    changeset = Accounts.change_user_email(%User{}, %{}, validate_unique: false)
+    # Build a combined changeset for email, name, and password validation
+    base = Accounts.change_user_email(%User{}, %{}, validate_unique: false)
+    changeset = User.password_changeset(base, %{}, hash_password: false)
 
     {:ok, assign_form(socket, changeset), temporary_assigns: [form: nil]}
   end
@@ -65,9 +81,9 @@ defmodule StudtasksWeb.UserLive.Registration do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
         {:ok, _} =
-          Accounts.deliver_login_instructions(
+          Accounts.deliver_user_confirmation_instructions(
             user,
-            &url(~p"/users/log-in/#{&1}")
+            &url(~p"/users/confirm/#{&1}")
           )
 
         {:noreply,
@@ -84,7 +100,8 @@ defmodule StudtasksWeb.UserLive.Registration do
   end
 
   def handle_event("validate", %{"user" => user_params}, socket) do
-    changeset = Accounts.change_user_email(%User{}, user_params, validate_unique: false)
+    email_name = Accounts.change_user_email(%User{}, user_params, validate_unique: false)
+    changeset = User.password_changeset(email_name, user_params, hash_password: false)
     {:noreply, assign_form(socket, Map.put(changeset, :action, :validate))}
   end
 

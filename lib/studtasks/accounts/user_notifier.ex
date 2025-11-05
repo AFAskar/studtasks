@@ -81,4 +81,26 @@ defmodule Studtasks.Accounts.UserNotifier do
     ==============================
     """)
   end
+
+  @doc """
+  Deliver account confirmation instructions (password-first flow).
+
+  This sends a confirmation email with a dedicated confirmation URL.
+  """
+  def deliver_user_confirmation_instructions(%User{} = user, url) do
+    deliver(user.email, "Confirm your email", """
+
+    ==============================
+
+    Hi #{user.email},
+
+    Please confirm your account by visiting the URL below:
+
+    #{url}
+
+    If you didn't create an account with us, please ignore this.
+
+    ==============================
+    """)
+  end
 end

@@ -46,6 +46,23 @@ defmodule StudtasksWeb.UserSessionController do
     end
   end
 
+  @doc """
+  Confirms a user's email using a confirmation token and logs them in.
+  """
+  def confirm(conn, %{"user" => %{"token" => token} = user_params}) do
+    case Accounts.confirm_user_by_token(token) do
+      {:ok, user} ->
+        conn
+        |> put_flash(:info, "User confirmed successfully.")
+        |> UserAuth.log_in_user(user, user_params)
+
+      _ ->
+        conn
+        |> put_flash(:error, "The confirmation link is invalid or it has expired.")
+        |> redirect(to: ~p"/users/log-in")
+    end
+  end
+
   def update_password(conn, %{"user" => user_params} = params) do
     user = conn.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)

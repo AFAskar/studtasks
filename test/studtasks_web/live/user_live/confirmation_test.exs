@@ -14,10 +14,10 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
     test "renders confirmation page for unconfirmed user", %{conn: conn, unconfirmed_user: user} do
       token =
         extract_user_token(fn url ->
-          Accounts.deliver_login_instructions(user, url)
+          Accounts.deliver_user_confirmation_instructions(user, url)
         end)
 
-      {:ok, _lv, html} = live(conn, ~p"/users/log-in/#{token}")
+      {:ok, _lv, html} = live(conn, ~p"/users/confirm/#{token}")
       assert html =~ "Confirm and stay logged in"
     end
 
@@ -35,10 +35,10 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
     test "confirms the given token once", %{conn: conn, unconfirmed_user: user} do
       token =
         extract_user_token(fn url ->
-          Accounts.deliver_login_instructions(user, url)
+          Accounts.deliver_user_confirmation_instructions(user, url)
         end)
 
-      {:ok, lv, _html} = live(conn, ~p"/users/log-in/#{token}")
+      {:ok, lv, _html} = live(conn, ~p"/users/confirm/#{token}")
 
       form = form(lv, "#confirmation_form", %{"user" => %{"token" => token}})
       render_submit(form)
@@ -57,10 +57,10 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
       conn = build_conn()
 
       {:ok, _lv, html} =
-        live(conn, ~p"/users/log-in/#{token}")
+        live(conn, ~p"/users/confirm/#{token}")
         |> follow_redirect(conn, ~p"/users/log-in")
 
-      assert html =~ "Magic link is invalid or it has expired"
+      assert html =~ "Confirmation link is invalid or it has expired"
     end
 
     test "logs confirmed user in without changing confirmed_at", %{

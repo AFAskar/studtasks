@@ -92,14 +92,17 @@ defmodule StudtasksWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
-      {token, _hashed_token} = generate_user_magic_link_token(user)
+    test "confirms unconfirmed user via confirmation token", %{conn: conn, unconfirmed_user: user} do
+      token =
+        extract_user_token(fn url ->
+          Accounts.deliver_user_confirmation_instructions(user, url)
+        end)
+
       refute user.confirmed_at
 
       conn =
-        post(conn, ~p"/users/log-in", %{
-          "user" => %{"token" => token},
-          "_action" => "confirmed"
+        post(conn, ~p"/users/confirm", %{
+          "user" => %{"token" => token}
         })
 
       assert get_session(conn, :user_token)
