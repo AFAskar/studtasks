@@ -23,7 +23,7 @@ defmodule StudtasksWeb.TaskLive.Index do
               <.input
                 type="select"
                 field={@filter_form[:assignee_id]}
-                prompt="All assignees"
+                prompt="Anyone"
                 options={@assignee_options}
               />
               <label class="label cursor-pointer gap-1 text-xs">
@@ -68,7 +68,7 @@ defmodule StudtasksWeb.TaskLive.Index do
           <:col :let={{_id, task}} label="Due">
             {task.due_date && Calendar.strftime(task.due_date, "%b %-d")}
           </:col>
-          <:col :let={{_id, task}} label="Assignee">
+          <:col :let={{_id, task}} label="Assigned to">
             {task.assignee && (task.assignee.name || task.assignee.email)}
           </:col>
           <:action :let={{_id, task}}>
@@ -214,7 +214,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                   field={@quick_form[:assignee_id]}
                   prompt="Unassigned"
                   options={@assignee_options}
-                  label="Assignee"
+                  label="Assigned to"
                 />
                 <footer class="flex gap-2 justify-end pt-2">
                   <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>

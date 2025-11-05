@@ -25,7 +25,7 @@ defmodule StudtasksWeb.TaskLive.Show do
 
       <.list>
         <:item title="Description">{@task.description}</:item>
-        <:item title="Assignee">
+        <:item title="Assigned to">
           {if @task.assignee, do: @task.assignee.name || @task.assignee.email, else: "Unassigned"}
         </:item>
         <:item title="Status">{format_status(@task.status)}</:item>

@@ -20,7 +20,7 @@ defmodule StudtasksWeb.TaskLive.Form do
           <.input
             field={@form[:assignee_id]}
             type="select"
-            label="Assignee"
+            label="Assigned to"
             prompt="Unassigned"
             options={@assignee_options}
           />
