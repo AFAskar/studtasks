@@ -202,7 +202,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
               <div class="space-y-2">
                 <h4 class="font-semibold">Invite</h4>
                 <div class="flex items-center gap-2">
-                  <.button phx-click={JS.push("group:generate_invite")} disabled={!@is_owner}>
+                  <.button phx-click={JS.push("group:generate_invite")} disabled={!@can_edit}>
                     Generate link
                   </.button>
                   <.button
@@ -444,19 +444,27 @@ defmodule StudtasksWeb.DashboardLive.Index do
   end
 
   def handle_event("group:generate_invite", _params, socket) do
-    token =
-      Phoenix.Token.sign(StudtasksWeb.Endpoint, "group_invite", socket.assigns.selected_group.id)
+    if socket.assigns[:can_edit] do
+      token =
+        Phoenix.Token.sign(
+          StudtasksWeb.Endpoint,
+          "group_invite",
+          socket.assigns.selected_group.id
+        )
 
-    url = StudtasksWeb.Endpoint.url() <> ~p"/invites/groups/#{token}"
+      url = StudtasksWeb.Endpoint.url() <> ~p"/invites/groups/#{token}"
 
-    qr_svg =
-      try do
-        url |> EQRCode.encode() |> EQRCode.svg(viewbox: true) |> Phoenix.HTML.raw()
-      rescue
-        _ -> Phoenix.HTML.raw("<p>QR code unavailable.</p>")
-      end
+      qr_svg =
+        try do
+          url |> EQRCode.encode() |> EQRCode.svg(viewbox: true) |> Phoenix.HTML.raw()
+        rescue
+          _ -> Phoenix.HTML.raw("<p>QR code unavailable.</p>")
+        end
 
-    {:noreply, assign(socket, invite_url: url, invite_qr_svg: qr_svg)}
+      {:noreply, assign(socket, invite_url: url, invite_qr_svg: qr_svg)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("membership:set_role", %{"user" => user_id, "role" => role}, socket) do
