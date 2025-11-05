@@ -55,3 +55,16 @@ The UI must include:
 - Data visualization of completed tasks per course.
 - Drag-and-drop ordering of tasks.
 - Offline capability (using service workers).
+
+# Project Submission Guidelines
+
+- You will be assessed on the quality of your evaluation, the strength of your arguments, the support provided, and your conclusions.
+- Submit a well-organized report with a Minimum Viable Product (MVP) that integrates all requested tasks. There are no minimum or maximum page requirements; use your judgment. The report file must contain:
+  - Project Title and Description.
+  - Names of Team Members.
+  - Setup Instructions: A step-by-step guide on how to install dependencies, set up environment variables, and run the project locally.
+  - Technology Stack: A list of all technologies, frameworks, and libraries used.
+  - Application Features: A bulleted list of all implemented core and bonus features.
+  - Screenshots: At least 3 screenshots of the main application pages (Login, Dashboard, Course View).
+  - Live Demo: A publicly accessible URL where the functional application is hosted (e.g., Firebase Hosting, Netlify, Heroku).
+- The report must be in English, as most resources are in English. Formatting, spacing, and professionalism in writing will be graded.
