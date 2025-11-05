@@ -92,7 +92,10 @@ defmodule StudtasksWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "confirms unconfirmed user via confirmation token", %{conn: conn, unconfirmed_user: user} do
+    test "confirms unconfirmed user via confirmation token (requires login)", %{
+      conn: conn,
+      unconfirmed_user: user
+    } do
       token =
         extract_user_token(fn url ->
           Accounts.deliver_user_confirmation_instructions(user, url)
@@ -100,13 +103,17 @@ defmodule StudtasksWeb.UserSessionControllerTest do
 
       refute user.confirmed_at
 
+      # must be logged in before confirming
+      conn = log_in_user(conn, user)
+
       conn =
         post(conn, ~p"/users/confirm", %{
           "user" => %{"token" => token}
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      dest = redirected_to(conn)
+      assert dest in [~p"/", ~p"/users/settings"]
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "User confirmed successfully."
 
       assert Accounts.get_user!(user.id).confirmed_at

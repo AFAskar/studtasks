@@ -50,11 +50,18 @@ defmodule StudtasksWeb.UserSessionController do
   Confirms a user's email using a confirmation token and logs them in.
   """
   def confirm(conn, %{"user" => %{"token" => token} = user_params}) do
-    case Accounts.confirm_user_by_token(token) do
-      {:ok, user} ->
+    with %Accounts.User{} = token_user <- Accounts.get_user_by_confirm_token(token),
+         %Accounts.User{} = current <- conn.assigns.current_scope.user,
+         true <- current.id == token_user.id,
+         {:ok, user} <- Accounts.confirm_user_by_token(token) do
+      conn
+      |> put_flash(:info, "User confirmed successfully.")
+      |> UserAuth.log_in_user(user, user_params)
+    else
+      false ->
         conn
-        |> put_flash(:info, "User confirmed successfully.")
-        |> UserAuth.log_in_user(user, user_params)
+        |> put_flash(:error, "This confirmation link does not belong to your account.")
+        |> redirect(to: ~p"/users/confirm-required")
 
       _ ->
         conn

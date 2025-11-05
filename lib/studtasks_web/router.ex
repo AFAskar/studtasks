@@ -88,14 +88,29 @@ defmodule StudtasksWeb.Router do
       live "/users/reset-password", UserLive.ForgotPassword, :new
       live "/users/reset-password/:token", UserLive.ResetPassword, :edit
       live "/users/log-in/:token", UserLive.Confirmation, :new
-      live "/users/confirm/:token", UserLive.ConfirmEmail, :new
       live "/users/confirm-required", UserLive.ConfirmRequired, :show
       # Group invite page (works with or without auth)
       live "/invites/groups/:token", GroupInviteLive, :show
     end
 
     post "/users/log-in", UserSessionController, :create
-    post "/users/confirm", UserSessionController, :confirm
     delete "/users/log-out", UserSessionController, :delete
+  end
+
+  # Routes that require authentication but allow unconfirmed users
+  scope "/", StudtasksWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :authenticated,
+      on_mount: [
+        {StudtasksWeb.UserAuth, :require_authenticated},
+        {StudtasksWeb.UserAuth, :set_locale}
+      ] do
+      # Account confirmation requires the user to be logged in,
+      # but they may still be unconfirmed at this point
+      live "/users/confirm/:token", UserLive.ConfirmEmail, :new
+    end
+
+    post "/users/confirm", UserSessionController, :confirm
   end
 end

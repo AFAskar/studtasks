@@ -39,7 +39,11 @@ defmodule StudtasksWeb.UserAuth do
 
     cond do
       is_nil(user.confirmed_at) ->
-        redirect(conn, to: ~p"/users/confirm-required")
+        # If the user was trying to access a confirmation link, send them there now
+        case user_return_to do
+          <<"/users/confirm/", _rest::binary>> -> redirect(conn, to: user_return_to)
+          _ -> redirect(conn, to: ~p"/users/confirm-required")
+        end
 
       true ->
         redirect(conn, to: user_return_to || signed_in_path(conn))

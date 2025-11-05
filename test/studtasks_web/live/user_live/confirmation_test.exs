@@ -11,11 +11,16 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
   end
 
   describe "Confirm user" do
-    test "renders confirmation page for unconfirmed user", %{conn: conn, unconfirmed_user: user} do
+    test "renders confirmation page for unconfirmed user (requires login)", %{
+      conn: conn,
+      unconfirmed_user: user
+    } do
       token =
         extract_user_token(fn url ->
           Accounts.deliver_user_confirmation_instructions(user, url)
         end)
+
+      conn = log_in_user(conn, user)
 
       {:ok, _lv, html} = live(conn, ~p"/users/confirm/#{token}")
       assert html =~ "Confirm and stay logged in"
@@ -32,11 +37,13 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
       assert html =~ "Log in"
     end
 
-    test "confirms the given token once", %{conn: conn, unconfirmed_user: user} do
+    test "confirms the given token once (requires login)", %{conn: conn, unconfirmed_user: user} do
       token =
         extract_user_token(fn url ->
           Accounts.deliver_user_confirmation_instructions(user, url)
         end)
+
+      conn = log_in_user(conn, user)
 
       {:ok, lv, _html} = live(conn, ~p"/users/confirm/#{token}")
 
@@ -51,16 +58,15 @@ defmodule StudtasksWeb.UserLive.ConfirmationTest do
       assert Accounts.get_user!(user.id).confirmed_at
       # we are logged in now
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/users/settings"
 
       # log out, new conn
       conn = build_conn()
 
-      {:ok, _lv, html} =
-        live(conn, ~p"/users/confirm/#{token}")
-        |> follow_redirect(conn, ~p"/users/log-in")
-
-      assert html =~ "Confirmation link is invalid or it has expired"
+      assert {:error,
+              {:redirect,
+               %{to: "/users/log-in", flash: %{"error" => "You must log in to access this page."}}}} =
+               live(conn, ~p"/users/confirm/#{token}")
     end
 
     test "logs confirmed user in without changing confirmed_at", %{

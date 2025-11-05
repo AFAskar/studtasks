@@ -46,11 +46,28 @@ defmodule StudtasksWeb.UserLive.ConfirmEmail do
   @impl true
   def mount(%{"token" => token}, _session, socket) do
     case Accounts.get_user_by_confirm_token(token) do
-      %{} = user ->
-        form = to_form(%{"token" => token}, as: "user")
+      %{} = token_user ->
+        current_user = get_in(socket.assigns, [:current_scope, Access.key(:user)])
 
-        {:ok, assign(socket, user: user, form: form, trigger_submit: false),
-         temporary_assigns: [form: nil]}
+        cond do
+          is_nil(current_user) ->
+            {:ok,
+             socket
+             |> put_flash(:error, "You must log in to access this page.")
+             |> push_navigate(to: ~p"/users/log-in")}
+
+          current_user.id != token_user.id ->
+            {:ok,
+             socket
+             |> put_flash(:error, "This confirmation link does not belong to your account.")
+             |> push_navigate(to: ~p"/users/confirm-required")}
+
+          true ->
+            form = to_form(%{"token" => token}, as: "user")
+
+            {:ok, assign(socket, user: token_user, form: form, trigger_submit: false),
+             temporary_assigns: [form: nil]}
+        end
 
       _ ->
         {:ok,
