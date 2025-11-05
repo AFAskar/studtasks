@@ -129,11 +129,8 @@ defmodule StudtasksWeb.DashboardLive.Index do
               Details
             </.link>
           </:action>
-          <:action :let={{id, course_group}}>
-            <.link
-              phx-click={JS.push("delete", value: %{id: course_group.id}) |> hide("##" <> id)}
-              data-confirm="Are you sure?"
-            >
+          <:action :let={{_id, course_group}}>
+            <.link phx-click={JS.push("delete:open", value: %{id: course_group.id})}>
               Delete
             </.link>
           </:action>
@@ -232,7 +229,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                     <div class="flex items-center gap-2">
                       <span class="badge">{m.role}</span>
                       <.button
-                        :if={@is_owner}
+                        :if={@is_owner and m.role != "owner"}
                         phx-click="membership:set_role"
                         phx-value-user={m.user.id}
                         phx-value-role={if m.role == "admin", do: "member", else: "admin"}
@@ -240,7 +237,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                         {if m.role == "admin", do: "Demote", else: "Promote"}
                       </.button>
                       <.button
-                        :if={@is_owner}
+                        :if={@is_owner and m.role != "owner"}
                         phx-click="membership:remove"
                         phx-value-user={m.user.id}
                       >
@@ -274,6 +271,34 @@ defmodule StudtasksWeb.DashboardLive.Index do
           </div>
         </div>
       </div>
+      <div
+        :if={@show_delete_group}
+        id="delete-group-modal"
+        class="fixed inset-0 z-50 hidden"
+        phx-mounted={show("#delete-group-modal")}
+        phx-remove={hide("#delete-group-modal")}
+      >
+        <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("delete:close")} />
+        <div class="modal modal-open">
+          <div class="modal-box space-y-4">
+            <h3 class="font-bold text-lg">Delete group</h3>
+            <p class="text-sm">
+              Are you sure you want to delete <strong>{@group_to_delete && (@group_to_delete.name || @group_to_delete.id)}</strong>?
+              This action cannot be undone.
+            </p>
+            <footer class="flex gap-2 justify-end pt-2">
+              <.button type="button" phx-click={JS.push("delete:close")}>Cancel</.button>
+              <.button
+                variant="primary"
+                phx-click={JS.push("delete:confirm")}
+                phx-disable-with="Deleting..."
+              >
+                Delete
+              </.button>
+            </footer>
+          </div>
+        </div>
+      </div>
     </Layouts.app>
     """
   end
@@ -300,6 +325,8 @@ defmodule StudtasksWeb.DashboardLive.Index do
        length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
      )
      |> assign(:show_group, false)
+     |> assign(:show_delete_group, false)
+     |> assign(:group_to_delete, nil)
      |> assign(:invite_url, nil)
      |> assign(:invite_qr_svg, nil)
      |> assign(:show_new_group, false)
@@ -313,6 +340,36 @@ defmodule StudtasksWeb.DashboardLive.Index do
     {:ok, _} = Courses.delete_course_group(socket.assigns.current_scope, course_group)
 
     {:noreply, stream_delete(socket, :course_groups, course_group)}
+  end
+
+  def handle_event("delete:open", %{"id" => id}, socket) do
+    scope = socket.assigns.current_scope
+    group = Courses.get_course_group!(scope, id)
+
+    {:noreply,
+     socket
+     |> assign(:show_delete_group, true)
+     |> assign(:group_to_delete, group)}
+  end
+
+  def handle_event("delete:close", _params, socket) do
+    {:noreply, socket |> assign(:show_delete_group, false) |> assign(:group_to_delete, nil)}
+  end
+
+  def handle_event("delete:confirm", _params, socket) do
+    scope = socket.assigns.current_scope
+    group = socket.assigns.group_to_delete
+
+    {:ok, _} = Courses.delete_course_group(scope, group)
+
+    groups = list_course_groups(scope)
+
+    {:noreply,
+     socket
+     |> assign(:show_delete_group, false)
+     |> assign(:group_to_delete, nil)
+     |> assign(:group_count, length(groups))
+     |> stream(:course_groups, groups, reset: true)}
   end
 
   @impl true
