@@ -64,8 +64,6 @@ defmodule StudtasksWeb.Router do
       live "/dashboard", DashboardLive.Index, :index
       live "/dashboard/tasks", DashboardTasksLive, :index
 
-      live "/groups", CourseGroupLive.Index, :index
-      live "/groups/new", CourseGroupLive.Form, :new
       live "/groups/:id", CourseGroupLive.Show, :show
       live "/groups/:id/edit", CourseGroupLive.Form, :edit
 

@@ -15,7 +15,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
           <div class="flex items-center gap-2">
             <span class="badge badge-ghost">Groups: {@group_count}</span>
             <span class="badge badge-ghost">Assigned: {@assigned_count}</span>
-            <.button variant="primary" navigate={~p"/groups/new"}>
+            <.button variant="primary" phx-click={JS.push("open_new_group")}>
               <.icon name="hero-plus" /> New Group
             </.button>
           </div>
@@ -140,6 +140,29 @@ defmodule StudtasksWeb.DashboardLive.Index do
           </:action>
         </.table>
       </div>
+
+      <div
+        :if={@show_new_group}
+        id="new-group-modal"
+        class="fixed inset-0 z-50 hidden"
+        phx-mounted={show("#new-group-modal")}
+        phx-remove={hide("#new-group-modal")}
+      >
+        <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_new_group")} />
+        <div class="modal modal-open">
+          <div class="modal-box space-y-3">
+            <h3 class="font-bold text-lg">Create a new group</h3>
+            <.form for={@group_form} id="group-form" phx-submit="create_group">
+              <.input type="text" field={@group_form[:name]} label="Name" required />
+              <.input type="textarea" field={@group_form[:description]} label="Description" required />
+              <footer class="flex gap-2 justify-end pt-2">
+                <.button type="button" phx-click={JS.push("close_new_group")}>Cancel</.button>
+                <.button variant="primary" phx-disable-with="Creating...">Create</.button>
+              </footer>
+            </.form>
+          </div>
+        </div>
+      </div>
     </Layouts.app>
     """
   end
@@ -165,6 +188,8 @@ defmodule StudtasksWeb.DashboardLive.Index do
        :assigned_count,
        length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
      )
+     |> assign(:show_new_group, false)
+     |> assign(:group_form, new_group_form(socket.assigns.current_scope))
      |> stream(:course_groups, groups)}
   end
 
@@ -200,6 +225,34 @@ defmodule StudtasksWeb.DashboardLive.Index do
      )}
   end
 
+  @impl true
+  def handle_event("open_new_group", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_new_group, true)
+     |> assign(:group_form, new_group_form(socket.assigns.current_scope))}
+  end
+
+  def handle_event("close_new_group", _params, socket) do
+    {:noreply, assign(socket, :show_new_group, false)}
+  end
+
+  def handle_event("create_group", %{"course_group" => params}, socket) do
+    case Courses.create_course_group(socket.assigns.current_scope, params) do
+      {:ok, _group} ->
+        groups = list_course_groups(socket.assigns.current_scope)
+
+        {:noreply,
+         socket
+         |> assign(:show_new_group, false)
+         |> assign(:group_count, length(groups))
+         |> stream(:course_groups, groups, reset: true)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :group_form, to_form(changeset))}
+    end
+  end
+
   defp list_course_groups(current_scope) do
     Courses.list_course_groups(current_scope)
   end
@@ -215,4 +268,9 @@ defmodule StudtasksWeb.DashboardLive.Index do
   defp format_status("backlog"), do: "Backlog"
   defp format_status("done"), do: "Done"
   defp format_status(other) when is_binary(other), do: String.capitalize(other)
+
+  defp new_group_form(scope) do
+    Courses.change_course_group(scope, %Studtasks.Courses.CourseGroup{})
+    |> to_form()
+  end
 end

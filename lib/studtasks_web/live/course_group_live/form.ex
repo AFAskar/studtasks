@@ -110,6 +110,6 @@ defmodule StudtasksWeb.CourseGroupLive.Form do
     end
   end
 
-  defp return_path(_scope, "index", _course_group), do: ~p"/groups"
+  defp return_path(_scope, "index", _course_group), do: ~p"/dashboard"
   defp return_path(_scope, "show", course_group), do: ~p"/groups/#{course_group}"
 end

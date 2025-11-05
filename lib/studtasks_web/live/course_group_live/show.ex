@@ -17,7 +17,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
         Course group {@course_group.name || @course_group.id}
         <:subtitle>Group details</:subtitle>
         <:actions>
-          <.button navigate={~p"/groups"}>
+          <.button navigate={~p"/dashboard"}>
             <.icon name="hero-arrow-left" />
           </.button>
           <%= if @is_member do %>
@@ -181,7 +181,7 @@ defmodule StudtasksWeb.CourseGroupLive.Show do
     {:noreply,
      socket
      |> put_flash(:error, "The current course_group was deleted.")
-     |> push_navigate(to: ~p"/groups")}
+     |> push_navigate(to: ~p"/dashboard")}
   end
 
   def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
