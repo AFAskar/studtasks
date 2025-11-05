@@ -358,6 +358,37 @@ defmodule Studtasks.Courses do
   end
 
   @doc """
+  Returns a limited list of tasks assigned to the current user across all groups,
+  ordered by priority and due date.
+
+  Defaults to 5 items.
+  """
+  def list_assigned_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
+    from(t in Task,
+      where: t.user_id == ^scope.user.id and t.assignee_id == ^scope.user.id,
+      preload: [:assignee, :creator, :children, :course_group],
+      order_by: [desc: t.inserted_at],
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a limited list of most recently created tasks for the current user across all groups.
+
+  Defaults to 5 items.
+  """
+  def list_recent_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
+    from(t in Task,
+      where: t.user_id == ^scope.user.id,
+      preload: [:assignee, :creator, :children, :course_group],
+      order_by: [desc: t.inserted_at],
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single task.
 
   Raises `Ecto.NoResultsError` if the Task does not exist.

@@ -1,22 +1,43 @@
-== Why Elixir
-1. I hate my self
-2. the Unparalleled concurency system 
-3. i wanted to use a functional language with understandable syntax
-4. BRAZILL
-=== Why Phoenix
-1. since we can rid ourselves of client side state whilst keeping livesync
-2. it has websockets builtin
-3. i wanted to
 
-= Deployment Structure
-distributed Compute with Read Cached Databases
-== Why Kubernetes
-1. Why not
-2. i wanted to utilize a distributed system using eks
-3. our framework of choice integrates well with k8s
-3. as i said before i hate myself
+== Project Architecture
+=== Current Architecture
+- Kubernetes
+- Elixir/Phoenix
+- sqlite
 
-== why cloudflare D1
-1. I'M A CLOUDFLARE SIMP
-2. Free
-3. I like their DX
+==== Why This Architecture?
+- *Kubernetes*:
+  - Provides scalability
+  - Easy management of containerized applications.
+- *Elixir/Phoenix*:
+  - High performance and concurrency
+  - Builtin Pub/Sub capabilities.
+- *sqlite*:
+  - Lightweight and easy to set up
+  - Suitable for small to medium-sized applications.
+
+==== Diagrams
+```mermaid
+graph TD;
+    A[Kubernetes] --> B[Elixir/Phoenix];
+    B --> C[sqlite];
+```
+
+=== Other Proposed Architectures
+
+==== Stack 1
+- Docker
+- redis
+- Node.js/Express
+- sqlite
+- React
+
+==== Stack 2
+- firebase
+- Next.js
+- vercel
+
+==== why Not These Architectures?
+- *Stack 1*: While Docker and redis are powerful tools, the combination of Node.js/Express with sqlite may not provide the same level of performance and concurrency as Elixir/Phoenix.
+- *Stack 2*: Firebase and Next.js offer great serverless capabilities, but they may not be as flexible or customizable as a cloud agnostic solution using Kubernetes and Elixir/Phoenix.
+
