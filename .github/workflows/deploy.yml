@@ -67,7 +67,11 @@ jobs:
 
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v3
-
+      - name: Debug auth and project
+        shell: bash
+        run: |
+          gcloud auth list
+          gcloud config list
       - name: Deploy to Cloud Run
         shell: bash
         env:
