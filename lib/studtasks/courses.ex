@@ -389,6 +389,30 @@ defmodule Studtasks.Courses do
   end
 
   @doc """
+  Returns all tasks assigned to the current user across all groups, newest first.
+  """
+  def list_assigned_tasks_all(%Scope{} = scope) do
+    from(t in Task,
+      where: t.user_id == ^scope.user.id and t.assignee_id == ^scope.user.id,
+      preload: [:assignee, :creator, :children, :course_group],
+      order_by: [desc: t.inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns all tasks for the current user across all groups, newest first.
+  """
+  def list_recent_tasks_all(%Scope{} = scope) do
+    from(t in Task,
+      where: t.user_id == ^scope.user.id,
+      preload: [:assignee, :creator, :children, :course_group],
+      order_by: [desc: t.inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single task.
 
   Raises `Ecto.NoResultsError` if the Task does not exist.

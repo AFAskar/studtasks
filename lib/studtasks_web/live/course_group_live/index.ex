@@ -12,9 +12,13 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
         Dashboard
         <:subtitle>Overview of your work and groups</:subtitle>
         <:actions>
-          <.button variant="primary" navigate={~p"/groups/new"}>
-            <.icon name="hero-plus" /> New Group
-          </.button>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-ghost">Groups: {@group_count}</span>
+            <span class="badge badge-ghost">Assigned: {@assigned_count}</span>
+            <.button variant="primary" navigate={~p"/groups/new"}>
+              <.icon name="hero-plus" /> New Group
+            </.button>
+          </div>
         </:actions>
       </.header>
 
@@ -23,7 +27,9 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
           <div class="card-body">
             <div class="flex items-center justify-between">
               <h3 class="card-title text-base">Assigned to me</h3>
-              <.link navigate={~p"/groups"} class="link link-primary text-sm">View all</.link>
+              <.link navigate={~p"/dashboard/tasks?type=assigned"} class="link link-primary text-sm">
+                View all
+              </.link>
             </div>
             <div :if={@assigned_tasks == []} class="text-sm opacity-70">No assigned tasks.</div>
             <ul class="divide-y divide-base-300">
@@ -64,7 +70,9 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
           <div class="card-body">
             <div class="flex items-center justify-between">
               <h3 class="card-title text-base">Recent tasks</h3>
-              <.link navigate={~p"/groups"} class="link link-primary text-sm">View all</.link>
+              <.link navigate={~p"/dashboard/tasks?type=recent"} class="link link-primary text-sm">
+                View all
+              </.link>
             </div>
             <div :if={@recent_tasks == []} class="text-sm opacity-70">No recent tasks.</div>
             <ul class="divide-y divide-base-300">
@@ -145,13 +153,19 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
 
     assigned = Courses.list_assigned_tasks(socket.assigns.current_scope, 5)
     recent = Courses.list_recent_tasks(socket.assigns.current_scope, 5)
+    groups = list_course_groups(socket.assigns.current_scope)
 
     {:ok,
      socket
      |> assign(:page_title, "Dashboard")
      |> assign(:assigned_tasks, assigned)
      |> assign(:recent_tasks, recent)
-     |> stream(:course_groups, list_course_groups(socket.assigns.current_scope))}
+     |> assign(:group_count, length(groups))
+     |> assign(
+       :assigned_count,
+       length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
+     )
+     |> stream(:course_groups, groups)}
   end
 
   @impl true
@@ -165,8 +179,12 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
   @impl true
   def handle_info({type, %Studtasks.Courses.CourseGroup{}}, socket)
       when type in [:created, :updated, :deleted] do
+    groups = list_course_groups(socket.assigns.current_scope)
+
     {:noreply,
-     stream(socket, :course_groups, list_course_groups(socket.assigns.current_scope), reset: true)}
+     socket
+     |> assign(:group_count, length(groups))
+     |> stream(:course_groups, groups, reset: true)}
   end
 
   @impl true
@@ -175,7 +193,11 @@ defmodule StudtasksWeb.CourseGroupLive.Index do
     {:noreply,
      socket
      |> assign(:assigned_tasks, Courses.list_assigned_tasks(socket.assigns.current_scope, 5))
-     |> assign(:recent_tasks, Courses.list_recent_tasks(socket.assigns.current_scope, 5))}
+     |> assign(:recent_tasks, Courses.list_recent_tasks(socket.assigns.current_scope, 5))
+     |> assign(
+       :assigned_count,
+       length(Courses.list_assigned_tasks_all(socket.assigns.current_scope))
+     )}
   end
 
   defp list_course_groups(current_scope) do

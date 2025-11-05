@@ -66,6 +66,9 @@ defmodule StudtasksWeb.Router do
       live "/groups/:id", CourseGroupLive.Show, :show
       live "/groups/:id/edit", CourseGroupLive.Form, :edit
 
+      # Dashboard tasks listing across groups
+      live "/dashboard/tasks", DashboardTasksLive, :index
+
       # Tasks nested under groups (requires authentication)
       live "/groups/:group_id/tasks", TaskLive.Index, :index
       live "/groups/:group_id/tasks/new", TaskLive.Form, :new
