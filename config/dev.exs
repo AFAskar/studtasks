@@ -1,6 +1,6 @@
 import Config
 
-# Configure your database
+# Configure your database (SQLite in development)
 config :studtasks, Studtasks.Repo,
   database: Path.expand("../studtasks_dev.db", __DIR__),
   pool_size: 5,
