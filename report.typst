@@ -60,6 +60,7 @@ Database (choose one):
 
 - File-backed SQLite (simple single-node alternative)
   - DATABASE_PATH — absolute path to the SQLite file (e.g., `/etc/studtasks/studtasks.db`)
+  - Note: Not suitable for Google Cloud Run (containers are stateless/ephemeral). Use Neon for Cloud Run.
 
 Mailer (prod):
 
@@ -82,7 +83,7 @@ Start with releases (illustrative):
 - Build Tooling: esbuild, Tailwind (via Mix tasks)
 - Server Adapter: Bandit
 - I18n: Gettext
-  - Deployment: AWS EKS (Kubernetes); containerized (OCI/Docker)
+  - Deployment: Google Cloud Run (managed containers, scale-to-zero); containerized (OCI/Docker)
 
 == Application Features
 
@@ -114,7 +115,7 @@ Start with releases (illustrative):
 
 - Elixir/Phoenix + LiveView
 - Neon (PostgreSQL) for production data, SQLite file-backed for local dev
-- Kubernetes (AWS EKS)
+- Google Cloud Run (fully managed container runtime with autoscaling and scale-to-zero)
 
 ==== Why This Architecture?
 
@@ -122,13 +123,17 @@ Start with releases (illustrative):
   - Excellent concurrency and fault tolerance
   - LiveView for first-class realtime UX without heavy client JS
   - Built-in Pub/Sub for efficient live synchronization
-  - Neon
-    - Serverless, globally distributed PostgreSQL with low-latency edge access
-  - Managed operations with simple connection model (DATABASE_URL + token)
   - Local dev parity via plain SQLite
-- Kubernetes (EKS):
-  - Cloud-agnostic orchestration with autoscaling, rollouts, and resilience on AWS
-  - Clear separation of stateless app vs managed DB (Neon)
+
+- Neon (PostgreSQL):
+  - Serverless, globally distributed PostgreSQL with low-latency edge access
+  - Managed operations with simple connection model (DATABASE_URL + token)
+
+- Google Cloud Run:
+  - Fully managed container runtime—no servers or Kubernetes to manage
+  - Scales to zero when idle; fast scale-out on demand
+  - Simple deploys from Artifact Registry with health checks, autoscaling, and request concurrency controls
+  - Custom domains and TLS via Cloud Run's managed certificates
 
 ==== Diagram (High-Level)
 
@@ -163,28 +168,87 @@ Start with releases (illustrative):
 
 - URL: TODO — Add deployed URL here (e.g., https://nadhm.example.com)
 
-=== Quick Deploy Notes — AWS EKS + Neon
+=== Quick Deploy Notes — Google Cloud Run + Neon
 
 High-level checklist:
 
 1) Container image
-- generate the release image `mix gen.release --docker` and push to Amazon ECR.
+- Build a release image (e.g., `mix gen.release --docker`) and push to Google Artifact Registry.
 
-2) Secrets & Config
-- Kubernetes Secret: `SECRET_KEY_BASE`,  (and email provider creds if any)
-- ConfigMap or env: `DATABASE_URL` (NEON URL), `PHX_HOST`, `PORT`, `POOL_SIZE`
+2) Environment & Secrets
+- Cloud Run service env: `SECRET_KEY_BASE` (store in Secret Manager and mount/inject), `DATABASE_URL` (Neon), `PHX_HOST`, `POOL_SIZE` (optional).
+- Ensure `PHX_SERVER=true` so the release boots the web endpoint.
+- Cloud Run sets `PORT`; Phoenix must listen on it (supported by default when `PORT` is present).
 
-3) Deployment & Service
-- Deployment: set `PHX_SERVER=true` and env from Secret/ConfigMap; add readiness/liveness probes
-- Service: ClusterIP for internal, or LoadBalancer/Ingress for external access
+3) Cloud Run Service
+- Deploy a Cloud Run service from the Artifact Registry image; select region and CPU/RAM.
+- Configure health check path (e.g., `/`) and container port.
+- Autoscaling: set min instances to 0 (scale-to-zero) or 1 for warm start; set max instances and request concurrency.
 
-4) Ingress & TLS
-- Use AWS Load Balancer Controller + Ingress; terminate TLS with ACM certificate
+4) Domain & TLS
+- Map a custom domain in Cloud Run; TLS is automatic via Google-managed certificates.
 
-5) Autoscaling & Ops
-- Configure HPA (CPU/Memory), resource requests/limits, rolling updates
-- Centralized logs/metrics (e.g., CloudWatch), alerts
+5) Observability & Ops
+- Logs/metrics stream to Cloud Logging and Cloud Monitoring; add alerting policies and dashboards.
 
 Notes:
-- App is stateless; all persistence is handled by Neon. No PVC required.
-- For local dev and CI, you can run on a file-backed SQLite and switch to Neon in prod via env vars.
+- App is stateless; persistence is in Neon. No volumes required.
+- For local dev and CI, use SQLite; for Cloud Run production, use Neon.
+
+=== Runtime config (Cloud Run)
+
+Add the following to `config/runtime.exs` to read env vars provided by Cloud Run and Secret Manager:
+
+```elixir
+import Config
+
+if System.get_env("PHX_SERVER") do
+  config :studtasks, StudtasksWeb.Endpoint, server: true
+end
+
+if config_env() == :prod do
+  database_url =
+    System.get_env("DATABASE_URL") ||
+      raise "DATABASE_URL is missing. Example: ecto://USER:PASS@HOST/DATABASE"
+
+  secret_key_base =
+    System.get_env("SECRET_KEY_BASE") ||
+      raise "SECRET_KEY_BASE is missing. Generate one with: mix phx.gen.secret"
+
+  host = System.get_env("PHX_HOST") || "example.com"
+  port = String.to_integer(System.get_env("PORT") || "4000")
+
+  config :studtasks, Studtasks.Repo,
+    url: database_url,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+
+  config :studtasks, StudtasksWeb.Endpoint,
+    url: [host: host, scheme: "https", port: 443],
+    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}, port: port],
+    secret_key_base: secret_key_base
+end
+```
+
+=== Example deploy with gcloud
+
+Illustrative commands (replace placeholders: `PROJECT_ID`, `REGION`, `REPO`, `SERVICE_NAME`, `YOUR_DOMAIN`, and set a Neon `DATABASE_URL`):
+
+```bash
+# Build & push to Google Artifact Registry
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/studtasks:$(git rev-parse --short HEAD)"
+gcloud builds submit --tag "$IMAGE" --project "$PROJECT_ID"
+
+# Deploy to Cloud Run
+gcloud run deploy ${SERVICE_NAME} \
+  --image "$IMAGE" \
+  --region "$REGION" \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars PHX_HOST=${YOUR_DOMAIN},DATABASE_URL=${YOUR_NEON_DATABASE_URL},PHX_SERVER=true \
+  --set-env-vars POOL_SIZE=10 \
+  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest \
+  --min-instances=0 --max-instances=5 \
+  --concurrency=80
+```
+
+Tip: Create the `SECRET_KEY_BASE` secret in Secret Manager first and grant access to the Cloud Run runtime service account.
