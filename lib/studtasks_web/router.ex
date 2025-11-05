@@ -50,11 +50,12 @@ defmodule StudtasksWeb.Router do
   ## Authentication routes
 
   scope "/", StudtasksWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_confirmed_user]
 
     live_session :require_authenticated_user,
       on_mount: [
         {StudtasksWeb.UserAuth, :require_authenticated},
+        {StudtasksWeb.UserAuth, :require_confirmed},
         {StudtasksWeb.UserAuth, :set_locale}
       ] do
       live "/users/settings", UserLive.Settings, :edit
@@ -86,6 +87,7 @@ defmodule StudtasksWeb.Router do
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
       live "/users/confirm/:token", UserLive.ConfirmEmail, :new
+      live "/users/confirm-required", UserLive.ConfirmRequired, :show
       # Group invite page (works with or without auth)
       live "/invites/groups/:token", GroupInviteLive, :show
     end

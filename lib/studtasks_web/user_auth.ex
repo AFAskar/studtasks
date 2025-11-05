@@ -35,9 +35,15 @@ defmodule StudtasksWeb.UserAuth do
   def log_in_user(conn, user, params \\ %{}) do
     user_return_to = get_session(conn, :user_return_to)
 
-    conn
-    |> create_or_extend_session(user, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
+    conn = create_or_extend_session(conn, user, params)
+
+    cond do
+      is_nil(user.confirmed_at) ->
+        redirect(conn, to: ~p"/users/confirm-required")
+
+      true ->
+        redirect(conn, to: user_return_to || signed_in_path(conn))
+    end
   end
 
   @doc """
@@ -251,6 +257,23 @@ defmodule StudtasksWeb.UserAuth do
     end
   end
 
+  def on_mount(:require_confirmed, _params, session, socket) do
+    socket = mount_current_scope(socket, session)
+
+    user = socket.assigns.current_scope.user
+
+    if user && is_nil(user.confirmed_at) do
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "Please confirm your email to continue.")
+        |> Phoenix.LiveView.redirect(to: ~p"/users/confirm-required")
+
+      {:halt, socket}
+    else
+      {:cont, socket}
+    end
+  end
+
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       {user, _} =
@@ -282,6 +305,20 @@ defmodule StudtasksWeb.UserAuth do
       |> maybe_store_return_to()
       |> redirect(to: ~p"/users/log-in")
       |> halt()
+    end
+  end
+
+  def require_confirmed_user(
+        %Plug.Conn{assigns: %{current_scope: %Scope{user: user}}} = conn,
+        _opts
+      ) do
+    if user && is_nil(user.confirmed_at) do
+      conn
+      |> put_flash(:error, "Please confirm your email to continue.")
+      |> redirect(to: ~p"/users/confirm-required")
+      |> halt()
+    else
+      conn
     end
   end
 
