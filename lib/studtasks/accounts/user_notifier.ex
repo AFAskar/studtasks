@@ -103,4 +103,24 @@ defmodule Studtasks.Accounts.UserNotifier do
     ==============================
     """)
   end
+
+  @doc """
+  Deliver reset password instructions with a reset URL.
+  """
+  def deliver_user_reset_password_instructions(%User{} = user, url) do
+    deliver(user.email, "Reset your password", """
+
+    ==============================
+
+    Hi #{user.email},
+
+    You can reset your password by visiting the URL below:
+
+    #{url}
+
+    If you didn't request this change, please ignore this.
+
+    ==============================
+    """)
+  end
 end

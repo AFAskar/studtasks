@@ -11,6 +11,7 @@ defmodule Studtasks.Accounts.UserToken do
   @magic_link_validity_in_minutes 15
   @change_email_validity_in_days 7
   @confirm_validity_in_days 7
+  @reset_password_validity_in_days 1
   @session_validity_in_days 14
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -168,6 +169,29 @@ defmodule Studtasks.Accounts.UserToken do
         query =
           from token in by_token_and_context_query(hashed_token, context),
             where: token.inserted_at > ago(@change_email_validity_in_days, "day")
+
+        {:ok, query}
+
+      :error ->
+        :error
+    end
+  end
+
+  @doc """
+  Checks if the reset password token is valid and returns its lookup query.
+
+  The query returns the user_token found by the token, if any. The token is valid
+  if it matches its hashed counterpart in the database and if it has not expired
+  (after @reset_password_validity_in_days). The context must be "reset_password".
+  """
+  def verify_reset_password_token_query(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+
+        query =
+          from token in by_token_and_context_query(hashed_token, "reset_password"),
+            where: token.inserted_at > ago(@reset_password_validity_in_days, "day")
 
         {:ok, query}
 

@@ -58,6 +58,11 @@ defmodule StudtasksWeb.UserLive.Login do
             label="Password"
             autocomplete="current-password"
           />
+          <div class="text-right -mt-2 mb-2">
+            <.link navigate={~p"/users/reset-password"} class="btn btn-link btn-xs">
+              Forgot your password?
+            </.link>
+          </div>
           <.button class="btn btn-primary w-full" name={@form[:remember_me].name} value="true">
             Log in and stay logged in <span aria-hidden="true">→</span>
           </.button>

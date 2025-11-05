@@ -334,6 +334,47 @@ defmodule Studtasks.Accounts do
     :ok
   end
 
+  ## Password reset
+
+  @doc """
+  Delivers reset password instructions to the given user.
+
+  The email includes a token-based reset URL.
+  """
+  def deliver_user_reset_password_instructions(%User{} = user, reset_url_fun)
+      when is_function(reset_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "reset_password")
+    Repo.insert!(user_token)
+    UserNotifier.deliver_user_reset_password_instructions(user, reset_url_fun.(encoded_token))
+  end
+
+  @doc """
+  Gets the user_token for a given reset password token and returns the user without consuming the token.
+
+  Returns the user if the token is valid, otherwise nil.
+  """
+  def get_user_by_reset_password_token(token) do
+    with {:ok, query} <- UserToken.verify_reset_password_token_query(token),
+         %UserToken{} = token_rec <- Repo.one(query),
+         %User{} = user <- Repo.get(User, token_rec.user_id) do
+      user
+    else
+      _ -> nil
+    end
+  end
+
+  @doc """
+  Resets the user's password using a valid token.
+
+  If successful, updates the password and expires all tokens for the user.
+  Returns `{:ok, {user, expired_tokens}}` or `{:error, changeset}`.
+  """
+  def reset_user_password(%User{} = user, attrs) do
+    user
+    |> User.password_changeset(attrs)
+    |> update_user_and_delete_all_tokens()
+  end
+
   @doc """
   Confirms a user given a confirmation token.
 
