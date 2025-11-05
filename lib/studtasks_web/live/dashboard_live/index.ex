@@ -130,7 +130,10 @@ defmodule StudtasksWeb.DashboardLive.Index do
             </.link>
           </:action>
           <:action :let={{_id, course_group}}>
-            <.link phx-click={JS.push("delete:open", value: %{id: course_group.id})}>
+            <.link
+              :if={Courses.group_owner?(@current_scope, course_group)}
+              phx-click={JS.push("delete:open", value: %{id: course_group.id})}
+            >
               Delete
             </.link>
           </:action>
@@ -181,16 +184,16 @@ defmodule StudtasksWeb.DashboardLive.Index do
                     type="text"
                     field={@group_edit_form[:name]}
                     label="Name"
-                    disabled={!@is_owner}
+                    disabled={!@can_edit}
                   />
                   <.input
                     type="textarea"
                     field={@group_edit_form[:description]}
                     label="Description"
-                    disabled={!@is_owner}
+                    disabled={!@can_edit}
                   />
                   <footer class="flex gap-2 justify-end pt-2">
-                    <.button :if={@is_owner} variant="primary" phx-disable-with="Saving...">
+                    <.button :if={@can_edit} variant="primary" phx-disable-with="Saving...">
                       Save
                     </.button>
                   </footer>
@@ -402,6 +405,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
     group = Courses.get_course_group!(scope, id)
     memberships = Courses.list_group_memberships(id)
     is_owner = Courses.group_owner?(scope, group)
+    is_admin = Courses.group_admin?(scope, group)
 
     {:noreply,
      socket
@@ -409,6 +413,8 @@ defmodule StudtasksWeb.DashboardLive.Index do
      |> assign(:selected_group, group)
      |> assign(:memberships, memberships)
      |> assign(:is_owner, is_owner)
+     |> assign(:is_admin, is_admin)
+     |> assign(:can_edit, is_owner or is_admin)
      |> assign(:invite_url, nil)
      |> assign(:invite_qr_svg, nil)
      |> assign(:group_edit_form, group_edit_form(scope, group))}

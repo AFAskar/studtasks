@@ -212,7 +212,7 @@ defmodule Studtasks.Courses do
 
   """
   def update_course_group(%Scope{} = scope, %CourseGroup{} = course_group, attrs) do
-    true = owner_membership?(scope, course_group.id)
+    true = owner_or_admin_membership?(scope, course_group.id)
 
     with {:ok, course_group = %CourseGroup{}} <-
            course_group
@@ -269,7 +269,7 @@ defmodule Studtasks.Courses do
     if is_nil(course_group.id) do
       CourseGroup.changeset(course_group, attrs, scope)
     else
-      true = owner_membership?(scope, course_group.id)
+      true = owner_or_admin_membership?(scope, course_group.id)
       CourseGroup.changeset(course_group, attrs, scope)
     end
   end
@@ -296,6 +296,33 @@ defmodule Studtasks.Courses do
 
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id and m.role == "owner",
+      select: m.id
+    )
+    |> Repo.one()
+    |> is_binary()
+  end
+
+  @doc """
+  Returns true if the given scope's user is an admin of the group.
+  """
+  def group_admin?(%Scope{} = scope, %CourseGroup{} = group) do
+    import Ecto.Query
+
+    from(m in Studtasks.Courses.GroupMembership,
+      where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "admin",
+      select: m.id
+    )
+    |> Repo.one()
+    |> is_binary()
+  end
+
+  defp owner_or_admin_membership?(%Scope{} = scope, group_id) do
+    import Ecto.Query
+
+    from(m in Studtasks.Courses.GroupMembership,
+      where:
+        m.course_group_id == ^group_id and m.user_id == ^scope.user.id and
+          m.role in ["owner", "admin"],
       select: m.id
     )
     |> Repo.one()
