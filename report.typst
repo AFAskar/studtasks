@@ -47,16 +47,18 @@ mix test
 
 === Production (Overview)
 
-Environment variables (required):
+Secrets and environment (prod):
 
-- SECRET_KEY_BASE — generate with: `mix phx.gen.secret`
-- PHX_HOST — your domain (e.g., nadhm.example.com)
-- PORT — default 4000
+- SECRET_KEY_BASE — store in Secret Manager; generate with `mix phx.gen.secret`
+- DATABASE_URL — store in Secret Manager (Neon connection URL)
+- PHX_HOST — your domain (e.g., nadhm.example.com) [env var]
+- PORT — default 4000 [Cloud Run provides]
+- POOL_SIZE — optional [env var]
 
 Database (choose one):
 
 - Neon (recommended for prod)
-  - DATABASE_URL — NEON URL
+  - DATABASE_URL — Secret Manager secret with your Neon URL
 
 - File-backed SQLite (simple single-node alternative)
   - DATABASE_PATH — absolute path to the SQLite file (e.g., `/etc/studtasks/studtasks.db`)
@@ -65,6 +67,7 @@ Database (choose one):
 Mailer (prod):
 
 - Configure Swoosh adapter in runtime for a real provider (Resend/Mailgun/SES). Also set `config :swoosh, :api_client, Swoosh.ApiClient.Req`.
+- Store any provider credentials (e.g., RESEND_API_KEY, MAILGUN_API_KEY, MAILGUN_DOMAIN, AWS credentials) in Secret Manager and inject them as env vars at deploy time.
 
 Start with releases (illustrative):
 ```sh
@@ -176,7 +179,8 @@ High-level checklist:
 - Build a release image (e.g., `mix gen.release --docker`) and push to Google Artifact Registry.
 
 2) Environment & Secrets
-- Cloud Run service env: `SECRET_KEY_BASE` (store in Secret Manager and mount/inject), `DATABASE_URL` (Neon), `PHX_HOST`, `POOL_SIZE` (optional).
+- Use Secret Manager for all sensitive values: `SECRET_KEY_BASE`, `DATABASE_URL`, and any mailer API keys.
+- Non-sensitive env vars: `PHX_HOST`, `POOL_SIZE` (optional). Cloud Run sets `PORT` automatically.
 - Ensure `PHX_SERVER=true` so the release boots the web endpoint.
 - Cloud Run sets `PORT`; Phoenix must listen on it (supported by default when `PORT` is present).
 
@@ -198,7 +202,7 @@ Notes:
 
 === Example deploy with gcloud
 
-Illustrative commands (replace placeholders: `PROJECT_ID`, `REGION`, `REPO`, `SERVICE_NAME`, `YOUR_DOMAIN`, and set a Neon `DATABASE_URL`):
+Illustrative commands (replace placeholders: `PROJECT_ID`, `REGION`, `REPO`, `SERVICE_NAME`, `YOUR_DOMAIN`). Assumes you created Secret Manager secrets `SECRET_KEY_BASE` and `DATABASE_URL` and granted the service account `roles/secretmanager.secretAccessor`:
 
 ```bash
 # Build & push to Google Artifact Registry
@@ -211,11 +215,29 @@ gcloud run deploy ${SERVICE_NAME} \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars PHX_HOST=${YOUR_DOMAIN},DATABASE_URL=${YOUR_NEON_DATABASE_URL},PHX_SERVER=true \
+  --set-env-vars PHX_HOST=${YOUR_DOMAIN},PHX_SERVER=true \
   --set-env-vars POOL_SIZE=10 \
-  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest \
+  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,DATABASE_URL=DATABASE_URL:latest \
   --min-instances=0 --max-instances=5 \
   --concurrency=80
 ```
 
-Tip: Create the `SECRET_KEY_BASE` secret in Secret Manager first and grant access to the Cloud Run runtime service account.
+Tip: Before deploying, create the secrets and grant access to the Cloud Run runtime service account:
+
+```bash
+# Create secrets
+gcloud secrets create SECRET_KEY_BASE --replication-policy=automatic
+gcloud secrets create DATABASE_URL --replication-policy=automatic
+
+# Add secret versions (paste your generated values)
+echo -n "$(mix phx.gen.secret)" | gcloud secrets versions add SECRET_KEY_BASE --data-file=-
+echo -n "postgres://<user>:<pass>@<host>:<port>/<db>" | gcloud secrets versions add DATABASE_URL --data-file=-
+
+# Grant access (replace with your service account email)
+gcloud secrets add-iam-policy-binding SECRET_KEY_BASE \
+  --member=serviceAccount:<SERVICE_ACCOUNT_EMAIL> \
+  --role=roles/secretmanager.secretAccessor
+gcloud secrets add-iam-policy-binding DATABASE_URL \
+  --member=serviceAccount:<SERVICE_ACCOUNT_EMAIL> \
+  --role=roles/secretmanager.secretAccessor
+```
