@@ -38,7 +38,8 @@
 
 # Generated on crash by the VM
 erl_crash.dump
-
+*.md
+*.log
 # Static artifacts - These should be fetched and built inside the Docker image
 # https://hexdocs.pm/phoenix/Mix.Tasks.Phx.Gen.Release.html#module-docker
 /assets/node_modules/
