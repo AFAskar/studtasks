@@ -17,6 +17,17 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+  studtasks:
+    image: abo3skr/studtasks:latest
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-studtasks_user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-studtasks_dev}
+      STUDTASKS_PORT: ${STUDTASKS_PORT:-8000}
+    ports:
+      - "${STUDTASKS_PORT:-8000}:${STUDTASKS_PORT:-8000}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:
