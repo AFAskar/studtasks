@@ -1,12 +1,14 @@
 # Studtasks
 
+PostgreSQL is now the only supported database for all environments (dev/test/prod). SQLite has been removed.
+
 ## plan
 
 ### Deployment
 
 - use phoenix liveview for realtime sync
 - use releases with a docker host | gigalixir | fly.io for deployment
-- use turso for db host
+- use PostgreSQL for database (e.g. local Docker, managed providers like Neon, Supabase, RDS)
 
 #### Mailing Services
 
@@ -43,6 +45,7 @@ Tasks have 3 Users (1 creator ,1 assignee)
 To start your Phoenix server:
 
 - Run `mix setup` to install and setup dependencies
+- Ensure Postgres is running locally (you can use `docker-compose up -d db`)
 - Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.

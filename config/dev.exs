@@ -1,9 +1,13 @@
 import Config
 
-# Configure your database (SQLite in development)
+# Configure your database (PostgreSQL in development)
 config :studtasks, Studtasks.Repo,
-  database: Path.expand("../studtasks_dev.db", __DIR__),
-  pool_size: 5,
+  username: System.get_env("POSTGRES_USER", "studtasks_user"),
+  password: System.get_env("POSTGRES_PASSWORD", "password"),
+  hostname: System.get_env("POSTGRES_HOST", "localhost"),
+  port: String.to_integer(System.get_env("POSTGRES_PORT") || "5432"),
+  database: System.get_env("POSTGRES_DB", "studtasks_dev"),
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
