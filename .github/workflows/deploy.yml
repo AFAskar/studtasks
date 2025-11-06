@@ -16,8 +16,8 @@ env:
   # Default values; you can override these with GitHub Variables
   DOCKERHUB_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/studtasks
   GCP_REGION: ${{ vars.GCP_REGION || 'europe-west3' }}
-  SERVICE_NAME: ${{ vars.SERVICE_NAME }}
-  PHX_HOST: ${{ vars.PHX_HOST }}
+  SERVICE_NAME: ${{ vars.SERVICE_NAME }} || 'studtasks-service'
+  PHX_HOST: ${{ vars.PHX_HOST }} || 'studtasks.askardesign.com'
 
 jobs:
   deploy:
@@ -68,33 +68,6 @@ jobs:
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v3
 
-      - name: Debug active SA and creds file
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Active account:"
-          gcloud auth list --filter=status:ACTIVE --format='value(account)'
-          echo ""
-          echo "Service account impersonation URL in creds file:"
-          python3 - <<'PY'
-          import json, os, re, sys
-          p = os.environ.get('GOOGLE_GHA_CREDS_PATH') or os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-          print("Creds path:", p)
-          with open(p) as f:
-              j = json.load(f)
-          url = j.get('service_account_impersonation_url', '')
-          print("service_account_impersonation_url:", url)
-          m = re.search(r'ServiceAccounts/([^:]+):generateAccessToken', url)
-          print("Impersonated SA email:", m.group(1) if m else "(not found)")
-          PY
-          echo ""
-          echo "Check token mint (should succeed):"
-          gcloud -q auth print-access-token >/dev/null && echo "Access token OK"
-      - name: Debug auth and project
-        shell: bash
-        run: |
-          gcloud auth list
-          gcloud config list
       - name: Deploy to Cloud Run
         shell: bash
         env:
