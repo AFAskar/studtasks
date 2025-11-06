@@ -16,8 +16,8 @@ env:
   # Default values; you can override these with GitHub Variables
   DOCKERHUB_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/studtasks
   GCP_REGION: ${{ vars.GCP_REGION || 'europe-west3' }}
-  SERVICE_NAME: ${{ vars.SERVICE_NAME }} || 'studtasks-service'
-  PHX_HOST: ${{ vars.PHX_HOST }} || 'studtasks.askardesign.com'
+  SERVICE_NAME: ${{ vars.SERVICE_NAME || 'studtasks-service' }}
+  PHX_HOST: ${{ vars.PHX_HOST || 'studtasks.askardesign.com' }}'
 
 jobs:
   deploy:
