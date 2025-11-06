@@ -31,9 +31,35 @@ if config_env() == :prod do
   # Enable IPv6 for Ecto connections when requested via env var
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
+  # Extract connection parts from DATABASE_URL
+  uri = URI.parse(database_url)
+
+  {username, password} =
+    case uri.userinfo do
+      nil ->
+        {nil, nil}
+
+      ui ->
+        case String.split(ui, ":", parts: 2) do
+          [u, p] -> {URI.decode(u), URI.decode(p)}
+          [u] -> {URI.decode(u), nil}
+        end
+    end
+
+  hostname = uri.host
+
+  database =
+    case uri.path do
+      nil -> nil
+      path -> String.trim_leading(path, "/")
+    end
+
   config :studtasks, Studtasks.Repo,
-    url: database_url,
-    ssl: true,
+    database: database,
+    username: username,
+    password: password,
+    hostname: hostname,
+    ssl: [cacerts: :public_key.cacerts_get()],
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6
 
