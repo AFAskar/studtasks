@@ -20,7 +20,10 @@ services:
   studtasks:
     image: abo3skr/studtasks:latest
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-studtasks_user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-studtasks_dev}
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-studtasks_user}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-password}
+      PGDATABASE: ${POSTGRES_DB:-studtasks_dev}
       STUDTASKS_PORT: ${STUDTASKS_PORT:-8000}
     ports:
       - "${STUDTASKS_PORT:-8000}:${STUDTASKS_PORT:-8000}"
