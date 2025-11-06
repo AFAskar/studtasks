@@ -89,7 +89,6 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars PHX_HOST="${PHX_HOST}",PHX_SERVER=true \
             --set-env-vars POOL_SIZE=10 \
-            --set-env-vars PORT=4000 \
             --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,DATABASE_URL=DATABASE_URL:latest \
             --min-instances=0 --max-instances=5 \
             --concurrency=80
