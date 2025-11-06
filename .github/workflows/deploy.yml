@@ -90,6 +90,6 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars PHX_HOST="${PHX_HOST}",PHX_SERVER=true \
             --set-env-vars POOL_SIZE=10 \
-            --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,DATABASE_URL=DATABASE_URL:latest \
+            --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
             --min-instances=0 --max-instances=5 \
             --concurrency=80

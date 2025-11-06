@@ -21,38 +21,36 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      Example: ecto://USER:PASS@HOST:PORT/DB_NAME or postgres://...
-      """
-
   # Enable IPv6 for Ecto connections when requested via env var
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  # Extract connection parts from DATABASE_URL
-  uri = URI.parse(database_url)
-
-  {username, password} =
-    case uri.userinfo do
-      nil ->
-        {nil, nil}
-
-      ui ->
-        case String.split(ui, ":", parts: 2) do
-          [u, p] -> {URI.decode(u), URI.decode(p)}
-          [u] -> {URI.decode(u), nil}
-        end
-    end
-
-  hostname = uri.host
-
   database =
-    case uri.path do
-      nil -> nil
-      path -> String.trim_leading(path, "/")
-    end
+    System.get_env("PGDBNAME") ||
+      raise """
+      environment variable PGDBNAME is missing.
+      For example: studtasks_prod
+      """
+
+  username =
+    System.get_env("PGUSER") ||
+      raise """
+      environment variable PGUSER is missing.
+      For example: studtasks_user
+      """
+
+  password =
+    System.get_env("PGPASSWORD") ||
+      raise """
+      environment variable PGPASSWORD is missing.
+      For example: "some long and complex password"
+      """
+
+  hostname =
+    System.get_env("PGHOST") ||
+      raise """
+      environment variable PGHOST is missing.
+      For example: localhost
+      """
 
   config :studtasks, Studtasks.Repo,
     database: database,
