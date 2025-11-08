@@ -17,8 +17,11 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+
   studtasks:
-    image: abo3skr/studtasks:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       PGHOST: db
       PGUSER: ${POSTGRES_USER:-studtasks_user}
