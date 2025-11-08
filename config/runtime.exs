@@ -59,7 +59,8 @@ if config_env() == :prod do
     hostname: hostname,
     ssl: [cacerts: :public_key.cacerts_get()],
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
+    socket_options: maybe_ipv6,
+    show_sensitive_data_on_connection_error: true
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
