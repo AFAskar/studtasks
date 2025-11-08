@@ -9,12 +9,10 @@ config :argon2_elixir, t_cost: 1, m_cost: 8
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :studtasks, Studtasks.Repo,
-  username: System.get_env("POSTGRES_USER", "studtasks_user"),
-  password: System.get_env("POSTGRES_PASSWORD", "password"),
-  hostname: System.get_env("POSTGRES_HOST", "localhost"),
-  port: String.to_integer(System.get_env("POSTGRES_PORT") || "5432"),
-  database: "studtasks_test" <> (System.get_env("MIX_TEST_PARTITION") || ""),
-  pool: Ecto.Adapters.SQL.Sandbox,
+  username: System.get_env("PGUSER", "nadhm"),
+  password: System.get_env("PGPASSWORD"),
+  hostname: System.get_env("PGDEVHOST"),
+  database: System.get_env("PGDBNAME", "nadhm"),
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 # We don't run a server during test. If one is required,

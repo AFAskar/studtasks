@@ -2,11 +2,10 @@ import Config
 
 # Configure your database (PostgreSQL in development)
 config :studtasks, Studtasks.Repo,
-  username: System.get_env("POSTGRES_USER", "studtasks_user"),
-  password: System.get_env("POSTGRES_PASSWORD", "password"),
-  hostname: System.get_env("POSTGRES_HOST", "localhost"),
-  port: String.to_integer(System.get_env("POSTGRES_PORT") || "5432"),
-  database: System.get_env("POSTGRES_DB", "studtasks_dev"),
+  username: System.get_env("PGUSER", "nadhm"),
+  password: System.get_env("PGPASSWORD"),
+  hostname: System.get_env("PGDEVHOST"),
+  database: System.get_env("PGDBNAME", "studtasks_dev"),
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
