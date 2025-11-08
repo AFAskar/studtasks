@@ -19,9 +19,7 @@ services:
     restart: unless-stopped
 
   studtasks:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: abo3skr/studtasks:latest
     environment:
       PGHOST: db
       PGUSER: ${POSTGRES_USER:-studtasks_user}
