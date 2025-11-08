@@ -16,7 +16,7 @@
 === Prerequisites
 
 - Elixir ~> 1.15 and Erlang/OTP (compatible)
-- SQLite (bundled via ecto_sqlite3; no external server needed)
+- PostgreSQL (local instance for development)
 - A modern browser (Chrome/Firefox/Safari/Edge)
 
 === Local Development (Dev)
@@ -72,8 +72,9 @@ The application uses the following environment variables (see `example.env` for 
   - Individual Postgres parameters (PGUSER, PGPASSWORD, PGDBNAME, PGHOST) are used to construct the database URL
   - All sensitive credentials stored in Google Secret Manager
 
-- Development: PostgreSQL locally or SQLite (ecto_sqlite3) for simplicity
+- Development: PostgreSQL locally
   - Uses PGDEVHOST environment variable for local development
+  - Requires a local PostgreSQL instance running
 
 ==== Mailer (Production):
 
@@ -86,7 +87,7 @@ The application uses the following environment variables (see `example.env` for 
 - Language & Runtime: Elixir, Erlang/OTP
 - Web Framework: Phoenix 1.8 + LiveView 1.1
 - Realtime: Phoenix PubSub + LiveView
-- Database: Neon (PostgreSQL) in production; SQLite (ecto_sqlite3) in development
+- Database: PostgreSQL (Neon in production, local instance in development)
 - Auth & Security: Argon2 (argon2_elixir), Phoenix/Plug sessions, email verification (Swoosh)
 - Email: Swoosh (dev: Local adapter at /dev/mailbox; prod: configure provider), delivered via Req client
 - HTTP Client: Req (preferred)
@@ -127,7 +128,7 @@ The application uses the following environment variables (see `example.env` for 
 === Current Architecture
 
 - Elixir/Phoenix + LiveView
-- Neon (PostgreSQL) for production data, SQLite file-backed for local dev
+- PostgreSQL for all environments (Neon serverless in production, local instance for development)
 - Google Cloud Run (fully managed container runtime with autoscaling and scale-to-zero)
 
 ==== Why This Architecture?
@@ -136,7 +137,7 @@ The application uses the following environment variables (see `example.env` for 
   - Excellent concurrency and fault tolerance
   - LiveView for first-class realtime UX without heavy client JS
   - Built-in Pub/Sub for efficient live synchronization
-  - Local dev parity via plain SQLite
+  - Consistent PostgreSQL usage across all environments
 
 - Neon (PostgreSQL):
   - Serverless, globally distributed PostgreSQL with low-latency edge access
@@ -150,15 +151,16 @@ The application uses the following environment variables (see `example.env` for 
 
 ==== Diagram (High-Level)
 
-- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ Neon (PostgreSQL over network)
+- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ PostgreSQL
+  - Production: Neon (serverless PostgreSQL over network)
+  - Development: Local PostgreSQL instance
 - Live updates flow through PubSub; forms/components use Phoenix core components
-- In dev: Ecto (Repo) ⇄ local SQLite file for simplicity
 
 === Other Proposed Architectures
 
 ==== Stack 1 (Containerized, FE/BE split)
 
-- Docker, Redis, Node.js/Express, SQLite, React
+- Docker, Redis, Node.js/Express, PostgreSQL, React
 
 ==== Stack 2 (Serverless-leaning)
 
