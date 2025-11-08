@@ -11,7 +11,8 @@ config :studtasks, StudtasksWeb.Endpoint, cache_static_manifest: "priv/static/ca
 config :swoosh, api_client: Swoosh.ApiClient.Req
 
 # Disable Swoosh Local Memory Storage
-config :swoosh, local: false
+# config :swoosh, local: false
+config :studtasks, dev_routes: true
 
 # Do not print debug messages in production
 config :logger, level: :info
