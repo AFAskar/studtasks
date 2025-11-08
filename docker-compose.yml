@@ -23,10 +23,12 @@ services:
       PGHOST: db
       PGUSER: ${POSTGRES_USER:-studtasks_user}
       PGPASSWORD: ${POSTGRES_PASSWORD:-password}
-      PGDATABASE: ${POSTGRES_DB:-studtasks_dev}
-      STUDTASKS_PORT: ${STUDTASKS_PORT:-8000}
+      PGDBNAME: ${POSTGRES_DB:-studtasks_dev}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-your_secret_key}
+      PHX_HOST: ${PHX_HOST:-127.0.0.1}
+      PORT: ${PORT:-4000}
     ports:
-      - "${STUDTASKS_PORT:-8000}:${STUDTASKS_PORT:-8000}"
+      - "${PORT:-4000}:${PORT:-4000}"
     depends_on:
       db:
         condition: service_healthy
