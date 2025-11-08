@@ -284,12 +284,26 @@ defmodule StudtasksWeb.TaskLive.Index do
   @impl true
   def handle_params(%{"view" => "list"}, _uri, socket) do
     _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "list")
-    {:noreply, assign(socket, :view_mode, :list)}
+
+    tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+    {:noreply,
+     socket
+     |> assign(:view_mode, :list)
+     |> stream(:tasks, tasks, reset: true)}
   end
 
   def handle_params(%{"view" => "board"}, _uri, socket) do
     _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "board")
-    {:noreply, assign(socket, :view_mode, :board)}
+
+    tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+    {:noreply,
+     socket
+     |> assign(:view_mode, :board)
+     |> assign_board(tasks)}
   end
 
   def handle_params(_params, _uri, socket) do
