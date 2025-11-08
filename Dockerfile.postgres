@@ -1,2 +1,10 @@
 FROM postgres:17
 
+# Install openssl to generate self-signed TLS certificates at init time
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add an init script that enables SSL and generates server cert/key on first init
+COPY docker-entrypoint-initdb.d/enable-ssl.sh /docker-entrypoint-initdb.d/enable-ssl.sh
+RUN chmod +x /docker-entrypoint-initdb.d/enable-ssl.sh

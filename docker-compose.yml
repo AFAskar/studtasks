@@ -13,6 +13,9 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # NOTE: SSL cert/key are generated on first init and stored in the data volume.
+      # If you already have an existing volume, you may need to recreate it to apply SSL config:
+      #   docker compose down -v && docker compose up -d --build
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 5s
@@ -27,6 +30,8 @@ services:
       PGUSER: ${POSTGRES_USER:-studtasks_user}
       PGPASSWORD: ${POSTGRES_PASSWORD:-password}
       PGDBNAME: ${POSTGRES_DB:-studtasks_dev}
+      # Request SSL from the client side; with self-signed server cert we don't verify CA
+      PGSSLMODE: ${PGSSLMODE:-require}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-your_secret_key}
       PHX_HOST: ${PHX_HOST:-127.0.0.1}
       PORT: ${PORT:-4000}
