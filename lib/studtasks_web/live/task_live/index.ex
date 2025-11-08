@@ -154,20 +154,8 @@ defmodule StudtasksWeb.TaskLive.Index do
                       <p class="text-sm opacity-70 line-clamp-3">{task.description}</p>
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                          <div class="avatar placeholder">
-                            <div class="w-6 rounded-full bg-neutral text-neutral-content">
-                              <span class="text-xs">
-                                {if task.assignee,
-                                  do:
-                                    (task.assignee.name || task.assignee.email)
-                                    |> String.slice(0, 1)
-                                    |> String.upcase(),
-                                  else: "?"}
-                              </span>
-                            </div>
-                          </div>
                           <span class="text-xs opacity-70 truncate max-w-36">
-                            {if task.assignee,
+                            Assigned to: {if task.assignee,
                               do: task.assignee.name || task.assignee.email,
                               else: "Unassigned"}
                           </span>
