@@ -6,6 +6,7 @@ config :studtasks, Studtasks.Repo,
   password: System.get_env("PGPASSWORD"),
   hostname: System.get_env("PGDEVHOST"),
   database: System.get_env("PGDBNAME", "studtasks_dev"),
+  ssl: [cacerts: :public_key.cacerts_get()],
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true

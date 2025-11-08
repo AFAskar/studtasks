@@ -13,6 +13,7 @@ config :studtasks, Studtasks.Repo,
   password: System.get_env("PGPASSWORD"),
   hostname: System.get_env("PGDEVHOST"),
   database: System.get_env("PGDBNAME", "nadhm"),
+  ssl: [cacerts: :public_key.cacerts_get()],
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 # We don't run a server during test. If one is required,
