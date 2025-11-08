@@ -45,33 +45,41 @@ Notes:
 mix test
 ```
 
-=== Production (Overview)
+=== Environment Configuration
 
-Secrets and environment (prod):
+The application uses the following environment variables (see `example.env` for reference):
 
-- SECRET_KEY_BASE — store in Secret Manager; generate with `mix phx.gen.secret`
-- DATABASE_URL — store in Secret Manager (Neon connection URL)
-- PHX_HOST — your domain (e.g., nadhm.example.com) [env var]
-- PORT — default 4000 [Cloud Run provides]
-- POOL_SIZE — optional [env var]
+==== Secrets (store in Secret Manager for production):
 
-Database (choose one):
+- `SECRET_KEY_BASE` — generate with `mix phx.gen.secret`
+- `PGUSER` — PostgreSQL username
+- `PGPASSWORD` — PostgreSQL password
+- `PGDBNAME` — PostgreSQL database name
+- `PGHOST` — PostgreSQL host (e.g., Neon endpoint)
 
-- Neon (recommended for prod)
-  - DATABASE_URL — Secret Manager secret with your Neon URL
+==== Non-Secret Environment Variables:
 
-- File-backed SQLite (simple single-node alternative)
-  - DATABASE_PATH — absolute path to the SQLite file (e.g., `/etc/studtasks/studtasks.db`)
-  - Note: Not suitable for Google Cloud Run (containers are stateless/ephemeral). Use Neon for Cloud Run.
+- `PHX_SERVER` — set to `true` to start the Phoenix server (required for production)
+- `PHX_HOST` — your domain (e.g., studtasks.askardesign.com)
+- `PORT` — HTTP port the app listens on (default: 4000; Cloud Run provides this)
+- `POOL_SIZE` — Ecto connection pool size (default: 10)
+- `ECTO_IPV6` — enable IPv6 for Ecto if needed (true|1 enables)
+- `PGDEVHOST` — PostgreSQL host for development (default: localhost)
 
-Mailer (prod):
+==== Database Configuration:
 
-- Configure Swoosh adapter in runtime for a real provider (Resend/Mailgun/SES). Also set `config :swoosh, :api_client, Swoosh.ApiClient.Req`.
-- Store any provider credentials (e.g., RESEND_API_KEY, MAILGUN_API_KEY, MAILGUN_DOMAIN, AWS credentials) in Secret Manager and inject them as env vars at deploy time.
+- Production: PostgreSQL via Neon (serverless PostgreSQL)
+  - Individual Postgres parameters (PGUSER, PGPASSWORD, PGDBNAME, PGHOST) are used to construct the database URL
+  - All sensitive credentials stored in Google Secret Manager
 
-Start with releases (illustrative):
-```sh
-```
+- Development: PostgreSQL locally or SQLite (ecto_sqlite3) for simplicity
+  - Uses PGDEVHOST environment variable for local development
+
+==== Mailer (Production):
+
+- Configure Swoosh adapter in runtime for a real provider (Resend/Mailgun/SES)
+- Set `config :swoosh, :api_client, Swoosh.ApiClient.Req`
+- Store any provider credentials in Secret Manager and inject as env vars at deploy time
 
 == Technology Stack
 
@@ -86,7 +94,9 @@ Start with releases (illustrative):
 - Build Tooling: esbuild, Tailwind (via Mix tasks)
 - Server Adapter: Bandit
 - I18n: Gettext
-  - Deployment: Google Cloud Run (managed containers, scale-to-zero); containerized (OCI/Docker)
+- Deployment: Google Cloud Run (managed containers, scale-to-zero) via GitHub Actions
+- CI/CD: GitHub Actions workflow for automated builds and deployments
+- Container Registry: Docker Hub
 
 == Application Features
 
@@ -169,40 +179,90 @@ Start with releases (illustrative):
 
 == Live Demo
 
-- URL: TODO — Add deployed URL here (e.g., https://nadhm.example.com)
+- URL: https://studtasks.askardesign.com (deployed via GitHub Actions to Google Cloud Run)
+
+== Deployment
+
+=== Automated Deployment via GitHub Actions
+
+The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) for continuous deployment to Google Cloud Run on every push to the `main` branch.
+
+==== Workflow Overview:
+
+1. *Build Phase*:
+  - Checks out the code
+  - Sets up Docker Buildx for efficient multi-platform builds
+  - Logs in to Docker Hub using secrets
+  - Builds and pushes the Docker image with multiple tags (SHA, main, latest)
+  - Uses GitHub Actions cache and Docker Hub registry cache for faster builds
+
+2. *Deploy Phase*:
+  - Authenticates to Google Cloud using Workload Identity Federation (no service account keys needed)
+  - Deploys the container image to Cloud Run in the `europe-west3` region
+  - Configures environment variables and secrets from Google Secret Manager
+
+==== Required GitHub Secrets:
+
+- `DOCKERHUB_USERNAME` — Docker Hub username
+- `DOCKERHUB_TOKEN` — Docker Hub access token
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` — Google Cloud Workload Identity Provider ID
+- `GCP_SERVICE_ACCOUNT_EMAIL` — Service account email for deployment
+
+==== Required GitHub Variables:
+
+- `GCP_REGION` — Google Cloud region (default: europe-west3)
+- `SERVICE_NAME` — Cloud Run service name (default: studtasks-service)
+- `PHX_HOST` — Application domain (default: studtasks.askardesign.com)
+
+==== Required Google Secret Manager Secrets:
+
+- `SECRET_KEY_BASE` — Phoenix secret key base
+- `PGDBNAME` — PostgreSQL database name
+- `PGUSER` — PostgreSQL username
+- `PGPASSWORD` — PostgreSQL password
+- `PGHOST` — PostgreSQL host (Neon endpoint)
+
+==== Deployment Configuration:
+
+- Region: europe-west3
+- Min instances: 0 (scale-to-zero when idle)
+- Max instances: 5
+- Concurrency: 80 requests per container
+- Pool size: 10 database connections
+- Platform: managed (fully managed Cloud Run)
+- Authentication: allow unauthenticated (public access)
 
 === Quick Deploy Notes — Google Cloud Run + Neon
 
 High-level checklist:
 
-1) Container image
-- Build a release image (e.g., `mix gen.release --docker`) and push to Google Artifact Registry.
+1) *Container Image*:
+- GitHub Actions automatically builds and pushes to Docker Hub on every commit to `main`
+- Image tags: `<SHA>`, `main`, `latest`
+- Uses layer caching for faster builds
 
-2) Environment & Secrets
-- Use Secret Manager for all sensitive values: `SECRET_KEY_BASE`, `DATABASE_URL`, and any mailer API keys.
-- Non-sensitive env vars: `PHX_HOST`, `POOL_SIZE` (optional). Cloud Run sets `PORT` automatically.
-- Ensure `PHX_SERVER=true` so the release boots the web endpoint.
-- Cloud Run sets `PORT`; Phoenix must listen on it (supported by default when `PORT` is present).
+2) *Environment & Secrets*:
+- Use Google Secret Manager for all sensitive values (see Required Secrets above)
+- Non-sensitive env vars configured in the workflow (PHX_HOST, PHX_SERVER, POOL_SIZE)
+- Cloud Run automatically sets `PORT`; Phoenix listens on it
 
-3) Cloud Run Service
-- Deploy a Cloud Run service from the Artifact Registry image; select region and CPU/RAM.
-- Configure health check path (e.g., `/`) and container port.
-- Autoscaling: set min instances to 0 (scale-to-zero) or 1 for warm start; set max instances and request concurrency.
+3) *Cloud Run Service*:
+- Automatically deployed via GitHub Actions workflow
+- Health check path: `/`
+- Autoscaling: 0-5 instances with 80 concurrent requests per container
 
-4) Domain & TLS
-- Map a custom domain in Cloud Run; TLS is automatic via Google-managed certificates.
-
-5) Observability & Ops
-- Logs/metrics stream to Cloud Logging and Cloud Monitoring; add alerting policies and dashboards.
+4) *Observability & Ops*:
+- Logs/metrics stream to Cloud Logging and Cloud Monitoring
+- Monitor deployment status in GitHub Actions workflow runs
 
 Notes:
-- App is stateless; persistence is in Neon. No volumes required.
-- For local dev and CI, use SQLite; for Cloud Run production, use Neon.
+- App is stateless; persistence is in Neon PostgreSQL
+- Workload Identity Federation provides secure authentication without service account keys
+- Docker Hub registry cache and GitHub Actions cache significantly speed up builds
 
+=== Manual Deployment (Alternative)
 
-=== Example deploy with gcloud
-
-Illustrative commands (replace placeholders:`SERVICE_NAME`, `YOUR_DOMAIN`). Assumes you created Secret Manager secrets `SECRET_KEY_BASE` and `DATABASE_URL` and granted the service account `roles/secretmanager.secretAccessor`:
+If you need to deploy manually instead of using the GitHub Actions workflow:
 
 ```bash
 # Build & push to Docker Hub
@@ -211,14 +271,16 @@ docker build -t "$IMAGE" .
 docker push "$IMAGE"
 
 # Deploy to Cloud Run using the Docker Hub image
-gcloud run deploy "${SERVICE_NAME}" \
+gcloud run deploy studtasks-service \
   --image "$IMAGE" \
-  --region "europe-west3" \
+  --region europe-west3 \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars PHX_HOST="${YOUR_DOMAIN}",PHX_SERVER=true \
+  --set-env-vars PHX_HOST=studtasks.askardesign.com,PHX_SERVER=true \
   --set-env-vars POOL_SIZE=10 \
-  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,DATABASE_URL=DATABASE_URL:latest \
+  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
   --min-instances=0 --max-instances=5 \
   --concurrency=80
 ```
+
+Note: The GitHub Actions workflow is the recommended deployment method for consistency and automation.
