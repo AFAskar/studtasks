@@ -170,9 +170,6 @@ defmodule StudtasksWeb.TaskLive.Index do
                               task.children
                             )}
                           </span>
-                          <span class="badge badge-ghost badge-sm">
-                            <.icon name="hero-chat-bubble-left-right" class="size-3 mr-1" /> 0
-                          </span>
                         </div>
                       </div>
                     </div>
