@@ -68,7 +68,6 @@ defmodule StudtasksWeb.Router do
       # Tasks nested under groups (requires authentication)
       live "/groups/:group_id/tasks", TaskLive.Index, :index
       live "/groups/:group_id/tasks/:id", TaskLive.Show, :show
-      live "/groups/:group_id/tasks/:id/edit", TaskLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password

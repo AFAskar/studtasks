@@ -131,7 +131,7 @@ defmodule StudtasksWeb.TaskLive.Index do
             <div class="sr-only">
               <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>Show</.link>
             </div>
-            <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}/edit"}>Edit</.link>
+            <.link phx-click={JS.push("open_edit", value: %{id: task.id})}>Edit</.link>
           </:action>
           <:action :let={{id, task}}>
             <.link
@@ -194,9 +194,9 @@ defmodule StudtasksWeb.TaskLive.Index do
                                 </.link>
                               </li>
                               <li>
-                                <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}/edit"}>
+                                <button phx-click={JS.push("open_edit", value: %{id: task.id})}>
                                   Edit
-                                </.link>
+                                </button>
                               </li>
                               <li>
                                 <button phx-click={JS.push("delete", value: %{id: task.id})}>
@@ -263,6 +263,51 @@ defmodule StudtasksWeb.TaskLive.Index do
           }
         </script>
       <% end %>
+
+      <div
+        :if={@show_edit}
+        id="edit-modal"
+        class="fixed inset-0 z-50 hidden"
+        phx-mounted={show("#edit-modal")}
+        phx-remove={hide("#edit-modal")}
+      >
+        <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_edit")} />
+        <div class="modal modal-open">
+          <div class="modal-box space-y-3">
+            <h3 class="font-bold text-lg">Edit task</h3>
+            <.form for={@edit_form} id="edit-form" phx-submit="save_edit">
+              <.input type="text" field={@edit_form[:name]} label="Title" required />
+              <.input type="textarea" field={@edit_form[:description]} label="Description" />
+              <.input
+                type="select"
+                field={@edit_form[:assignee_id]}
+                prompt="Unassigned"
+                options={@assignee_options}
+                label="Assigned to"
+              />
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <.input
+                  type="select"
+                  field={@edit_form[:priority]}
+                  options={priority_options()}
+                  label="Priority"
+                />
+                <.input type="date" field={@edit_form[:due_date]} label="Due date" />
+              </div>
+              <.input
+                type="select"
+                field={@edit_form[:status]}
+                options={status_options()}
+                label="Status"
+              />
+              <footer class="flex gap-2 justify-end pt-2">
+                <.button phx-click={JS.push("close_edit")} type="button">Cancel</.button>
+                <.button variant="primary" phx-disable-with="Saving...">Save</.button>
+              </footer>
+            </.form>
+          </div>
+        </div>
+      </div>
       <div
         :if={@show_quick_new}
         id="quick-new"
@@ -337,6 +382,9 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:filter_form, to_form(Map.put(filters, "sort", sort), as: :f))
      |> assign(:view_mode, user_view)
      |> assign(:show_quick_new, false)
+     |> assign(:show_edit, false)
+     |> assign(:editing_task, nil)
+     |> assign(:edit_form, to_form(%{}, as: :task))
      |> assign(:quick_status, "backlog")
      |> assign(
        :quick_form,
@@ -430,6 +478,54 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   def handle_event("close_quick_new", _params, socket) do
     {:noreply, assign(socket, :show_quick_new, false)}
+  end
+
+  def handle_event("open_edit", %{"id" => id}, socket) do
+    task = Courses.get_task!(socket.assigns.current_scope, id)
+
+    changeset =
+      task
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.cast(%{}, [
+        :name,
+        :description,
+        :assignee_id,
+        :priority,
+        :due_date,
+        :status
+      ])
+
+    {:noreply,
+     socket
+     |> assign(:show_edit, true)
+     |> assign(:editing_task, task)
+     |> assign(:edit_form, to_form(changeset))}
+  end
+
+  def handle_event("close_edit", _params, socket) do
+    {:noreply, socket |> assign(:show_edit, false) |> assign(:editing_task, nil)}
+  end
+
+  def handle_event("save_edit", %{"task" => params}, socket) do
+    task = socket.assigns.editing_task
+
+    case Courses.update_task(socket.assigns.current_scope, task, params) do
+      {:ok, _task} ->
+        tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+        stats = compute_stats(tasks)
+        tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+        {:noreply,
+         socket
+         |> assign(:show_edit, false)
+         |> assign(:editing_task, nil)
+         |> assign(:task_stats, stats)
+         |> assign_board(tasks)
+         |> stream(:tasks, tasks, reset: true)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, edit_form: to_form(changeset))}
+    end
   end
 
   def handle_event("quick_create", %{"task" => params}, socket) do
@@ -568,6 +664,9 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   defp priority_options(),
     do: [{"Low", "low"}, {"Medium", "medium"}, {"High", "high"}, {"Urgent", "urgent"}]
+
+  defp status_options(),
+    do: Enum.map(["backlog", "todo", "in_progress", "done"], &{format_status(&1), &1})
 
   defp apply_filters_sort(tasks, filters, sort) do
     tasks

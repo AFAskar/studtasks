@@ -55,26 +55,24 @@ defmodule StudtasksWeb.TaskLiveTest do
     test "updates task in listing", %{conn: conn, task: task} do
       {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
-      assert {:ok, form_live, _html} =
-               index_live
-               |> element("#tasks-#{task.id} a", "Edit")
-               |> render_click()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit")
+      _ =
+        index_live
+        |> element("#tasks-#{task.id} a", "Edit")
+        |> render_click()
 
-      assert render(form_live) =~ "Edit Task"
+      # Modal should be visible
+      assert has_element?(index_live, "#edit-modal")
+      assert render(index_live) =~ "Edit task"
 
-      assert form_live
-             |> form("#task-form", task: @invalid_attrs)
-             |> render_change() =~ "can&#39;t be blank"
+      # invalid submit
+      assert index_live
+             |> form("#edit-form", task: @invalid_attrs)
+             |> render_submit() =~ "can&#39;t be blank"
 
-      assert {:ok, index_live, _html} =
-               form_live
-               |> form("#task-form", task: @update_attrs)
-               |> render_submit()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks")
+      # valid submit
+      _ = index_live |> form("#edit-form", task: @update_attrs) |> render_submit()
 
       html = render(index_live)
-      assert html =~ "Task updated successfully"
       assert html =~ "some updated name"
     end
 
@@ -96,32 +94,20 @@ defmodule StudtasksWeb.TaskLiveTest do
       assert html =~ task.name
     end
 
-    test "updates task and returns to show", %{conn: conn, task: task} do
+    test "updates task and stays on show", %{conn: conn, task: task} do
       {:ok, show_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}")
 
-      assert {:ok, form_live, _} =
-               show_live
-               |> element("a", "Edit")
-               |> render_click()
-               |> follow_redirect(
-                 conn,
-                 ~p"/groups/#{task.course_group_id}/tasks/#{task}/edit?return_to=show"
-               )
+      _ = show_live |> element("button", "Edit task") |> render_click()
 
-      assert render(form_live) =~ "Edit Task"
+      assert has_element?(show_live, "#edit-modal")
 
-      assert form_live
-             |> form("#task-form", task: @invalid_attrs)
-             |> render_change() =~ "can&#39;t be blank"
+      assert show_live
+             |> form("#edit-form", task: @invalid_attrs)
+             |> render_submit() =~ "can&#39;t be blank"
 
-      assert {:ok, show_live, _html} =
-               form_live
-               |> form("#task-form", task: @update_attrs)
-               |> render_submit()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/#{task}")
+      _ = show_live |> form("#edit-form", task: @update_attrs) |> render_submit()
 
       html = render(show_live)
-      assert html =~ "Task updated successfully"
       assert html =~ "some updated name"
     end
   end
