@@ -612,25 +612,40 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   # Toggle a subtask between done and todo
   def handle_event("toggle_subtask", %{"id" => id}, socket) do
-    child = Courses.get_task!(socket.assigns.current_scope, id)
-    new_status = if child.status == "done", do: "todo", else: "done"
+    # Optimistic UI update similar to kanban drag
+    case update_child_status_in_columns(socket.assigns.board_columns, id) do
+      {:updated, new_columns, old_status, new_status} ->
+        optimistic_tasks = flatten_board_tasks(new_columns)
+        stats = compute_stats(optimistic_tasks)
 
-    case Courses.update_task(socket.assigns.current_scope, child, %{status: new_status}) do
-      {:ok, _} ->
-        tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
-        stats = compute_stats(tasks)
-        tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+        filtered =
+          apply_filters_sort(optimistic_tasks, socket.assigns.filters, socket.assigns.sort)
+
+        parent = self()
+        current_scope = socket.assigns.current_scope
+
+        Task.start(fn ->
+          child = Courses.get_task!(current_scope, id)
+
+          case Courses.update_task(current_scope, child, %{status: new_status}) do
+            {:ok, _} ->
+              :ok
+
+            {:error, _cs} ->
+              send(parent, {:subtask_toggle_revert, %{id: id, old_status: old_status}})
+          end
+        end)
 
         {:noreply,
          socket
+         |> assign(:board_columns, new_columns)
          |> assign(:task_stats, stats)
-         |> assign_board(tasks)
-         |> assign(:parent_options, parent_options(tasks))
-         |> assign(:edit_parent_options, parent_options(tasks))
-         |> stream(:tasks, tasks, reset: true)}
+         |> assign(:parent_options, parent_options(optimistic_tasks))
+         |> assign(:edit_parent_options, parent_options(optimistic_tasks))
+         |> stream(:tasks, filtered, reset: true)}
 
-      {:error, _cs} ->
-        {:noreply, put_flash(socket, :error, "Could not update subtask")}
+      :not_found ->
+        {:noreply, socket}
     end
   end
 
@@ -806,6 +821,28 @@ defmodule StudtasksWeb.TaskLive.Index do
     end
   end
 
+  # Revert an optimistic subtask toggle
+  def handle_info({:subtask_toggle_revert, %{id: id, old_status: old_status}}, socket) do
+    columns = socket.assigns.board_columns || []
+
+    case revert_child_status_in_columns(columns, id, old_status) do
+      {:reverted, new_columns} ->
+        tasks = flatten_board_tasks(new_columns)
+        stats = compute_stats(tasks)
+        filtered = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+        {:noreply,
+         socket
+         |> put_flash(:error, "Could not update subtask. Change was reverted.")
+         |> assign(:board_columns, new_columns)
+         |> assign(:task_stats, stats)
+         |> stream(:tasks, filtered, reset: true)}
+
+      :not_found ->
+        {:noreply, put_flash(socket, :error, "Subtask revert failed")}
+    end
+  end
+
   defp list_tasks(current_scope, group_id) do
     Courses.list_group_tasks(current_scope, group_id)
   end
@@ -868,6 +905,73 @@ defmodule StudtasksWeb.TaskLive.Index do
 
         {:moved, new_columns, old_status}
     end
+  end
+
+  # Optimistically update a child's status inside board columns
+  defp update_child_status_in_columns(columns, child_id) when is_list(columns) do
+    {new_columns, result} =
+      Enum.map_reduce(columns, :not_found, fn {status, %{tasks: tasks} = col}, acc ->
+        {new_tasks, acc2} =
+          Enum.map_reduce(tasks, acc, fn task, acc_in ->
+            {new_children, hit, old_s, new_s} = toggle_child_status(task.children || [], child_id)
+            new_task = if hit, do: %{task | children: new_children}, else: task
+            acc_out = if hit and acc_in == :not_found, do: {:updated, old_s, new_s}, else: acc_in
+            {new_task, acc_out}
+          end)
+
+        {{status, %{col | tasks: new_tasks}}, acc2}
+      end)
+
+    case result do
+      {:updated, old_s, new_s} -> {:updated, new_columns, old_s, new_s}
+      _ -> :not_found
+    end
+  end
+
+  defp toggle_child_status(children, child_id) do
+    Enum.map_reduce(children, {false, nil, nil}, fn ch, {hit, old_s, new_s} ->
+      cond do
+        hit ->
+          {ch, {hit, old_s, new_s}}
+
+        to_string(ch.id) == to_string(child_id) ->
+          ns = if ch.status == "done", do: "todo", else: "done"
+          {Map.put(ch, :status, ns), {true, ch.status, ns}}
+
+        true ->
+          {ch, {hit, old_s, new_s}}
+      end
+    end)
+    |> (fn {updated_children, {hit, old_s, new_s}} -> {updated_children, hit, old_s, new_s} end).()
+  end
+
+  # Revert child status
+  defp revert_child_status_in_columns(columns, child_id, old_status) when is_list(columns) do
+    {new_columns, touched} =
+      Enum.map_reduce(columns, false, fn {status, %{tasks: tasks} = col}, acc ->
+        {new_tasks, acc2} =
+          Enum.map_reduce(tasks, acc, fn task, acc_in ->
+            {new_children, hit} =
+              Enum.map_reduce(task.children || [], false, fn ch, acc_child ->
+                if acc_child do
+                  {ch, true}
+                else
+                  if to_string(ch.id) == to_string(child_id) do
+                    {Map.put(ch, :status, old_status), true}
+                  else
+                    {ch, false}
+                  end
+                end
+              end)
+
+            new_task = if hit, do: %{task | children: new_children}, else: task
+            {new_task, acc_in or hit}
+          end)
+
+        {{status, %{col | tasks: new_tasks}}, acc2}
+      end)
+
+    if touched, do: {:reverted, new_columns}, else: :not_found
   end
 
   # Pop a task by id from a list of tasks, returning {task | nil, remaining_tasks}
