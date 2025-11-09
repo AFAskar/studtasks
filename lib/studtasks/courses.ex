@@ -583,11 +583,32 @@ defmodule Studtasks.Courses do
   """
   def delete_task(%Scope{} = scope, %Task{} = task) do
     true = group_member?(scope, task.course_group_id)
+    # Deletion strategy: we do NOT cascade delete children. Instead we
+    # orphan them by setting their parent_id to nil prior to deleting the
+    # parent task. This preserves child tasks and avoids accidental loss
+    # of work items.
 
-    with {:ok, task = %Task{}} <-
-           Repo.delete(task) do
-      broadcast_task(scope, {:deleted, task})
-      {:ok, task}
+    import Ecto.Query, only: [from: 2]
+    alias Ecto.Multi
+
+    multi =
+      Multi.new()
+      |> Multi.run(:orphan_children, fn repo, _changes ->
+        # Orphan all children by nullifying their parent_id in a single statement.
+        children_query = from(t in Task, where: t.parent_id == ^task.id)
+
+        {count, _} = repo.update_all(children_query, set: [parent_id: nil])
+        {:ok, count}
+      end)
+      |> Multi.delete(:delete_task, task)
+
+    case Repo.transaction(multi) do
+      {:ok, %{delete_task: task}} ->
+        broadcast_task(scope, {:deleted, task})
+        {:ok, task}
+
+      {:error, _op, reason, _changes} ->
+        {:error, reason}
     end
   end
 
