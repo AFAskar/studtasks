@@ -2,7 +2,7 @@
 #set text(lang: "en")
 #show: ilm.with(
   title: [Studtasks (nadhm) – Shared Academic Task Manager],
-  author: "Abdulaziz Fahad BinAskar, Saud Mishari AlOtaibi, Naif idres",
+  author: "Abdulaziz Fahad BinAskar, Saud Mishari Aldalbahy, Naif Salman Aldrees, Abdulaziz Mohammed Alkthiri",
   abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, complete, and discuss tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
   date: datetime(year: 2025, month: 11, day: 9),
   figure-index: (enabled: true),
