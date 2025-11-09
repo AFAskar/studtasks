@@ -55,6 +55,59 @@ defmodule StudtasksWeb.TaskLive.Index do
         </:actions>
       </.header>
 
+      <div id="group-stats" class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-3">
+        <div class="card bg-base-200/60 border border-base-300">
+          <div class="card-body flex flex-row items-center gap-4">
+            <div
+              class="radial-progress text-primary"
+              style={"--value: #{@task_stats.percent_done}; --size: 4.5rem; --thickness: 6px"}
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={@task_stats.percent_done}
+            >
+              {@task_stats.percent_done}%
+            </div>
+            <div>
+              <div class="text-sm opacity-70">Completed tasks</div>
+              <div class="text-xl font-semibold">{@task_stats.done} / {@task_stats.total}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card bg-base-200/60 border border-base-300 md:col-span-2">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium">By status</div>
+              <div class="text-xs opacity-70">Total: {@task_stats.total}</div>
+            </div>
+            <div class="mt-3 space-y-3">
+              <%= for {label, key, color} <- [{"Backlog", :backlog, "bg-base-300"},
+                                              {"Todo", :todo, "bg-info/70"},
+                                              {"In Progress", :in_progress, "bg-warning/70"},
+                                              {"Done", :done, "bg-success/80"}] do %>
+                <div class="flex items-center gap-3">
+                  <div class="w-28 shrink-0 text-xs opacity-75">{label}</div>
+                  <div class="grow">
+                    <div class="h-2 rounded bg-base-300/60 overflow-hidden">
+                      <div
+                        class={[
+                          "h-2",
+                          "rounded",
+                          color
+                        ]}
+                        style={"width: #{bar_width(@task_stats[key], @task_stats.total)}%"}
+                      />
+                    </div>
+                  </div>
+                  <div class="w-10 text-right text-xs tabular-nums">{@task_stats[key]}</div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <%= if @view_mode == :list do %>
         <.table
           id="tasks"
@@ -256,6 +309,7 @@ defmodule StudtasksWeb.TaskLive.Index do
       end
 
     tasks = list_tasks(socket.assigns.current_scope, group_id)
+    stats = compute_stats(tasks)
     filters = default_filters()
     sort = "priority_desc"
     members = Courses.list_group_memberships(group_id)
@@ -277,6 +331,7 @@ defmodule StudtasksWeb.TaskLive.Index do
        :quick_form,
        to_form(%{"name" => nil, "description" => nil, "assignee_id" => nil}, as: :task)
      )
+     |> assign(:task_stats, stats)
      |> assign_board(apply_filters_sort(tasks, filters, sort))
      |> stream(:tasks, apply_filters_sort(tasks, filters, sort))}
   end
@@ -286,11 +341,13 @@ defmodule StudtasksWeb.TaskLive.Index do
     _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "list")
 
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
 
     {:noreply,
      socket
      |> assign(:view_mode, :list)
+     |> assign(:task_stats, stats)
      |> stream(:tasks, tasks, reset: true)}
   end
 
@@ -298,11 +355,13 @@ defmodule StudtasksWeb.TaskLive.Index do
     _ = Accounts.update_preferred_task_view(socket.assigns.current_scope.user, "board")
 
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
 
     {:noreply,
      socket
      |> assign(:view_mode, :board)
+     |> assign(:task_stats, stats)
      |> assign_board(tasks)}
   end
 
@@ -324,8 +383,9 @@ defmodule StudtasksWeb.TaskLive.Index do
     {:ok, _task} = Courses.update_task(socket.assigns.current_scope, task, params)
 
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
-    {:noreply, assign_board(socket, tasks)}
+    {:noreply, socket |> assign(:task_stats, stats) |> assign_board(tasks)}
   end
 
   def handle_event("open_quick_new", %{"status" => status}, socket) do
@@ -352,11 +412,13 @@ defmodule StudtasksWeb.TaskLive.Index do
     case Courses.create_task(socket.assigns.current_scope, attrs) do
       {:ok, _task} ->
         tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+        stats = compute_stats(tasks)
         tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
 
         {:noreply,
          socket
          |> assign(:show_quick_new, false)
+         |> assign(:task_stats, stats)
          |> assign_board(tasks)
          |> stream(:tasks, tasks, reset: true)}
 
@@ -374,6 +436,7 @@ defmodule StudtasksWeb.TaskLive.Index do
     }
 
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    stats = compute_stats(tasks)
     # pass sort string as needed
     tasks = apply_filters_sort(tasks, filters, filters["sort"])
 
@@ -382,6 +445,7 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:filters, filters)
      |> assign(:sort, filters["sort"])
      |> assign(:filter_form, to_form(filters, as: :f))
+     |> assign(:task_stats, stats)
      |> assign_board(tasks)
      |> stream(:tasks, tasks, reset: true)}
   end
@@ -390,10 +454,12 @@ defmodule StudtasksWeb.TaskLive.Index do
   def handle_info({type, %Studtasks.Courses.Task{}}, socket)
       when type in [:created, :updated, :deleted] do
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+    stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
 
     {:noreply,
      socket
+     |> assign(:task_stats, stats)
      |> assign_board(tasks)
      |> stream(:tasks, tasks, reset: true)}
   end
@@ -409,6 +475,42 @@ defmodule StudtasksWeb.TaskLive.Index do
     columns = Enum.map(statuses, fn s -> {s, %{tasks: Map.get(grouped, s, [])}} end)
 
     assign(socket, board_columns: columns)
+  end
+
+  defp compute_stats(tasks) do
+    # Count by status and compute completion percent
+    total = length(tasks)
+    by_status = Enum.frequencies_by(tasks, &(&1.status || ""))
+    done = Map.get(by_status, "done", 0)
+    backlog = Map.get(by_status, "backlog", 0)
+    todo = Map.get(by_status, "todo", 0)
+    in_progress = Map.get(by_status, "in_progress", 0)
+
+    percent_done =
+      if total == 0 do
+        0
+      else
+        done
+        |> Kernel.*(100)
+        |> div(total)
+      end
+
+    %{
+      total: total,
+      done: done,
+      backlog: backlog,
+      todo: todo,
+      in_progress: in_progress,
+      percent_done: percent_done
+    }
+  end
+
+  defp bar_width(_count, total) when total <= 0, do: 0
+
+  defp bar_width(count, total) when is_integer(count) and is_integer(total) do
+    count
+    |> Kernel.*(100)
+    |> div(total)
   end
 
   defp default_filters do

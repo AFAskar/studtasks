@@ -26,6 +26,12 @@ defmodule StudtasksWeb.TaskLiveTest do
       assert html =~ task.name
     end
 
+    test "shows group stats visualization", %{conn: conn, task: task} do
+      {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
+
+      assert has_element?(index_live, "#group-stats")
+    end
+
     test "saves new task", %{conn: conn, task: task} do
       {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 

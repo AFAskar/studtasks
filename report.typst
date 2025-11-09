@@ -16,8 +16,8 @@
 
 // implemented bonus features:
 // - Forgot password flow with email reset link
-// - drag-and-drop task ordering (kanban style) with LiveView hooks and JS library
-
+// - drag-and-drop task ordering (kanban style)
+// - Data Visualization (charts) for each coursegroup
 = Setup Instructions
 
 == Prerequisites
