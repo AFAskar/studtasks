@@ -1,34 +1,25 @@
 #import "@preview/ilm:1.4.1": *
 #set text(lang: "en")
 #show: ilm.with(
-  title: [nadhm (StudySync)],
-  author: "Abdulaziz Fahad BinAskar",
-  date: datetime(year: 2025, month: 9, day: 11),
+  title: [Studtasks (nadhm) – Shared Academic Task Manager],
+  author: "Abdulaziz Fahad BinAskar, Saud Mishari AlOtaibi, Naif idres",
+  abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, complete, and discuss tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
+  date: datetime(year: 2025, month: 11, day: 9),
   figure-index: (enabled: true),
   table-index: (enabled: true),
   listing-index: (enabled: true),
 )
-= Studtasks (nadhm) – Shared Academic Task Manager
 
-== Project Title & Description
 
-- Title: nadhm (Studtasks)
-- Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, complete, and discuss tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.
+= Setup Instructions
 
-== Team Members
-
-- Abdulaziz Fahad BinAskar
-- Saud Mishari AlOtaibi?
-- Naif
-== Setup Instructions
-
-=== Prerequisites
+== Prerequisites
 
 - Elixir ~> 1.15 and Erlang/OTP (compatible)
 - PostgreSQL (local instance for development)
 - A modern browser (Chrome/Firefox/Safari/Edge)
 
-=== Local Development (Dev)
+== Local Development (Dev)
 
 1. Install dependencies and set up the database:
 
@@ -48,17 +39,17 @@ Notes:
 - Emails are delivered to the local mailbox at /dev/mailbox in dev. Use it to complete email verification.
 - Assets (Tailwind v4, esbuild) are automatically installed and watched in dev.
 
-=== Running Tests
+== Running Tests
 
 ```bash
 mix test
 ```
 
-=== Environment Configuration
+== Environment Configuration
 
 The application uses the following environment variables (see `example.env` for reference):
 
-==== Secrets (store in Secret Manager for production):
+=== Secrets (store in Secret Manager for production):
 
 - `SECRET_KEY_BASE` — generate with `mix phx.gen.secret`
 - `PGUSER` — PostgreSQL username
@@ -66,7 +57,7 @@ The application uses the following environment variables (see `example.env` for 
 - `PGDBNAME` — PostgreSQL database name
 - `PGHOST` — PostgreSQL host (e.g., Neon endpoint)
 
-==== Non-Secret Environment Variables:
+=== Non-Secret Environment Variables:
 
 - `PHX_SERVER` — set to `true` to start the Phoenix server (required for production)
 - `PHX_HOST` — your domain (e.g., studtasks.askardesign.com)
@@ -75,7 +66,7 @@ The application uses the following environment variables (see `example.env` for 
 - `ECTO_IPV6` — enable IPv6 for Ecto if needed (true|1 enables)
 - `PGDEVHOST` — PostgreSQL host for development (default: localhost)
 
-==== Database Configuration:
+=== Database Configuration:
 
 - Production: PostgreSQL via Neon (serverless PostgreSQL)
   - Individual Postgres parameters (PGUSER, PGPASSWORD, PGDBNAME, PGHOST) are used to construct the database URL
@@ -85,11 +76,13 @@ The application uses the following environment variables (see `example.env` for 
   - Uses PGDEVHOST environment variable for local development
   - Requires a local PostgreSQL instance running
 
-==== Mailer (Production):
+=== Mailer (Production):
 
 - Configure Swoosh adapter in runtime for a real provider (Resend/Mailgun/SES)
 - Set `config :swoosh, :api_client, Swoosh.ApiClient.Req`
 - Store any provider credentials in Secret Manager and inject as env vars at deploy time
+
+= Project Metadata
 
 == Technology Stack
 
@@ -133,14 +126,14 @@ The application uses the following environment variables (see `example.env` for 
   - Clear completed vs pending indicators with Tailwind/DaisyUI styles
   - Drag-and-drop task ordering (kanban)
 
-== Project Architecture
-=== Current Architecture
+= Project Architecture
+== Current Architecture
 
 - Elixir/Phoenix + LiveView
 - PostgreSQL for all environments (Neon serverless in production, local instance for development)
 - Google Cloud Run (fully managed container runtime with autoscaling and scale-to-zero)
 
-==== Why This Architecture?
+=== Why This Architecture?
 
 - Elixir/Phoenix:
   - Excellent concurrency and fault tolerance
@@ -158,24 +151,24 @@ The application uses the following environment variables (see `example.env` for 
   - Simple deploys from Artifact Registry with health checks, autoscaling, and request concurrency controls
   - Custom domains and TLS via Cloud Run's managed certificates
 
-==== Diagram (High-Level)
+=== Diagram (High-Level)
 
 - Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ PostgreSQL
   - Production: Neon (serverless PostgreSQL over network)
   - Development: Local PostgreSQL instance
 - Live updates flow through PubSub; forms/components use Phoenix core components
 
-=== Other Proposed Architectures
+== Other Proposed Architectures
 
-==== Stack 1 (Containerized, FE/BE split)
+=== Stack 1 (Containerized, FE/BE split)
 
 - Docker, Redis, Node.js/Express, PostgreSQL, React
 
-==== Stack 2 (Serverless-leaning)
+=== Stack 2 (Serverless-leaning)
 
 - Firebase, Next.js, Vercel
 
-==== Why Not These for MVP?
+=== Why Not These for MVP?
 
 - Stack 1: Adds operational complexity (Redis, Docker, FE/BE split) with less out-of-the-box realtime ergonomics vs Phoenix LiveView.
 - Stack 2: Great serverless velocity, but less control/customization and tight coupling to vendor services compared to a cloud-agnostic Phoenix stack.
@@ -188,9 +181,9 @@ The application uses the following environment variables (see `example.env` for 
 // #figure(image("/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
 // #figure(image("/screens/tasks.png", width: 100%), caption: [Course/group task view])
 
-== Live Demo
+= Live Demo
 
-- URL: https://studtasks.askardesign.com (deployed via GitHub Actions to Google Cloud Run)
+- URL: https://studtasks-run-container-1043330219835.europe-west3.run.app (deployed via GitHub Actions to Google Cloud Run)
 
 == Deployment
 
