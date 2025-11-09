@@ -299,6 +299,14 @@ defmodule StudtasksWeb.TaskLive.Index do
                               <span :if={child.due_date} class="text-[10px] opacity-60">
                                 {Calendar.strftime(child.due_date, "%b %-d")}
                               </span>
+                              <button
+                                type="button"
+                                class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Edit subtask"
+                                phx-click={JS.push("open_edit", value: %{id: child.id})}
+                              >
+                                <.icon name="hero-pencil" class="size-4" />
+                              </button>
                             </div>
                           <% end %>
                           <div
