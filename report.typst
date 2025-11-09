@@ -25,6 +25,7 @@
 
 ```bash
 mix setup
+docker compose up -d db
 ```
 
 2. Start the server:
@@ -181,7 +182,7 @@ The application uses the following environment variables (see `example.env` for 
 // #figure(image("/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
 // #figure(image("/screens/tasks.png", width: 100%), caption: [Course/group task view])
 
-= Live Demo
+= Deployment & Demo
 
 - URL: https://studtasks-run-container-1043330219835.europe-west3.run.app (deployed via GitHub Actions to Google Cloud Run)
 
@@ -231,33 +232,32 @@ The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 - Region: europe-west3
 - Min instances: 0 (scale-to-zero when idle)
 - Max instances: 5
-- Concurrency: 80 requests per container
 - Pool size: 10 database connections
 - Platform: managed (fully managed Cloud Run)
-- Authentication: allow unauthenticated (public access)
+- Authentication: allow unauthenticated (public access) Auth is handled by the application
 
 === Quick Deploy Notes — Google Cloud Run + Neon
 
 High-level checklist:
 
-1) *Container Image*:
-- GitHub Actions automatically builds and pushes to Docker Hub on every commit to `main`
-- Image tags: `<SHA>`, `main`, `latest`
-- Uses layer caching for faster builds
++ *Container Image*:
+  - GitHub Actions automatically builds and pushes to Docker Hub on every commit to `main`
+  - Image tags: `<SHA>`, `main`, `latest`
+  - Uses layer caching for faster builds
 
-2) *Environment & Secrets*:
-- Use Google Secret Manager for all sensitive values (see Required Secrets above)
-- Non-sensitive env vars configured in the workflow (PHX_HOST, PHX_SERVER, POOL_SIZE)
-- Cloud Run automatically sets `PORT`; Phoenix listens on it
++ *Environment & Secrets*:
+  - Use Google Secret Manager for all sensitive values (see Required Secrets above)
+  - Non-sensitive env vars configured in the workflow (PHX_HOST, PHX_SERVER, POOL_SIZE)
+  - Cloud Run automatically sets `PORT`; Phoenix listens on it
 
-3) *Cloud Run Service*:
-- Automatically deployed via GitHub Actions workflow
-- Health check path: `/`
-- Autoscaling: 0-5 instances with 80 concurrent requests per container
++ *Cloud Run Service*:
+  - Automatically deployed via GitHub Actions workflow
+  - Health check path: `/`
+  - Autoscaling: 0-5 instances with 80 concurrent requests per container
 
-4) *Observability & Ops*:
-- Logs/metrics stream to Cloud Logging and Cloud Monitoring
-- Monitor deployment status in GitHub Actions workflow runs
++ *Observability & Ops*:
+  - Logs/metrics stream to Cloud Logging and Cloud Monitoring
+  - Monitor deployment status in GitHub Actions workflow runs
 
 Notes:
 - App is stateless; persistence is in Neon PostgreSQL
@@ -284,7 +284,4 @@ gcloud run deploy studtasks-service \
   --set-env-vars POOL_SIZE=10 \
   --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
   --min-instances=0 --max-instances=5 \
-  --concurrency=80
 ```
-
-Note: The GitHub Actions workflow is the recommended deployment method for consistency and automation.
