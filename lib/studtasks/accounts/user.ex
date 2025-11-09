@@ -59,6 +59,9 @@ defmodule Studtasks.Accounts.User do
     changeset =
       changeset
       |> validate_required([:email])
+      |> update_change(:email, fn email ->
+        if is_binary(email), do: String.downcase(email), else: email
+      end)
       |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
         message: "must have the @ sign and no spaces"
       )

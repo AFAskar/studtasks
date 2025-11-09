@@ -522,7 +522,12 @@ defmodule Studtasks.Courses do
 
   """
   def create_task(%Scope{} = scope, attrs) do
-    changeset = Task.changeset(%Task{}, attrs, scope) |> validate_parent_same_group()
+    changeset =
+      %Task{}
+      |> Task.changeset(attrs, scope)
+      |> validate_parent_same_group()
+      |> validate_parent_depth()
+
     group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
 
     # Only enforce membership when we actually have a group_id present in the changeset
@@ -557,6 +562,7 @@ defmodule Studtasks.Courses do
            task
            |> Task.changeset(attrs, scope)
            |> validate_parent_same_group()
+           |> validate_parent_depth()
            |> Repo.update() do
       broadcast_task(scope, {:updated, task})
       {:ok, task}
@@ -662,6 +668,34 @@ defmodule Studtasks.Courses do
               :parent_id,
               "parent must belong to the same course group"
             )
+        end
+    end
+  end
+
+  # Ensures there is only one level of parent-child depth.
+  # If the chosen parent itself has a parent, we reject the change.
+  defp validate_parent_depth(%Ecto.Changeset{} = changeset) do
+    parent_id = Ecto.Changeset.get_field(changeset, :parent_id)
+
+    cond do
+      is_nil(parent_id) ->
+        changeset
+
+      true ->
+        case Repo.get(Task, parent_id) do
+          nil ->
+            # Let the foreign_key_constraint handle non-existent parent normally; keep explicit error for clarity.
+            Ecto.Changeset.add_error(changeset, :parent_id, "parent does not exist")
+
+          %Task{parent_id: grandparent_id} when not is_nil(grandparent_id) ->
+            Ecto.Changeset.add_error(
+              changeset,
+              :parent_id,
+              "parent task already has a parent; only one level allowed"
+            )
+
+          _ ->
+            changeset
         end
     end
   end

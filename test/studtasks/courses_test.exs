@@ -163,7 +163,8 @@ defmodule Studtasks.CoursesTest do
     test "update_task/3 can set a parent" do
       scope = user_scope_fixture()
       parent = task_fixture(scope, %{name: "parent"})
-      child = task_fixture(scope, %{name: "child"})
+      # ensure child belongs to the same course group as parent
+      child = task_fixture(scope, %{name: "child", course_group_id: parent.course_group_id})
 
       assert {:ok, %Task{} = updated_child} =
                Courses.update_task(scope, child, %{parent_id: parent.id})
@@ -180,6 +181,29 @@ defmodule Studtasks.CoursesTest do
       # attempt to set parent from different group should error
       assert {:error, changeset} = Courses.update_task(scope, parent, %{parent_id: other_task.id})
       assert "parent must belong to the same course group" in errors_on(changeset).parent_id
+    end
+
+    test "cannot set parent that itself has a parent (only one level depth)" do
+      scope = user_scope_fixture()
+      grandparent = task_fixture(scope, %{name: "grandparent"})
+
+      # create a parent whose parent is the grandparent (same group)
+      {:ok, parent} =
+        Courses.create_task(scope, %{
+          name: "parent",
+          course_group_id: grandparent.course_group_id,
+          parent_id: grandparent.id
+        })
+
+      # now attempt to create a child whose parent already has a parent
+      assert {:error, changeset} =
+               Courses.create_task(scope, %{
+                 name: "child",
+                 course_group_id: grandparent.course_group_id,
+                 parent_id: parent.id
+               })
+
+      assert "parent task already has a parent; only one level allowed" in errors_on(changeset).parent_id
     end
 
     test "create_task/2 with invalid data returns error changeset" do

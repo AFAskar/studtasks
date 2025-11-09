@@ -1,18 +1,16 @@
 version: "3.8"
 
 services:
-  studtasks:
-    image: abo3skr/studtasks:latest
+  db:
+    image: postgres:17
     environment:
-      PGHOST: ${POSTGRES_HOST:-db}
-      PGUSER: ${POSTGRES_USER:-studtasks_user}
-      PGPASSWORD: ${POSTGRES_PASSWORD:-password}
-      PGDBNAME: ${POSTGRES_DB:-studtasks_dev}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-your_secret_key}
-      PHX_HOST: ${PHX_HOST:-127.0.0.1}
-      PORT: ${PORT:-4000}
+      POSTGRES_USER: ${PGUSER:-nadhm}
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${PGDBNAME:-nadhm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "${PORT:-4000}:${PORT:-4000}"
+      - "5432:5432"
     restart: unless-stopped
 
 volumes:
