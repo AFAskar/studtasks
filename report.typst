@@ -1,4 +1,13 @@
-
+#import "@preview/ilm:1.4.1": *
+#set text(lang: "en")
+#show: ilm.with(
+  title: [nadhm (StudySync)],
+  author: "Abdulaziz Fahad BinAskar",
+  date: datetime(year: 2025, month: 9, day: 11),
+  figure-index: (enabled: true),
+  table-index: (enabled: true),
+  listing-index: (enabled: true),
+)
 = Studtasks (nadhm) – Shared Academic Task Manager
 
 == Project Title & Description
