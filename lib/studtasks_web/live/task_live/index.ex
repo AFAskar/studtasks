@@ -179,7 +179,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                   >
                     <div class="card-body p-3 gap-2">
                       <div class="flex items-start justify-between gap-2">
-                        <h4 class="font-medium leading-5 truncate">{task.name}</h4>
+                        <h4 class="font-medium leading-5 line-clamp-2 flex-1">{task.name}</h4>
                         <div class="flex items-center gap-1">
                           <span class={["badge badge-xs", priority_badge_class(task.priority)]}>
                             {String.capitalize(task.priority || "")}
@@ -228,6 +228,18 @@ defmodule StudtasksWeb.TaskLive.Index do
                           </div>
                         </div>
                       </div>
+                      <div class="flex flex-wrap items-center gap-1 mb-1">
+                        <span class={["badge badge-sm", priority_badge_class(task.priority)]}>
+                          {String.capitalize(task.priority || "")}
+                        </span>
+                        <span
+                          :if={task.parent}
+                          class="badge badge-sm badge-outline"
+                          title="Parent task"
+                        >
+                          <.icon name="hero-arrow-up" class="size-3 mr-0.5" /> Parent
+                        </span>
+                      </div>
                       <p class="text-sm opacity-70 line-clamp-3">{task.description}</p>
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -250,6 +262,9 @@ defmodule StudtasksWeb.TaskLive.Index do
                         </div>
                       </div>
                       <div :if={task.children != []} class="mt-2 space-y-2">
+                        <div class="flex items-center gap-1 text-xs font-medium opacity-70">
+                          <.icon name="hero-bars-3-bottom-left" class="size-3" /> Subtasks
+                        </div>
                         <div class="flex items-center justify-between">
                           <div class="h-2 w-full bg-base-300/70 rounded overflow-hidden mr-2">
                             <div
@@ -265,20 +280,20 @@ defmodule StudtasksWeb.TaskLive.Index do
                           <%= for child <- Enum.take(sorted_children(task.children), 3) do %>
                             <div
                               id={"task-" <> child.id <> "-mini"}
-                              class="group flex items-center gap-2 rounded border border-base-300/70 hover:border-primary/50 px-2 py-1 text-xs bg-base-100/60"
+                              class="group flex items-center gap-2 rounded border border-base-300/70 hover:border-primary/50 px-2 py-1 text-sm bg-base-100/60"
                             >
                               <button
                                 type="button"
                                 phx-click={JS.push("toggle_subtask", value: %{id: child.id})}
                                 class={[
-                                  "size-4 rounded border flex items-center justify-center",
+                                  "size-5 rounded border flex items-center justify-center",
                                   child.status == "done" &&
                                     "bg-primary text-primary-content border-primary",
                                   child.status != "done" && "bg-base-100 border-base-300"
                                 ]}
                                 aria-label={(child.status == "done" && "Mark undone") || "Mark done"}
                               >
-                                <.icon :if={child.status == "done"} name="hero-check" class="size-3" />
+                                <.icon :if={child.status == "done"} name="hero-check" class="size-4" />
                               </button>
                               <span class="truncate flex-1" title={child.name}>{child.name}</span>
                               <span :if={child.due_date} class="text-[10px] opacity-60">
@@ -322,24 +337,32 @@ defmodule StudtasksWeb.TaskLive.Index do
           export default {
             mounted(){
               this.dragged = null
-              this.el.addEventListener("dragstart", (e) => {
+              const zones = Array.from(this.el.querySelectorAll('[data-drop-zone]'))
+
+              const clearHighlights = () => zones.forEach(z => z.classList.remove('ring-2','ring-primary/50','ring-offset-1'))
+
+              this.el.addEventListener('dragstart', (e) => {
                 const card = e.target.closest('[data-task-id]')
                 if(!card) return
                 this.dragged = card
-                e.dataTransfer?.setData("text/plain", card.dataset.taskId)
+                e.dataTransfer?.setData('text/plain', card.dataset.taskId)
+                if(e.dataTransfer){ e.dataTransfer.effectAllowed = 'move' }
                 e.dataTransfer?.setDragImage(card, 10, 10)
               })
-              this.el.addEventListener("dragend", () => { this.dragged = null })
-              this.el.addEventListener("dragover", (e) => {
-                if(e.target.closest('[data-drop-zone]')){ e.preventDefault() }
-              })
-              this.el.addEventListener("drop", (e) => {
-                const zone = e.target.closest('[data-drop-zone]')
-                if(!zone) return
-                e.preventDefault()
-                const taskId = this.dragged?.dataset.taskId || e.dataTransfer?.getData("text/plain")
-                const status = zone.dataset.status || null
-                if(taskId && status){ this.pushEvent("kanban:move", {task_id: taskId, status: status}) }
+
+              this.el.addEventListener('dragend', () => { this.dragged = null; clearHighlights() })
+
+              zones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => { e.preventDefault(); if(!zone.classList.contains('ring-2')){ zone.classList.add('ring-2','ring-primary/50','ring-offset-1') } })
+                zone.addEventListener('dragenter', (e) => { if(e.dataTransfer){ e.dataTransfer.dropEffect = 'move' } zone.classList.add('ring-2','ring-primary/50','ring-offset-1') })
+                zone.addEventListener('dragleave', () => { zone.classList.remove('ring-2','ring-primary/50','ring-offset-1') })
+                zone.addEventListener('drop', (e) => {
+                  e.preventDefault()
+                  const taskId = this.dragged?.dataset.taskId || e.dataTransfer?.getData('text/plain')
+                  const status = zone.dataset.status || null
+                  clearHighlights()
+                  if(taskId && status){ this.pushEvent('kanban:move', {task_id: taskId, status: status}) }
+                })
               })
             }
           }
