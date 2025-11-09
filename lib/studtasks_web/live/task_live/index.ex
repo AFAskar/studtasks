@@ -446,14 +446,40 @@ defmodule StudtasksWeb.TaskLive.Index do
   end
 
   def handle_event("kanban:move", %{"task_id" => id, "status" => status}, socket) do
-    task = Courses.get_task!(socket.assigns.current_scope, id)
-    params = %{status: status}
-    {:ok, _task} = Courses.update_task(socket.assigns.current_scope, task, params)
+    # Optimistic UI update: move immediately on the board, then persist async
+    columns = socket.assigns.board_columns || []
 
-    tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
-    stats = compute_stats(tasks)
-    tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
-    {:noreply, socket |> assign(:task_stats, stats) |> assign_board(tasks)}
+    case move_task_between_columns(columns, id, status) do
+      {:no_change, _columns} ->
+        # Dropped in the same column or task not found; nothing to do
+        {:noreply, socket}
+
+      {:moved, new_columns, old_status} ->
+        # Recompute stats from the optimistic board state
+        optimistic_tasks = flatten_board_tasks(new_columns)
+        new_stats = compute_stats(optimistic_tasks)
+
+        # Persist in the background; revert on failure
+        parent = self()
+        current_scope = socket.assigns.current_scope
+
+        Task.start(fn ->
+          task = Courses.get_task!(current_scope, id)
+
+          case Courses.update_task(current_scope, task, %{status: status}) do
+            {:ok, _} ->
+              :ok
+
+            {:error, _changeset} ->
+              send(parent, {:kanban_move_revert, %{id: id, old_status: old_status}})
+          end
+        end)
+
+        {:noreply,
+         socket
+         |> assign(:board_columns, new_columns)
+         |> assign(:task_stats, new_stats)}
+    end
   end
 
   def handle_event("open_quick_new", %{"status" => status}, socket) do
@@ -590,6 +616,26 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> stream(:tasks, tasks, reset: true)}
   end
 
+  # Revert an optimistic drag if persistence fails
+  def handle_info({:kanban_move_revert, %{id: id, old_status: old_status}}, socket) do
+    columns = socket.assigns.board_columns || []
+
+    case move_task_between_columns(columns, id, old_status) do
+      {:no_change, _} ->
+        {:noreply, put_flash(socket, :error, "Could not move task. Please try again.")}
+
+      {:moved, reverted_columns, _from_status} ->
+        tasks = flatten_board_tasks(reverted_columns)
+        stats = compute_stats(tasks)
+
+        {:noreply,
+         socket
+         |> put_flash(:error, "Could not move task. Change was reverted.")
+         |> assign(:board_columns, reverted_columns)
+         |> assign(:task_stats, stats)}
+    end
+  end
+
   defp list_tasks(current_scope, group_id) do
     Courses.list_group_tasks(current_scope, group_id)
   end
@@ -601,6 +647,72 @@ defmodule StudtasksWeb.TaskLive.Index do
     columns = Enum.map(statuses, fn s -> {s, %{tasks: Map.get(grouped, s, [])}} end)
 
     assign(socket, board_columns: columns)
+  end
+
+  # Move a task by id from its current column to a new status column.
+  # Returns:
+  # {:no_change, columns} if task not found or already in that status
+  # {:moved, new_columns, old_status}
+  defp move_task_between_columns(columns, id, new_status) when is_list(columns) do
+    # Find and remove task from its current column
+    {found_task, old_status, stripped_columns} =
+      Enum.reduce(columns, {nil, nil, []}, fn {status, %{tasks: tasks} = col}, {ft, os, acc} ->
+        if ft do
+          {ft, os, [{status, col} | acc]}
+        else
+          {maybe_task, remaining} = pop_task_by_id(tasks, id)
+
+          if maybe_task do
+            {maybe_task, status, [{status, %{col | tasks: remaining}} | acc]}
+          else
+            {nil, nil, [{status, col} | acc]}
+          end
+        end
+      end)
+
+    stripped_columns = Enum.reverse(stripped_columns)
+
+    cond do
+      is_nil(found_task) ->
+        {:no_change, columns}
+
+      old_status == new_status ->
+        {:no_change, columns}
+
+      true ->
+        updated_task = Map.put(found_task, :status, new_status)
+
+        new_columns =
+          Enum.map(stripped_columns, fn {status, %{tasks: tasks} = col} ->
+            if status == new_status do
+              {status, %{col | tasks: tasks ++ [updated_task]}}
+            else
+              {status, col}
+            end
+          end)
+
+        {:moved, new_columns, old_status}
+    end
+  end
+
+  # Pop a task by id from a list of tasks, returning {task | nil, remaining_tasks}
+  defp pop_task_by_id(tasks, id) do
+    Enum.reduce_while(Enum.with_index(tasks), {nil, tasks}, fn {t, idx}, {_found, acc} ->
+      if to_string(t.id) == to_string(id) do
+        remaining = List.delete_at(tasks, idx)
+        {:halt, {t, remaining}}
+      else
+        {:cont, {nil, tasks}}
+      end
+    end)
+    |> case do
+      {nil, _} -> {nil, tasks}
+      other -> other
+    end
+  end
+
+  defp flatten_board_tasks(columns) when is_list(columns) do
+    for {_status, %{tasks: tasks}} <- columns, task <- tasks, do: task
   end
 
   defp compute_stats(tasks) do
