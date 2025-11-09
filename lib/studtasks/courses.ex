@@ -4,10 +4,10 @@ defmodule Studtasks.Courses do
   """
 
   import Ecto.Query, warn: false
+  alias Ecto.Multi
   alias Studtasks.Repo
-
-  alias Studtasks.Courses.CourseGroup
-  alias Studtasks.Accounts.Scope
+  alias Studtasks.Courses.{CourseGroup, GroupMembership, Task}
+  alias Studtasks.Accounts.{Scope, User}
 
   @doc """
   Subscribes to scoped notifications about any course_group changes.
@@ -41,8 +41,6 @@ defmodule Studtasks.Courses do
 
   """
   def list_course_groups(%Scope{} = scope) do
-    import Ecto.Query
-
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
@@ -67,8 +65,6 @@ defmodule Studtasks.Courses do
 
   """
   def get_course_group!(%Scope{} = scope, id) do
-    import Ecto.Query
-
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
@@ -91,8 +87,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is the owner of the group.
   """
   def group_owner?(%Scope{} = scope, %CourseGroup{} = group) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "owner",
       select: m.id
@@ -105,8 +99,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is a member (or owner) of the group.
   """
   def group_member?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id,
       select: m.id
@@ -119,8 +111,6 @@ defmodule Studtasks.Courses do
   Lists memberships for a given group with the associated users preloaded.
   """
   def list_group_memberships(group_id) do
-    alias Studtasks.Courses.GroupMembership
-
     GroupMembership
     |> where([m], m.course_group_id == ^group_id)
     |> preload(:user)
@@ -131,8 +121,6 @@ defmodule Studtasks.Courses do
   Sets the role of a membership. Only the group owner can change roles.
   """
   def set_group_membership_role(%Scope{} = scope, group_id, user_id, role) do
-    alias Studtasks.Courses.GroupMembership
-
     true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
@@ -149,8 +137,6 @@ defmodule Studtasks.Courses do
   The owner cannot remove themselves via membership (owners are not members).
   """
   def remove_group_member(%Scope{} = scope, group_id, user_id) do
-    alias Studtasks.Courses.GroupMembership
-
     true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
@@ -165,8 +151,6 @@ defmodule Studtasks.Courses do
   Ensures the given user is a member of the group. Idempotent.
   """
   def ensure_group_membership(%Scope{} = scope, group_id, role \\ "member") do
-    alias Studtasks.Courses.GroupMembership
-
     %GroupMembership{}
     |> GroupMembership.changeset(%{
       user_id: scope.user.id,
@@ -278,10 +262,6 @@ defmodule Studtasks.Courses do
   Returns the owner user for a group, or nil if not set.
   """
   def get_group_owner_user(group_id) do
-    import Ecto.Query
-    alias Studtasks.Courses.GroupMembership
-    alias Studtasks.Accounts.User
-
     from(m in GroupMembership,
       join: u in User,
       on: u.id == m.user_id,
@@ -292,8 +272,6 @@ defmodule Studtasks.Courses do
   end
 
   defp owner_membership?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id and m.role == "owner",
       select: m.id
@@ -306,8 +284,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is an admin of the group.
   """
   def group_admin?(%Scope{} = scope, %CourseGroup{} = group) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "admin",
       select: m.id
@@ -317,8 +293,6 @@ defmodule Studtasks.Courses do
   end
 
   defp owner_or_admin_membership?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where:
         m.course_group_id == ^group_id and m.user_id == ^scope.user.id and
@@ -328,9 +302,6 @@ defmodule Studtasks.Courses do
     |> Repo.one()
     |> is_binary()
   end
-
-  alias Studtasks.Courses.Task
-  alias Studtasks.Accounts.Scope
 
   @doc """
   Subscribes to scoped notifications about any task changes.
@@ -405,8 +376,6 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_assigned_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -424,8 +393,6 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_recent_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -440,8 +407,6 @@ defmodule Studtasks.Courses do
   Returns all tasks assigned to the current user across all groups, newest first.
   """
   def list_assigned_tasks_all(%Scope{} = scope) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -456,8 +421,6 @@ defmodule Studtasks.Courses do
   Returns all tasks for the current user across all groups, newest first.
   """
   def list_recent_tasks_all(%Scope{} = scope) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -482,8 +445,6 @@ defmodule Studtasks.Courses do
 
   """
   def get_task!(%Scope{} = scope, id) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -498,8 +459,6 @@ defmodule Studtasks.Courses do
   Raises `Ecto.NoResultsError` if not found or not owned by user.
   """
   def get_task_in_group!(%Scope{} = scope, id, course_group_id) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -587,9 +546,6 @@ defmodule Studtasks.Courses do
     # orphan them by setting their parent_id to nil prior to deleting the
     # parent task. This preserves child tasks and avoids accidental loss
     # of work items.
-
-    import Ecto.Query, only: [from: 2]
-    alias Ecto.Multi
 
     multi =
       Multi.new()
