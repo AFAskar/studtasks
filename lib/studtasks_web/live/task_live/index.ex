@@ -49,7 +49,10 @@ defmodule StudtasksWeb.TaskLive.Index do
               <span class="ml-1 hidden md:inline">Board</span>
             </.link>
           </div>
-          <.button variant="primary" navigate={~p"/groups/#{@course_group}/tasks/new"}>
+          <.button
+            variant="primary"
+            phx-click={JS.push("open_quick_new", value: %{status: "backlog"})}
+          >
             <.icon name="hero-plus" /> New Task
           </.button>
         </:actions>
@@ -233,36 +236,6 @@ defmodule StudtasksWeb.TaskLive.Index do
           <% end %>
         </div>
 
-        <div
-          :if={@show_quick_new}
-          id="quick-new"
-          class="fixed inset-0 z-50 hidden"
-          phx-mounted={show("#quick-new")}
-          phx-remove={hide("#quick-new")}
-        >
-          <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_quick_new")} />
-          <div class="modal modal-open">
-            <div class="modal-box space-y-3">
-              <h3 class="font-bold text-lg">Quick create task</h3>
-              <.form for={@quick_form} id="quick-form" phx-submit="quick_create">
-                <.input type="text" field={@quick_form[:name]} label="Title" required />
-                <.input type="textarea" field={@quick_form[:description]} label="Description" />
-                <.input
-                  type="select"
-                  field={@quick_form[:assignee_id]}
-                  prompt="Unassigned"
-                  options={@assignee_options}
-                  label="Assigned to"
-                />
-                <footer class="flex gap-2 justify-end pt-2">
-                  <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>
-                  <.button variant="primary" phx-disable-with="Creating...">Create</.button>
-                </footer>
-              </.form>
-            </div>
-          </div>
-        </div>
-
         <script :type={Phoenix.LiveView.ColocatedHook} name=".Kanban">
           export default {
             mounted(){
@@ -290,6 +263,44 @@ defmodule StudtasksWeb.TaskLive.Index do
           }
         </script>
       <% end %>
+      <div
+        :if={@show_quick_new}
+        id="quick-new"
+        class="fixed inset-0 z-50 hidden"
+        phx-mounted={show("#quick-new")}
+        phx-remove={hide("#quick-new")}
+      >
+        <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_quick_new")} />
+        <div class="modal modal-open">
+          <div class="modal-box space-y-3">
+            <h3 class="font-bold text-lg">Quick create task</h3>
+            <.form for={@quick_form} id="quick-form" phx-submit="quick_create">
+              <.input type="text" field={@quick_form[:name]} label="Title" required />
+              <.input type="textarea" field={@quick_form[:description]} label="Description" />
+              <.input
+                type="select"
+                field={@quick_form[:assignee_id]}
+                prompt="Unassigned"
+                options={@assignee_options}
+                label="Assigned to"
+              />
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <.input
+                  type="select"
+                  field={@quick_form[:priority]}
+                  options={priority_options()}
+                  label="Priority"
+                />
+                <.input type="date" field={@quick_form[:due_date]} label="Due date" />
+              </div>
+              <footer class="flex gap-2 justify-end pt-2">
+                <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>
+                <.button variant="primary" phx-disable-with="Creating...">Create</.button>
+              </footer>
+            </.form>
+          </div>
+        </div>
+      </div>
     </Layouts.app>
     """
   end
@@ -329,7 +340,16 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:quick_status, "backlog")
      |> assign(
        :quick_form,
-       to_form(%{"name" => nil, "description" => nil, "assignee_id" => nil}, as: :task)
+       to_form(
+         %{
+           "name" => nil,
+           "description" => nil,
+           "assignee_id" => nil,
+           "priority" => "medium",
+           "due_date" => nil
+         },
+         as: :task
+       )
      )
      |> assign(:task_stats, stats)
      |> assign_board(apply_filters_sort(tasks, filters, sort))
@@ -395,7 +415,16 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:quick_status, status)
      |> assign(
        :quick_form,
-       to_form(%{"name" => nil, "description" => nil, "assignee_id" => nil}, as: :task)
+       to_form(
+         %{
+           "name" => nil,
+           "description" => nil,
+           "assignee_id" => nil,
+           "priority" => "medium",
+           "due_date" => nil
+         },
+         as: :task
+       )
      )}
   end
 
@@ -408,6 +437,7 @@ defmodule StudtasksWeb.TaskLive.Index do
       params
       |> Map.put("course_group_id", socket.assigns.course_group.id)
       |> Map.put("status", socket.assigns.quick_status)
+      |> Map.update("priority", "medium", & &1)
 
     case Courses.create_task(socket.assigns.current_scope, attrs) do
       {:ok, _task} ->
@@ -535,6 +565,9 @@ defmodule StudtasksWeb.TaskLive.Index do
       {"Created ↓", "created_desc"}
     ]
   end
+
+  defp priority_options(),
+    do: [{"Low", "low"}, {"Medium", "medium"}, {"High", "high"}, {"Urgent", "urgent"}]
 
   defp apply_filters_sort(tasks, filters, sort) do
     tasks

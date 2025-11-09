@@ -32,29 +32,23 @@ defmodule StudtasksWeb.TaskLiveTest do
       assert has_element?(index_live, "#group-stats")
     end
 
-    test "saves new task", %{conn: conn, task: task} do
+    test "saves new task via quick modal", %{conn: conn, task: task} do
       {:ok, index_live, _html} = live(conn, ~p"/groups/#{task.course_group_id}/tasks")
 
-      assert {:ok, form_live, _} =
-               index_live
-               |> element("a", "New Task")
-               |> render_click()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks/new")
+      _ = index_live |> element("button", "New Task") |> render_click()
 
-      assert render(form_live) =~ "New Task"
+      # submit invalid (missing name) - expect validation error from changeset
+      assert index_live
+             |> form("#quick-form", task: @invalid_attrs)
+             |> render_submit() =~ "can&#39;t be blank"
 
-      assert form_live
-             |> form("#task-form", task: @invalid_attrs)
-             |> render_change() =~ "can&#39;t be blank"
-
-      assert {:ok, index_live, _html} =
-               form_live
-               |> form("#task-form", task: @create_attrs)
-               |> render_submit()
-               |> follow_redirect(conn, ~p"/groups/#{task.course_group_id}/tasks")
+      # submit valid
+      _ =
+        index_live
+        |> form("#quick-form", task: @create_attrs)
+        |> render_submit()
 
       html = render(index_live)
-      assert html =~ "Task created successfully"
       assert html =~ "some name"
     end
 
