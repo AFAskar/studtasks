@@ -124,6 +124,10 @@ defmodule StudtasksWeb.TaskLive.Index do
           <:col :let={{_id, task}} label="Due">
             {task.due_date && Calendar.strftime(task.due_date, "%b %-d")}
           </:col>
+          <:col :let={{_id, task}} label="Parent">
+            {task.parent && (task.parent.name || task.parent.id)}
+          </:col>
+          <:col :let={{_id, task}} label="Subtasks">{length(task.children)}</:col>
           <:col :let={{_id, task}} label="Assigned to">
             {task.assignee && (task.assignee.name || task.assignee.email)}
           </:col>
@@ -180,6 +184,14 @@ defmodule StudtasksWeb.TaskLive.Index do
                           <span class={["badge badge-xs", priority_badge_class(task.priority)]}>
                             {String.capitalize(task.priority || "")}
                           </span>
+                          <span
+                            :if={task.parent}
+                            class="badge badge-xs badge-outline"
+                            title="Parent task"
+                          >
+                            <.icon name="hero-arrow-up" class="size-3 mr-0.5" /> {task.parent.name ||
+                              task.parent.id}
+                          </span>
                           <div class="dropdown dropdown-end">
                             <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
                               <.icon name="hero-ellipsis-vertical" />
@@ -196,6 +208,15 @@ defmodule StudtasksWeb.TaskLive.Index do
                               <li>
                                 <button phx-click={JS.push("open_edit", value: %{id: task.id})}>
                                   Edit
+                                </button>
+                              </li>
+                              <li>
+                                <button phx-click={
+                                  JS.push("open_quick_new",
+                                    value: %{status: status, parent_id: task.id}
+                                  )
+                                }>
+                                  Add subtask
                                 </button>
                               </li>
                               <li>
@@ -226,6 +247,67 @@ defmodule StudtasksWeb.TaskLive.Index do
                               task.children
                             )}
                           </span>
+                        </div>
+                      </div>
+                      <div :if={task.children != []} class="mt-2 space-y-2">
+                        <div class="flex items-center justify-between">
+                          <div class="h-2 w-full bg-base-300/70 rounded overflow-hidden mr-2">
+                            <div
+                              class="h-2 bg-primary/70 transition-all"
+                              style={"width: #{subtask_completion(task.children)}%"}
+                            />
+                          </div>
+                          <span class="text-[10px] font-medium tabular-nums opacity-70">
+                            {done_children_count(task.children)} / {length(task.children)}
+                          </span>
+                        </div>
+                        <div class="space-y-1">
+                          <%= for child <- Enum.take(sorted_children(task.children), 3) do %>
+                            <div
+                              id={"task-" <> child.id <> "-mini"}
+                              class="group flex items-center gap-2 rounded border border-base-300/70 hover:border-primary/50 px-2 py-1 text-xs bg-base-100/60"
+                            >
+                              <button
+                                type="button"
+                                phx-click={JS.push("toggle_subtask", value: %{id: child.id})}
+                                class={[
+                                  "size-4 rounded border flex items-center justify-center",
+                                  child.status == "done" &&
+                                    "bg-primary text-primary-content border-primary",
+                                  child.status != "done" && "bg-base-100 border-base-300"
+                                ]}
+                                aria-label={(child.status == "done" && "Mark undone") || "Mark done"}
+                              >
+                                <.icon :if={child.status == "done"} name="hero-check" class="size-3" />
+                              </button>
+                              <span class="truncate flex-1" title={child.name}>{child.name}</span>
+                              <span :if={child.due_date} class="text-[10px] opacity-60">
+                                {Calendar.strftime(child.due_date, "%b %-d")}
+                              </span>
+                            </div>
+                          <% end %>
+                          <div
+                            :if={length(task.children) > 3}
+                            class="flex items-center justify-between text-[10px]"
+                          >
+                            <span class="opacity-60">+{length(task.children) - 3} more</span>
+                            <button
+                              class="link link-hover text-[10px]"
+                              phx-click={JS.navigate(~p"/groups/#{@course_group}/tasks/#{task}")}
+                            >
+                              View all
+                            </button>
+                          </div>
+                          <button
+                            class="btn btn-xs btn-ghost w-full mt-1"
+                            phx-click={
+                              JS.push("open_quick_new",
+                                value: %{status: task.status, parent_id: task.id}
+                              )
+                            }
+                          >
+                            <.icon name="hero-plus" class="size-3" /> Add subtask
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -300,6 +382,13 @@ defmodule StudtasksWeb.TaskLive.Index do
                 options={status_options()}
                 label="Status"
               />
+              <.input
+                type="select"
+                field={@edit_form[:parent_id]}
+                prompt="No parent"
+                options={@edit_parent_options}
+                label="Parent task"
+              />
               <footer class="flex gap-2 justify-end pt-2">
                 <.button phx-click={JS.push("close_edit")} type="button">Cancel</.button>
                 <.button variant="primary" phx-disable-with="Saving...">Save</.button>
@@ -338,6 +427,13 @@ defmodule StudtasksWeb.TaskLive.Index do
                 />
                 <.input type="date" field={@quick_form[:due_date]} label="Due date" />
               </div>
+              <.input
+                type="select"
+                field={@quick_form[:parent_id]}
+                prompt="No parent"
+                options={@parent_options}
+                label="Parent task"
+              />
               <footer class="flex gap-2 justify-end pt-2">
                 <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>
                 <.button variant="primary" phx-disable-with="Creating...">Create</.button>
@@ -369,6 +465,7 @@ defmodule StudtasksWeb.TaskLive.Index do
     filters = default_filters()
     sort = "priority_desc"
     members = Courses.list_group_memberships(group_id)
+    parent_opts = parent_options(tasks)
 
     {:ok,
      socket
@@ -386,6 +483,8 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:editing_task, nil)
      |> assign(:edit_form, to_form(%{}, as: :task))
      |> assign(:quick_status, "backlog")
+     |> assign(:parent_options, parent_opts)
+     |> assign(:edit_parent_options, parent_opts)
      |> assign(
        :quick_form,
        to_form(
@@ -411,11 +510,14 @@ defmodule StudtasksWeb.TaskLive.Index do
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
     stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+    parent_opts = parent_options(tasks)
 
     {:noreply,
      socket
      |> assign(:view_mode, :list)
      |> assign(:task_stats, stats)
+     |> assign(:parent_options, parent_opts)
+     |> assign(:edit_parent_options, parent_opts)
      |> stream(:tasks, tasks, reset: true)}
   end
 
@@ -425,11 +527,14 @@ defmodule StudtasksWeb.TaskLive.Index do
     tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
     stats = compute_stats(tasks)
     tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+    parent_opts = parent_options(tasks)
 
     {:noreply,
      socket
      |> assign(:view_mode, :board)
      |> assign(:task_stats, stats)
+     |> assign(:parent_options, parent_opts)
+     |> assign(:edit_parent_options, parent_opts)
      |> assign_board(tasks)}
   end
 
@@ -482,7 +587,33 @@ defmodule StudtasksWeb.TaskLive.Index do
     end
   end
 
-  def handle_event("open_quick_new", %{"status" => status}, socket) do
+  # Toggle a subtask between done and todo
+  def handle_event("toggle_subtask", %{"id" => id}, socket) do
+    child = Courses.get_task!(socket.assigns.current_scope, id)
+    new_status = if child.status == "done", do: "todo", else: "done"
+
+    case Courses.update_task(socket.assigns.current_scope, child, %{status: new_status}) do
+      {:ok, _} ->
+        tasks = list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id)
+        stats = compute_stats(tasks)
+        tasks = apply_filters_sort(tasks, socket.assigns.filters, socket.assigns.sort)
+
+        {:noreply,
+         socket
+         |> assign(:task_stats, stats)
+         |> assign_board(tasks)
+         |> assign(:parent_options, parent_options(tasks))
+         |> assign(:edit_parent_options, parent_options(tasks))
+         |> stream(:tasks, tasks, reset: true)}
+
+      {:error, _cs} ->
+        {:noreply, put_flash(socket, :error, "Could not update subtask")}
+    end
+  end
+
+  def handle_event("open_quick_new", %{"status" => status} = params, socket) do
+    parent_id = Map.get(params, "parent_id")
+
     {:noreply,
      socket
      |> assign(:show_quick_new, true)
@@ -495,7 +626,8 @@ defmodule StudtasksWeb.TaskLive.Index do
            "description" => nil,
            "assignee_id" => nil,
            "priority" => "medium",
-           "due_date" => nil
+           "due_date" => nil,
+           "parent_id" => parent_id
          },
          as: :task
        )
@@ -525,6 +657,13 @@ defmodule StudtasksWeb.TaskLive.Index do
      socket
      |> assign(:show_edit, true)
      |> assign(:editing_task, task)
+     |> assign(
+       :edit_parent_options,
+       parent_options(
+         list_tasks(socket.assigns.current_scope, socket.assigns.course_group.id),
+         task.id
+       )
+     )
      |> assign(:edit_form, to_form(changeset))}
   end
 
@@ -547,6 +686,8 @@ defmodule StudtasksWeb.TaskLive.Index do
          |> assign(:editing_task, nil)
          |> assign(:task_stats, stats)
          |> assign_board(tasks)
+         |> assign(:parent_options, parent_options(tasks))
+         |> assign(:edit_parent_options, parent_options(tasks))
          |> stream(:tasks, tasks, reset: true)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -572,6 +713,8 @@ defmodule StudtasksWeb.TaskLive.Index do
          |> assign(:show_quick_new, false)
          |> assign(:task_stats, stats)
          |> assign_board(tasks)
+         |> assign(:parent_options, parent_options(tasks))
+         |> assign(:edit_parent_options, parent_options(tasks))
          |> stream(:tasks, tasks, reset: true)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -599,6 +742,8 @@ defmodule StudtasksWeb.TaskLive.Index do
      |> assign(:filter_form, to_form(filters, as: :f))
      |> assign(:task_stats, stats)
      |> assign_board(tasks)
+     |> assign(:parent_options, parent_options(tasks))
+     |> assign(:edit_parent_options, parent_options(tasks))
      |> stream(:tasks, tasks, reset: true)}
   end
 
@@ -613,6 +758,8 @@ defmodule StudtasksWeb.TaskLive.Index do
      socket
      |> assign(:task_stats, stats)
      |> assign_board(tasks)
+     |> assign(:parent_options, parent_options(tasks))
+     |> assign(:edit_parent_options, parent_options(tasks))
      |> stream(:tasks, tasks, reset: true)}
   end
 
@@ -774,6 +921,25 @@ defmodule StudtasksWeb.TaskLive.Index do
   defp status_options(),
     do: Enum.map(["backlog", "todo", "in_progress", "done"], &{format_status(&1), &1})
 
+  # --- Subtask helpers for board UI ---
+  defp done_children_count(children) when is_list(children) do
+    Enum.count(children, &(&1.status == "done"))
+  end
+
+  defp subtask_completion(children) when is_list(children) do
+    total = length(children)
+    if total == 0, do: 0, else: div(done_children_count(children) * 100, total)
+  end
+
+  defp sorted_children(children) do
+    # Show undone first, then by due_date asc, then inserted_at desc
+    Enum.sort_by(children, fn c ->
+      done = c.status == "done"
+      due = c.due_date || ~D[3000-01-01]
+      {done, due}
+    end)
+  end
+
   defp apply_filters_sort(tasks, filters, sort) do
     tasks
     |> Enum.filter(fn t ->
@@ -840,4 +1006,18 @@ defmodule StudtasksWeb.TaskLive.Index do
   defp priority_badge_class(_), do: "badge-ghost"
 
   defp truthy?(val), do: val in [true, "true", "on", 1, "1"]
+
+  # Build parent task options limited to tasks without a parent (root tasks).
+  # Exclude the currently edited task if exclude_id provided to avoid self-reference.
+  defp parent_options(tasks, exclude_id \\ nil) do
+    tasks
+    |> Enum.map(fn
+      {_id, t} -> t
+      t -> t
+    end)
+    |> Enum.filter(&is_nil(&1.parent_id))
+    |> Enum.reject(fn t -> exclude_id && to_string(t.id) == to_string(exclude_id) end)
+    |> Enum.map(fn t -> {t.name || "Task #{t.id}", t.id} end)
+    |> Enum.sort_by(fn {name, _id} -> String.downcase(name || "") end)
+  end
 end

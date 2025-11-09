@@ -14,7 +14,7 @@
 // todo add Department info "Computer Science Department" and Logo
 // todo add Course info "CS 335 - Cloud Computing"
 
-// implemented bonus features:
+// mention the implemented bonus features:
 // - Forgot password flow with email reset link
 // - drag-and-drop task ordering (kanban style)
 // - Data Visualization (charts) for each coursegroup
@@ -292,7 +292,10 @@ gcloud run deploy studtasks-service \
   --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
   --min-instances=0 --max-instances=5 \
 ```
-= Future Work
+
+= Conclusion
+// write a brief Conclusion about the project, what was learned, and the overall experience.
+== Future Work
 - Push Notifications for assigned tasks or upcoming deadlines
 - Comments/Discussion thread on individual tasks.
 - Integration with external calendar services (e.g., Google Calendar).
