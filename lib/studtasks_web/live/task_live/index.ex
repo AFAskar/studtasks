@@ -265,14 +265,14 @@ defmodule StudtasksWeb.TaskLive.Index do
                         <div class="flex items-center gap-1 text-xs font-medium opacity-70">
                           <.icon name="hero-bars-3-bottom-left" class="size-3" /> Subtasks
                         </div>
-                        <div class="flex items-center justify-between">
-                          <div class="h-2 w-full bg-base-300/70 rounded overflow-hidden mr-2">
+                        <div class="flex items-center gap-2">
+                          <div class="h-[6px] grow bg-base-300/70 rounded overflow-hidden">
                             <div
-                              class="h-2 bg-primary/70 transition-all"
+                              class="h-full bg-primary/70 transition-all"
                               style={"width: #{subtask_completion(task.children)}%"}
                             />
                           </div>
-                          <span class="text-[10px] font-medium tabular-nums opacity-70">
+                          <span class="text-[10px] font-medium tabular-nums opacity-70 shrink-0 whitespace-nowrap">
                             {done_children_count(task.children)} / {length(task.children)}
                           </span>
                         </div>
