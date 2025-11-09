@@ -811,7 +811,12 @@ defmodule StudtasksWeb.TaskLive.Index do
   end
 
   defp assign_board(socket, tasks) do
-    grouped = Enum.group_by(tasks, & &1.status)
+    # Build Kanban columns using ONLY root (parentless) tasks so subtasks
+    # are displayed inside their parent's card and not as separate cards.
+    # We still keep all tasks elsewhere (streams, stats) so list view and
+    # metrics include subtasks.
+    root_tasks = Enum.filter(tasks, &is_nil(&1.parent_id))
+    grouped = Enum.group_by(root_tasks, & &1.status)
     statuses = ["backlog", "todo", "in_progress", "done"]
 
     columns = Enum.map(statuses, fn s -> {s, %{tasks: Map.get(grouped, s, [])}} end)
@@ -876,7 +881,13 @@ defmodule StudtasksWeb.TaskLive.Index do
   end
 
   defp flatten_board_tasks(columns) when is_list(columns) do
-    for {_status, %{tasks: tasks}} <- columns, task <- tasks, do: task
+    # Return all tasks represented in the board INCLUDING subtasks so stats
+    # remain accurate after optimistic updates.
+    for {_status, %{tasks: tasks}} <- columns,
+        task <- tasks,
+        child <- [task] ++ (task.children || []) do
+      child
+    end
   end
 
   defp compute_stats(tasks) do
