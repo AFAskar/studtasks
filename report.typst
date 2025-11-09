@@ -3,13 +3,20 @@
 #show: ilm.with(
   title: [Studtasks (nadhem) – Shared Academic Task Manager],
   author: "Abdulaziz Fahad BinAskar, Saud Mishari Aldalbahy, Naif Salman Aldrees, Abdulaziz Mohammed Alkthiri",
-  abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, complete, and discuss tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
+  abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, or complete tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
   date: datetime(year: 2025, month: 11, day: 9),
   figure-index: (enabled: true),
   table-index: (enabled: true),
   listing-index: (enabled: true),
 )
+// todo add Doctoral Advisor info "Dr. Imran Qureshi"
+// todo add University info "Imam Mohammed ibn Saud Islamic University" and Logo
+// todo add Department info "Computer Science Department" and Logo
+// todo add Course info "CS 335 - Cloud Computing"
 
+// implemented bonus features:
+// - Forgot password flow with email reset link
+// - drag-and-drop task ordering (kanban style) with LiveView hooks and JS library
 
 = Setup Instructions
 
@@ -177,10 +184,10 @@ The application uses the following environment variables (see `example.env` for 
 == Screenshots
 
 
-// Uncomment the following lines after adding images under /screens/
-// #figure(image("/screens/login.png", width: 100%), caption: [Login page])
-// #figure(image("/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
-// #figure(image("/screens/tasks.png", width: 100%), caption: [Course/group task view])
+// Uncomment the following lines after adding images under /Report/screens/
+// #figure(image("/Report/screens/login.png", width: 100%), caption: [Login page])
+// #figure(image("/Report/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
+// #figure(image("/Report/screens/tasks.png", width: 100%), caption: [Course/group task view])
 
 = Deployment & Demo
 
@@ -285,3 +292,9 @@ gcloud run deploy studtasks-service \
   --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
   --min-instances=0 --max-instances=5 \
 ```
+= Future Work
+- Push Notifications for assigned tasks or upcoming deadlines
+- Comments/Discussion thread on individual tasks.
+- Integration with external calendar services (e.g., Google Calendar).
+- File attachments for tasks (e.g., upload PDFs, images).
+- Offline support with local caching and sync when online using Service Workers.
