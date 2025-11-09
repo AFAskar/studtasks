@@ -1070,11 +1070,16 @@ defmodule StudtasksWeb.TaskLive.Index do
   end
 
   defp sorted_children(children) do
-    # Show undone first, then by due_date asc, then inserted_at desc
+    # Sort children strictly by name (case-insensitive), nil names last
     Enum.sort_by(children, fn c ->
-      done = c.status == "done"
-      due = c.due_date || ~D[3000-01-01]
-      {done, due}
+      name_key =
+        case c.name do
+          # push nil names to bottom
+          nil -> "zzzzzz"
+          name -> String.downcase(name)
+        end
+
+      name_key
     end)
   end
 
