@@ -697,17 +697,11 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   # Pop a task by id from a list of tasks, returning {task | nil, remaining_tasks}
   defp pop_task_by_id(tasks, id) do
-    Enum.reduce_while(Enum.with_index(tasks), {nil, tasks}, fn {t, idx}, {_found, acc} ->
-      if to_string(t.id) == to_string(id) do
-        remaining = List.delete_at(tasks, idx)
-        {:halt, {t, remaining}}
-      else
-        {:cont, {nil, tasks}}
-      end
-    end)
-    |> case do
-      {nil, _} -> {nil, tasks}
-      other -> other
+    idx = Enum.find_index(tasks, fn t -> to_string(t.id) == to_string(id) end)
+
+    case idx do
+      nil -> {nil, tasks}
+      idx -> {Enum.at(tasks, idx), List.delete_at(tasks, idx)}
     end
   end
 
