@@ -153,7 +153,7 @@ defmodule StudtasksWeb.TaskLive.Index do
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <%= for {status, column} <- @board_columns do %>
-            <div class="card bg-base-200/60 border border-base-300">
+            <div class="card h-full flex flex-col bg-base-200/60 border border-base-300">
               <div class="flex items-center justify-between px-3 py-2 border-b">
                 <div class="flex items-center gap-2">
                   <h3 class="text-sm font-semibold">{format_status(status)}</h3>
@@ -166,7 +166,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                   <.icon name="hero-plus" />
                 </button>
               </div>
-              <div class="p-2 min-h-64 space-y-2" data-status={status} data-drop-zone="true">
+              <div class="p-2 min-h-64 space-y-2 flex-1" data-status={status} data-drop-zone="true">
                 <%= if column.tasks == [] do %>
                   <div class="text-sm opacity-60 px-2 py-8 text-center">Drop here</div>
                 <% end %>
