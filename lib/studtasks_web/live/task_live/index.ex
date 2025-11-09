@@ -82,7 +82,7 @@ defmodule StudtasksWeb.TaskLive.Index do
               <div class="text-xs opacity-70">Total: {@task_stats.total}</div>
             </div>
             <div class="mt-3 space-y-3">
-              <%= for {label, key, color} <- [{"Backlog", :backlog, "bg-base-300"},
+              <%= for {label, key, color} <- [{"Backlog", :backlog, "bg-neutral/100"},
                                               {"Todo", :todo, "bg-info/70"},
                                               {"In Progress", :in_progress, "bg-warning/70"},
                                               {"Done", :done, "bg-success/80"}] do %>
