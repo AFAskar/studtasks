@@ -142,6 +142,46 @@ defmodule Studtasks.CoursesTest do
       assert task.user_id == scope.user.id
     end
 
+    test "create_task/2 with parent_id creates a child task" do
+      scope = user_scope_fixture()
+      parent = task_fixture(scope, %{name: "parent"})
+
+      child_attrs = %{
+        name: "child",
+        description: "child desc",
+        course_group_id: parent.course_group_id,
+        parent_id: parent.id
+      }
+
+      assert {:ok, %Task{} = child} = Courses.create_task(scope, child_attrs)
+      assert child.parent_id == parent.id
+      # Reload parent to ensure child appears
+      reloaded_parent = Courses.get_task!(scope, parent.id) |> Studtasks.Repo.preload(:children)
+      assert Enum.any?(reloaded_parent.children, &(&1.id == child.id))
+    end
+
+    test "update_task/3 can set a parent" do
+      scope = user_scope_fixture()
+      parent = task_fixture(scope, %{name: "parent"})
+      child = task_fixture(scope, %{name: "child"})
+
+      assert {:ok, %Task{} = updated_child} =
+               Courses.update_task(scope, child, %{parent_id: parent.id})
+
+      assert updated_child.parent_id == parent.id
+    end
+
+    test "parent must belong to same course group" do
+      scope = user_scope_fixture()
+      parent = task_fixture(scope, %{name: "parent"})
+      other_group_task_scope = user_scope_fixture()
+      other_task = task_fixture(other_group_task_scope, %{name: "other"})
+
+      # attempt to set parent from different group should error
+      assert {:error, changeset} = Courses.update_task(scope, parent, %{parent_id: other_task.id})
+      assert "parent must belong to the same course group" in errors_on(changeset).parent_id
+    end
+
     test "create_task/2 with invalid data returns error changeset" do
       scope = user_scope_fixture()
       assert {:error, %Ecto.Changeset{}} = Courses.create_task(scope, @invalid_attrs)

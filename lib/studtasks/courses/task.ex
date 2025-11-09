@@ -43,6 +43,8 @@ defmodule Studtasks.Courses.Task do
     |> validate_required([:name, :course_group_id])
     |> validate_inclusion(:status, ["backlog", "todo", "in_progress", "done"])
     |> validate_inclusion(:priority, ["low", "medium", "high", "urgent"])
+    |> foreign_key_constraint(:parent_id)
+    |> foreign_key_constraint(:course_group_id)
     |> maybe_put_creator(user_scope)
     |> put_change(:user_id, user_scope.user.id)
   end

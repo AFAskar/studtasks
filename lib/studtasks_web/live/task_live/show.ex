@@ -33,7 +33,23 @@ defmodule StudtasksWeb.TaskLive.Show do
         <:item title="Due date">
           {@task.due_date && Calendar.strftime(@task.due_date, "%b %-d, %Y")}
         </:item>
+        <:item :if={@task.parent} title="Parent task">
+          <.link navigate={~p"/groups/#{@course_group}/tasks/#{@task.parent}"}>
+            {@task.parent.name}
+          </.link>
+        </:item>
       </.list>
+
+      <div :if={@task.children != []} class="mt-6">
+        <h3 class="text-sm font-semibold mb-2">Subtasks</h3>
+        <ul class="space-y-1">
+          <%= for child <- @task.children do %>
+            <li>
+              <.link navigate={~p"/groups/#{@course_group}/tasks/#{child}"}>{child.name}</.link>
+            </li>
+          <% end %>
+        </ul>
+      </div>
     </Layouts.app>
     """
   end

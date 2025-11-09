@@ -393,7 +393,7 @@ defmodule Studtasks.Courses do
 
     from(t in Task,
       where: t.course_group_id == ^course_group_id,
-      preload: [:assignee, :creator, :children]
+      preload: [:assignee, :creator, :children, :parent]
     )
     |> Repo.all()
   end
@@ -506,7 +506,7 @@ defmodule Studtasks.Courses do
       where: t.id == ^id and t.course_group_id == ^course_group_id
     )
     |> Repo.one!()
-    |> Repo.preload([:assignee])
+    |> Repo.preload([:assignee, :children, :parent])
   end
 
   @doc """
@@ -522,7 +522,7 @@ defmodule Studtasks.Courses do
 
   """
   def create_task(%Scope{} = scope, attrs) do
-    changeset = Task.changeset(%Task{}, attrs, scope)
+    changeset = Task.changeset(%Task{}, attrs, scope) |> validate_parent_same_group()
     group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
 
     # Only enforce membership when we actually have a group_id present in the changeset
@@ -556,6 +556,7 @@ defmodule Studtasks.Courses do
     with {:ok, task = %Task{}} <-
            task
            |> Task.changeset(attrs, scope)
+           |> validate_parent_same_group()
            |> Repo.update() do
       broadcast_task(scope, {:updated, task})
       {:ok, task}
@@ -597,5 +598,71 @@ defmodule Studtasks.Courses do
     true = is_nil(task.id) or group_member?(scope, task.course_group_id)
 
     Task.changeset(task, attrs, scope)
+  end
+
+  @doc """
+  Returns all root tasks (tasks without a parent) for the given course group.
+  Includes their immediate children.
+  """
+  def list_root_tasks(%Scope{} = scope, course_group_id) do
+    true = group_member?(scope, course_group_id)
+
+    from(t in Task,
+      where: t.course_group_id == ^course_group_id and is_nil(t.parent_id),
+      preload: [:children, :assignee, :creator]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns child tasks for a given parent task id (only immediate children).
+  Ensures membership in the parent's course group.
+  """
+  def list_child_tasks(%Scope{} = scope, parent_id) do
+    parent = get_task!(scope, parent_id)
+
+    from(t in Task,
+      where: t.parent_id == ^parent.id,
+      preload: [:children, :assignee, :creator]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a simple task tree for a course group (one level of children preloaded).
+  """
+  def task_tree(%Scope{} = scope, course_group_id) do
+    list_root_tasks(scope, course_group_id)
+  end
+
+  # Private helpers
+  defp validate_parent_same_group(%Ecto.Changeset{} = changeset) do
+    parent_id = Ecto.Changeset.get_field(changeset, :parent_id)
+    course_group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
+    task_id = changeset.data.id
+
+    cond do
+      is_nil(parent_id) ->
+        changeset
+
+      task_id && parent_id == task_id ->
+        Ecto.Changeset.add_error(changeset, :parent_id, "cannot reference itself")
+
+      true ->
+        case Repo.get(Task, parent_id) do
+          nil ->
+            Ecto.Changeset.add_error(changeset, :parent_id, "parent does not exist")
+
+          %Task{course_group_id: ^course_group_id} ->
+            changeset
+
+          %Task{} ->
+            Ecto.Changeset.add_error(
+              changeset,
+              :parent_id,
+              "parent must belong to the same course group"
+            )
+        end
+    end
   end
 end
