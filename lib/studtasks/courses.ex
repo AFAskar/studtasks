@@ -364,7 +364,8 @@ defmodule Studtasks.Courses do
 
     from(t in Task,
       where: t.course_group_id == ^course_group_id,
-      preload: [:assignee, :creator, :children, :parent]
+      preload: [:assignee, :creator, :children, :parent],
+      order_by: [asc: t.position, desc: t.inserted_at]
     )
     |> Repo.all()
   end
@@ -525,6 +526,33 @@ defmodule Studtasks.Courses do
            |> Repo.update() do
       broadcast_task(scope, {:updated, task})
       {:ok, task}
+    end
+  end
+
+  @doc """
+  Reorders tasks within a column by updating their positions.
+  
+  Takes a list of task IDs in the desired order and updates their positions accordingly.
+  """
+  def reorder_tasks(%Scope{} = scope, task_ids, status, course_group_id) when is_list(task_ids) do
+    true = group_member?(scope, course_group_id)
+
+    # Build updates for each task with its new position
+    updates =
+      task_ids
+      |> Enum.with_index()
+      |> Enum.map(fn {id, index} ->
+        from(t in Task,
+          where: t.id == ^id and t.course_group_id == ^course_group_id and t.status == ^status
+        )
+        |> Repo.update_all(set: [position: index])
+      end)
+
+    # Return :ok if all updates succeeded
+    if Enum.all?(updates, fn {count, _} -> count > 0 end) do
+      :ok
+    else
+      {:error, :invalid_reorder}
     end
   end
 

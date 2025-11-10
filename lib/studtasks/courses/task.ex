@@ -15,6 +15,7 @@ defmodule Studtasks.Courses.Task do
     field :status, :string, default: "backlog"
     field :priority, :string, default: "medium"
     field :due_date, :date
+    field :position, :integer, default: 0
 
     belongs_to :course_group, Studtasks.Courses.CourseGroup, define_field: false
     belongs_to :creator, Studtasks.Accounts.User, define_field: false, foreign_key: :creator_id
@@ -37,7 +38,8 @@ defmodule Studtasks.Courses.Task do
       :parent_id,
       :status,
       :priority,
-      :due_date
+      :due_date,
+      :position
     ])
     # Description is optional per requirements
     |> validate_required([:name, :course_group_id])

@@ -1,3 +1,1 @@
-set -a
-source .env.cloud
-set +a
+export $(grep -v '^#' .env | xargs)
