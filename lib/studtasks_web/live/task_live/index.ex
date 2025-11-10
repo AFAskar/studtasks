@@ -1096,30 +1096,40 @@ defmodule StudtasksWeb.TaskLive.Index do
   # Reorder a task within the same column
   defp reorder_task_in_column(columns, id, status, before_task_id) when is_list(columns) do
     # Find the column
-    {column_index, {^status, %{tasks: tasks} = col}} =
-      Enum.with_index(columns)
-      |> Enum.find(fn {_index, {s, _col}} -> s == status end)
+    result =
+      columns
+      |> Enum.with_index()
+      |> Enum.find(fn {col_tuple, _index} ->
+        {s, _col} = col_tuple
+        s == status
+      end)
 
-    # Find and remove the task
-    {task, old_position, remaining} = pop_task_by_id_with_position(tasks, id)
-
-    if is_nil(task) do
-      {:no_change, columns}
-    else
-      # Insert at new position
-      new_tasks = insert_task_at_position(remaining, task, before_task_id)
-
-      # Check if position actually changed
-      new_position = Enum.find_index(new_tasks, fn t -> to_string(t.id) == to_string(id) end)
-
-      if old_position == new_position do
+    case result do
+      nil ->
         {:no_change, columns}
-      else
-        # Update the column
-        new_col = {status, %{col | tasks: new_tasks}}
-        new_columns = List.replace_at(columns, column_index, new_col)
-        {:reordered, new_columns, old_position}
-      end
+
+      {{^status, %{tasks: tasks} = col}, column_index} ->
+        # Find and remove the task
+        {task, old_position, remaining} = pop_task_by_id_with_position(tasks, id)
+
+        if is_nil(task) do
+          {:no_change, columns}
+        else
+          # Insert at new position
+          new_tasks = insert_task_at_position(remaining, task, before_task_id)
+
+          # Check if position actually changed
+          new_position = Enum.find_index(new_tasks, fn t -> to_string(t.id) == to_string(id) end)
+
+          if old_position == new_position do
+            {:no_change, columns}
+          else
+            # Update the column
+            new_col = {status, %{col | tasks: new_tasks}}
+            new_columns = List.replace_at(columns, column_index, new_col)
+            {:reordered, new_columns, old_position}
+          end
+        end
     end
   end
 
