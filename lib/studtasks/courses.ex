@@ -531,7 +531,7 @@ defmodule Studtasks.Courses do
 
   @doc """
   Reorders tasks within a column by updating their positions.
-  
+
   Takes a list of task IDs in the desired order and updates their positions accordingly.
   """
   def reorder_tasks(%Scope{} = scope, task_ids, status, course_group_id) when is_list(task_ids) do

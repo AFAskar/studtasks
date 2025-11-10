@@ -360,18 +360,18 @@ defmodule StudtasksWeb.TaskLive.Index do
                 e.dataTransfer?.setDragImage(card, 10, 10)
               })
 
-              this.el.addEventListener('dragend', () => { 
+              this.el.addEventListener('dragend', () => {
                 if(this.dragged) this.dragged.classList.remove('opacity-50')
                 if(this.draggedOverCard) this.draggedOverCard.classList.remove('border-t-2', 'border-primary')
                 this.dragged = null
                 this.draggedOverCard = null
-                clearHighlights() 
+                clearHighlights()
               })
 
               zones.forEach(zone => {
-                zone.addEventListener('dragover', (e) => { 
+                zone.addEventListener('dragover', (e) => {
                   e.preventDefault()
-                  
+
                   // Check if we're hovering over a card for reordering
                   const cardUnderCursor = e.target.closest('[data-task-id]')
                   if(cardUnderCursor && cardUnderCursor !== this.dragged && cardUnderCursor.parentElement === zone){
@@ -394,42 +394,42 @@ defmodule StudtasksWeb.TaskLive.Index do
                     this.draggedOverCard.classList.remove('border-t-2', 'border-b-2', 'border-primary')
                     this.draggedOverCard = null
                   }
-                  
-                  if(!zone.classList.contains('ring-2')){ 
-                    zone.classList.add('ring-2','ring-primary/50','ring-offset-1') 
+
+                  if(!zone.classList.contains('ring-2')){
+                    zone.classList.add('ring-2','ring-primary/50','ring-offset-1')
                   }
                 })
-                
-                zone.addEventListener('dragenter', (e) => { 
-                  if(e.dataTransfer){ e.dataTransfer.dropEffect = 'move' } 
-                  zone.classList.add('ring-2','ring-primary/50','ring-offset-1') 
+
+                zone.addEventListener('dragenter', (e) => {
+                  if(e.dataTransfer){ e.dataTransfer.dropEffect = 'move' }
+                  zone.classList.add('ring-2','ring-primary/50','ring-offset-1')
                 })
-                
-                zone.addEventListener('dragleave', (e) => { 
+
+                zone.addEventListener('dragleave', (e) => {
                   // Only remove highlight if we're leaving the zone completely
                   if(!zone.contains(e.relatedTarget)){
                     zone.classList.remove('ring-2','ring-primary/50','ring-offset-1')
                   }
                 })
-                
+
                 zone.addEventListener('drop', (e) => {
                   e.preventDefault()
                   const taskId = this.dragged?.dataset.taskId || e.dataTransfer?.getData('text/plain')
                   const targetStatus = zone.dataset.status || null
-                  
+
                   if(!taskId || !targetStatus) return
-                  
+
                   const sourceZone = this.dragged?.parentElement
                   const sourceStatus = sourceZone?.dataset?.status
-                  
+
                   // Determine insert position
                   let beforeTaskId = null
                   const cardUnderCursor = e.target.closest('[data-task-id]')
-                  
+
                   if(cardUnderCursor && cardUnderCursor !== this.dragged){
                     const rect = cardUnderCursor.getBoundingClientRect()
                     const midpoint = rect.top + rect.height / 2
-                    
+
                     if(e.clientY < midpoint){
                       // Insert before this card
                       beforeTaskId = cardUnderCursor.dataset.taskId
@@ -441,24 +441,24 @@ defmodule StudtasksWeb.TaskLive.Index do
                       }
                     }
                   }
-                  
+
                   clearHighlights()
                   if(this.draggedOverCard) {
                     this.draggedOverCard.classList.remove('border-t-2', 'border-b-2', 'border-primary')
                     this.draggedOverCard = null
                   }
-                  
+
                   // If same column, it's a reorder operation
                   if(sourceStatus === targetStatus){
                     this.pushEvent('kanban:reorder', {
-                      task_id: taskId, 
+                      task_id: taskId,
                       status: targetStatus,
                       before_task_id: beforeTaskId
                     })
                   } else {
                     // Different column - move operation
                     this.pushEvent('kanban:move', {
-                      task_id: taskId, 
+                      task_id: taskId,
                       status: targetStatus,
                       before_task_id: beforeTaskId
                     })
@@ -677,7 +677,7 @@ defmodule StudtasksWeb.TaskLive.Index do
   def handle_event("kanban:move", params, socket) do
     %{"task_id" => id, "status" => status} = params
     before_task_id = Map.get(params, "before_task_id")
-    
+
     # Optimistic UI update: move immediately on the board, then persist async
     columns = socket.assigns.board_columns || []
 
@@ -703,19 +703,23 @@ defmodule StudtasksWeb.TaskLive.Index do
           case Courses.update_task(current_scope, task, %{status: status}) do
             {:ok, _} ->
               # Get the new column's task IDs in order
-              {^status, %{tasks: new_column_tasks}} = 
+              {^status, %{tasks: new_column_tasks}} =
                 Enum.find(new_columns, fn {s, _} -> s == status end)
-              
+
               task_ids = Enum.map(new_column_tasks, & &1.id)
               Courses.reorder_tasks(current_scope, task_ids, status, course_group_id)
               :ok
 
             {:error, _changeset} ->
-              send(parent, {:kanban_move_revert, %{
-                id: id, 
-                old_status: old_status,
-                old_position: old_position
-              }})
+              send(
+                parent,
+                {:kanban_move_revert,
+                 %{
+                   id: id,
+                   old_status: old_status,
+                   old_position: old_position
+                 }}
+              )
           end
         end)
 
@@ -729,36 +733,42 @@ defmodule StudtasksWeb.TaskLive.Index do
   def handle_event("kanban:reorder", params, socket) do
     %{"task_id" => id, "status" => status} = params
     before_task_id = Map.get(params, "before_task_id")
-    
+
     columns = socket.assigns.board_columns || []
-    
+
     case reorder_task_in_column(columns, id, status, before_task_id) do
       {:no_change, _columns} ->
         {:noreply, socket}
-        
+
       {:reordered, new_columns, old_position} ->
         parent = self()
         current_scope = socket.assigns.current_scope
         course_group_id = socket.assigns.course_group.id
-        
+
         Task.start(fn ->
           # Get the reordered task IDs
-          {^status, %{tasks: column_tasks}} = 
+          {^status, %{tasks: column_tasks}} =
             Enum.find(new_columns, fn {s, _} -> s == status end)
-          
+
           task_ids = Enum.map(column_tasks, & &1.id)
-          
+
           case Courses.reorder_tasks(current_scope, task_ids, status, course_group_id) do
-            :ok -> :ok
+            :ok ->
+              :ok
+
             {:error, _} ->
-              send(parent, {:kanban_reorder_revert, %{
-                id: id,
-                status: status,
-                old_position: old_position
-              }})
+              send(
+                parent,
+                {:kanban_reorder_revert,
+                 %{
+                   id: id,
+                   status: status,
+                   old_position: old_position
+                 }}
+              )
           end
         end)
-        
+
         {:noreply, assign(socket, :board_columns, new_columns)}
     end
   end
@@ -1021,11 +1031,11 @@ defmodule StudtasksWeb.TaskLive.Index do
     # are displayed inside their parent's card and not as separate cards.
     # We still keep all tasks elsewhere (streams, stats) so list view and
     # metrics include subtasks.
-    root_tasks = 
+    root_tasks =
       tasks
       |> Enum.filter(&is_nil(&1.parent_id))
       |> Enum.sort_by(& &1.position)
-    
+
     grouped = Enum.group_by(root_tasks, & &1.status)
     statuses = ["backlog", "todo", "in_progress", "done"]
 
@@ -1041,7 +1051,8 @@ defmodule StudtasksWeb.TaskLive.Index do
   defp move_task_between_columns(columns, id, new_status, before_task_id) when is_list(columns) do
     # Find and remove task from its current column
     {found_task, old_status, old_position, stripped_columns} =
-      Enum.reduce(columns, {nil, nil, nil, []}, fn {status, %{tasks: tasks} = col}, {ft, os, op, acc} ->
+      Enum.reduce(columns, {nil, nil, nil, []}, fn {status, %{tasks: tasks} = col},
+                                                   {ft, os, op, acc} ->
         if ft do
           {ft, os, op, [{status, col} | acc]}
         else
@@ -1085,22 +1096,22 @@ defmodule StudtasksWeb.TaskLive.Index do
   # Reorder a task within the same column
   defp reorder_task_in_column(columns, id, status, before_task_id) when is_list(columns) do
     # Find the column
-    {column_index, {^status, %{tasks: tasks} = col}} = 
+    {column_index, {^status, %{tasks: tasks} = col}} =
       Enum.with_index(columns)
       |> Enum.find(fn {_index, {s, _col}} -> s == status end)
-    
+
     # Find and remove the task
     {task, old_position, remaining} = pop_task_by_id_with_position(tasks, id)
-    
+
     if is_nil(task) do
       {:no_change, columns}
     else
       # Insert at new position
       new_tasks = insert_task_at_position(remaining, task, before_task_id)
-      
+
       # Check if position actually changed
       new_position = Enum.find_index(new_tasks, fn t -> to_string(t.id) == to_string(id) end)
-      
+
       if old_position == new_position do
         {:no_change, columns}
       else
@@ -1120,8 +1131,9 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   defp insert_task_at_position(tasks, task, before_task_id) do
     # Find the index of the before_task
-    before_index = Enum.find_index(tasks, fn t -> to_string(t.id) == to_string(before_task_id) end)
-    
+    before_index =
+      Enum.find_index(tasks, fn t -> to_string(t.id) == to_string(before_task_id) end)
+
     if is_nil(before_index) do
       # If before_task not found, append to end
       tasks ++ [task]
