@@ -697,20 +697,18 @@ defmodule StudtasksWeb.TaskLive.Index do
         course_group_id = socket.assigns.course_group.id
 
         Task.start(fn ->
-          task = Courses.get_task!(current_scope, id)
+          # Get the new column's task IDs in order from our optimistic update
+          {^status, %{tasks: new_column_tasks}} =
+            Enum.find(new_columns, fn {s, _} -> s == status end)
 
-          # Update status and reorder tasks in the new column
-          case Courses.update_task(current_scope, task, %{status: status}) do
-            {:ok, _} ->
-              # Get the new column's task IDs in order
-              {^status, %{tasks: new_column_tasks}} =
-                Enum.find(new_columns, fn {s, _} -> s == status end)
+          task_ids = Enum.map(new_column_tasks, & &1.id)
 
-              task_ids = Enum.map(new_column_tasks, & &1.id)
-              Courses.reorder_tasks(current_scope, task_ids, status, course_group_id)
+          # Move task to new column with correct position in a single atomic operation
+          case Courses.move_task_to_column(current_scope, id, status, task_ids, course_group_id) do
+            :ok ->
               :ok
 
-            {:error, _changeset} ->
+            {:error, _reason} ->
               send(
                 parent,
                 {:kanban_move_revert,

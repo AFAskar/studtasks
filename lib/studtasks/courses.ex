@@ -557,6 +557,75 @@ defmodule Studtasks.Courses do
   end
 
   @doc """
+  Atomically moves a task to a new column (status) and sets its position.
+  This combines status update and reordering in a single transaction to avoid race conditions.
+  """
+  def move_task_to_column(
+        %Scope{} = scope,
+        task_id,
+        new_status,
+        task_ids_in_order,
+        course_group_id
+      ) do
+    true = group_member?(scope, course_group_id)
+
+    multi =
+      Multi.new()
+      # Step 1: Update the moved task's status and position atomically
+      |> Multi.run(:update_moved_task, fn repo, _changes ->
+        # Find the position of the moved task in the new ordering
+        new_position =
+          Enum.find_index(task_ids_in_order, fn id -> to_string(id) == to_string(task_id) end)
+
+        if is_nil(new_position) do
+          {:error, :task_not_in_order}
+        else
+          query =
+            from(t in Task,
+              where: t.id == ^task_id and t.course_group_id == ^course_group_id
+            )
+
+          case repo.update_all(query, set: [status: new_status, position: new_position]) do
+            {1, _} -> {:ok, new_position}
+            {0, _} -> {:error, :task_not_found}
+            _ -> {:error, :unexpected_count}
+          end
+        end
+      end)
+      # Step 2: Update positions for all other tasks in the new column
+      |> Multi.run(:reorder_column, fn repo, %{update_moved_task: _moved_position} ->
+        # Update all tasks in the new status column (except the moved one) with their correct positions
+        results =
+          task_ids_in_order
+          |> Enum.with_index()
+          |> Enum.reject(fn {id, _idx} -> to_string(id) == to_string(task_id) end)
+          |> Enum.map(fn {id, index} ->
+            query =
+              from(t in Task,
+                where:
+                  t.id == ^id and t.course_group_id == ^course_group_id and
+                    t.status == ^new_status
+              )
+
+            repo.update_all(query, set: [position: index])
+          end)
+
+        {:ok, results}
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, _} ->
+        # Broadcast the update so other clients see the change
+        task = get_task!(scope, task_id)
+        broadcast_task(scope, {:updated, task})
+        :ok
+
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Deletes a task.
 
   ## Examples
