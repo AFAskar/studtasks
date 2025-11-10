@@ -9,11 +9,15 @@
   table-index: (enabled: true),
   listing-index: (enabled: true),
 )
+
+// Cover Page Info todos
 // todo add Doctoral Advisor info "Dr. Imran Qureshi"
-// todo add University info "Imam Mohammed ibn Saud Islamic University" and Logo
-// todo add Department info "Computer Science Department" and Logo
+// todo add University info "Imam Mohammed ibn Saud Islamic University" and Logo /Report/IMSIU_Logo.png
+// todo add Department info "CCIS" and Logo /Report/CCIS.png
 // todo add Course info "CS 335 - Cloud Computing"
 
+
+// Extra todos
 // mention the implemented bonus features:
 // - Forgot password flow with email reset link
 // - drag-and-drop task ordering (kanban style)
