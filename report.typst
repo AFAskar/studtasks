@@ -1,13 +1,24 @@
-#import "@preview/ilm:1.4.1": *
 #set text(lang: "en")
-#show: ilm.with(
-  title: [Studtasks (nadhem) – Shared Academic Task Manager],
-  author: "Abdulaziz Fahad BinAskar, Saud Mishari Aldalbahy, Naif Salman Aldrees, Abdulaziz Mohammed Alkthiri",
-  abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, or complete tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
-  date: datetime(year: 2025, month: 11, day: 9),
-  figure-index: (enabled: true),
-  table-index: (enabled: true),
-  listing-index: (enabled: true),
+
+#import "@preview/red-agora:0.1.2": project
+
+#show: project.with(
+  title: "Studtasks (nadhem) – Shared Academic Task Manager",
+  authors: (
+    "Abdulaziz Fahad BinAskar",
+    "Saud Mishari Aldalbahy",
+    "Naif Salman Aldrees",
+    "Abdulaziz Mohammed Alkthiri",
+  ),
+  school-logo: image("Report/IMSIU_Logo.png"), // Replace with [] to remove the school logo
+  company-logo: image("Report/CCIS_Logo.png"),
+  mentors: (
+    "Dr. Imran Qureshi",
+  ),
+  branch: "College of Computer and Information Sciences (CCIS)",
+  academic-year: "2025-2026",
+  french: false, // Use french instead of english
+  footer-text: "Imam Mohammed ibn Saud Islamic University", // Text used in left side of the footer
 )
 
 = Setup Instructions
