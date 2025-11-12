@@ -248,11 +248,15 @@
   // Table of contents.
   outline(depth: 3, indent: auto)
 
-  // Initialize codly show rules at the document level (must not be conditional)
-  show: codly-init.with()
+  // Conditionally enable fancy code blocks and codly show rules
+  let fancy = features.contains("fancy-codeblocks")
+
+  // Make the show rule conditional by choosing the function to apply
+  let codly_init_fn = if fancy { codly-init.with() } else { it => it }
+  show: codly_init_fn
 
   // Activate fancy code blocks only when the feature flag is enabled
-  if features.contains("fancy-codeblocks") {
+  if fancy {
     codly(languages: codly-languages)
   }
 
