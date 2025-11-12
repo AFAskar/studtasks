@@ -1,6 +1,6 @@
 #set text(lang: "en")
 
-#import "@preview/red-agora:0.1.2": project
+#import "Report/lib.typ": project
 
 #show: project.with(
   title: "Studtasks (nadhem) – Shared Academic Task Manager",
@@ -10,16 +10,15 @@
     "Naif Salman Aldrees",
     "Abdulaziz Mohammed Alkthiri",
   ),
-  school-logo: image("Report/IMSIU_Logo.png"), // Replace with [] to remove the school logo
-  company-logo: image("Report/CCIS_Logo.png"),
   mentors: (
     "Dr. Imran Qureshi",
   ),
   branch: "College of Computer and Information Sciences (CCIS)",
   academic-year: "2025-2026",
-  french: false, // Use french instead of english
-  footer-text: "Imam Mohammed ibn Saud Islamic University", // Text used in left side of the footer
+  features: "fancy-codeblocks",
+  footer-text: "IMSIU", // Text used in left side of the footer
 )
+
 
 = Setup Instructions
 
@@ -102,15 +101,10 @@ The application uses the following environment variables (see `example.env` for 
 - Realtime: Phoenix PubSub + LiveView
 - Database: PostgreSQL (Neon in production, local instance in development)
 - Auth & Security: Argon2 (argon2_elixir), Phoenix/Plug sessions, email verification (Swoosh)
-- Email: Swoosh (dev: Local adapter at /dev/mailbox; prod: configure provider), delivered via Req client
-- HTTP Client: Req (preferred)
 - Frontend: Tailwind CSS v4, DaisyUI components, Phoenix core components
-- Build Tooling: esbuild, Tailwind (via Mix tasks)
-- Server Adapter: Bandit
-- I18n: Gettext
-- Deployment: Google Cloud Run (managed containers, scale-to-zero) via GitHub Actions
+- Containerization: Docker, Docker compose (for local dev DB), Docker Hub registry
+- Deployment: Google Cloud Run (managed containers, scale-to-zero)
 - CI/CD: GitHub Actions workflow for automated builds and deployments
-- Container Registry: Docker Hub
 
 == Application Features
 
@@ -126,6 +120,9 @@ The application uses the following environment variables (see `example.env` for 
   - Read: list with filtering (status, assignee, priority) and sorting (e.g., due date)
   - Update: edit details, mark complete/incomplete
   - Delete tasks
+
+// to avoid splitting sections awkwardly
+#pagebreak()
 - Real-time Synchronization
   - All task operations are reflected live across connected clients via LiveView/PubSub
   - Data model aligns with Users → Courses → Tasks
@@ -277,7 +274,6 @@ Notes:
 === Manual Deployment (Alternative)
 
 If you need to deploy manually instead of using the GitHub Actions workflow:
-
 ```bash
 # Build & push to Docker Hub
 IMAGE="docker.io/abo3skr/studtasks:$(git rev-parse --short HEAD)"
@@ -292,8 +288,14 @@ gcloud run deploy studtasks-service \
   --allow-unauthenticated \
   --set-env-vars PHX_HOST=studtasks.askardesign.com,PHX_SERVER=true \
   --set-env-vars POOL_SIZE=10 \
-  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
-  --min-instances=0 --max-instances=5 \
+  --set-secrets \
+    SECRET_KEY_BASE=SECRET_KEY_BASE:latest \
+    PGDBNAME=PGDBNAME:latest \
+    PGUSER=PGUSER:latest \
+    PGPASSWORD=PGPASSWORD:latest \
+    PGHOST=PGHOST:latest \
+  --min-instances=0 \
+  --max-instances=5
 ```
 
 = Conclusion
