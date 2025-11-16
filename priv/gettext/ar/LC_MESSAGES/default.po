@@ -69,6 +69,7 @@ msgstr "المجموعات"
 msgid "New group"
 msgstr "مجموعة جديدة"
 
+
 # Settings
 msgid "Language"
 msgstr "اللغة"
@@ -81,6 +82,33 @@ msgstr "العربية"
 
 msgid "Save language"
 msgstr "حفظ اللغة"
+
+msgid "Save Password"
+msgstr "حفظ كلمة المرور"
+
+msgid "Change name"
+msgstr "تغيير الاسم"
+
+msgid "Change Email"
+msgstr "تغيير البريد الإلكتروني"
+
+msgid "Changing..."
+msgstr "جارٍ التغيير..."
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "New password"
+msgstr "كلمة المرور الجديدة"
+
+msgid "Confirm new password"
+msgstr "تأكيد كلمة المرور الجديدة"
+
+msgid "Manage your account email address, name and password settings"
+msgstr "قم بإدارة إعدادات عنوان بريدك الإلكتروني واسمك وكلمة المرور"
+
+msgid "Account Settings"
+msgstr "إعدادات الحساب"
 
 # Dashboard strings
 msgid "Overview of your work and groups"

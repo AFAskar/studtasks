@@ -11,8 +11,10 @@ defmodule StudtasksWeb.UserLive.Settings do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="text-center">
         <.header>
-          Account Settings
-          <:subtitle>Manage your account email address, name and password settings</:subtitle>
+          {gettext("Account Settings")}
+          <:subtitle>
+            {gettext("Manage your account email address, name and password settings")}
+          </:subtitle>
         </.header>
       </div>
 
@@ -20,11 +22,13 @@ defmodule StudtasksWeb.UserLive.Settings do
         <.input
           field={@email_form[:email]}
           type="email"
-          label="Email"
+          label={gettext("Email")}
           autocomplete="email"
           required
         />
-        <.button variant="primary" phx-disable-with="Changing...">Change Email</.button>
+        <.button variant="primary" phx-disable-with={gettext("Changing...")}>
+          {gettext("Change Email")}
+        </.button>
       </.form>
 
       <div class="divider" />
@@ -38,11 +42,13 @@ defmodule StudtasksWeb.UserLive.Settings do
         <.input
           field={@name_form[:name]}
           type="text"
-          label="Name"
+          label={gettext("Name")}
           autocomplete="username"
           required
         />
-        <.button variant="primary" phx-disable-with="Changing...">Change name</.button>
+        <.button variant="primary" phx-disable-with={gettext("Changing...")}>
+          {gettext("Change name")}
+        </.button>
       </.form>
 
       <div class="divider" />
@@ -66,18 +72,18 @@ defmodule StudtasksWeb.UserLive.Settings do
         <.input
           field={@password_form[:password]}
           type="password"
-          label="New password"
+          label={gettext("New password")}
           autocomplete="new-password"
           required
         />
         <.input
           field={@password_form[:password_confirmation]}
           type="password"
-          label="Confirm new password"
+          label={gettext("Confirm new password")}
           autocomplete="new-password"
         />
-        <.button variant="primary" phx-disable-with="Saving...">
-          Save Password
+        <.button variant="primary" phx-disable-with={gettext("Saving...")}>
+          {gettext("Save Password")}
         </.button>
       </.form>
 

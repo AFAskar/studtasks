@@ -70,6 +70,34 @@ msgstr "Arabic"
 msgid "Save language"
 msgstr "Save language"
 
+msgid "Save Password"
+msgstr "Save Password"
+
+msgid "Change name"
+msgstr "Change name"
+
+msgid "Change Email"
+msgstr "Change Email"
+
+msgid "Changing..."
+msgstr "Changing..."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "New password"
+msgstr "New password"
+
+msgid "Confirm new password"
+msgstr "Confirm new password"
+
+msgid "Manage your account email address, name and password settings"
+msgstr "Manage your account email address, name and password settings"
+
+msgid "Account Settings"
+msgstr "Account Settings"
+
+
 # Dashboard strings
 msgid "Overview of your work and groups"
 msgstr "Overview of your work and groups"

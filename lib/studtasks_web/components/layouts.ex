@@ -43,7 +43,7 @@ defmodule StudtasksWeb.Layouts do
         </.link>
       </div>
       <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-3 items-center">
+        <ul class="flex flex-column px-1 gap-3 items-center">
           <li>
             <.theme_toggle />
           </li>
