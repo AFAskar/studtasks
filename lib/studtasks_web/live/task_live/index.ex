@@ -126,7 +126,7 @@ defmodule StudtasksWeb.TaskLive.Index do
           <:col :let={{_id, task}} label={gettext("Name")}>{task.name}</:col>
           <:col :let={{_id, task}} label={gettext("Description")}>{task.description}</:col>
           <:col :let={{_id, task}} label={gettext("Priority")}>
-            {String.capitalize(task.priority || "")}
+            {translate_priority(task.priority)}
           </:col>
           <:col :let={{_id, task}} label={gettext("Status")}>{format_status(task.status)}</:col>
           <:col :let={{_id, task}} label={gettext("Due")}>
@@ -190,7 +190,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                         <h4 class="font-medium leading-5 line-clamp-2 flex-1">{task.name}</h4>
                         <div class="flex items-center gap-1">
                           <span class={["badge badge-xs", priority_badge_class(task.priority)]}>
-                            {String.capitalize(task.priority || "")}
+                            {translate_priority(task.priority)}
                           </span>
                           <span
                             :if={task.parent}
@@ -238,7 +238,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                       </div>
                       <div class="flex flex-wrap items-center gap-1 mb-1">
                         <span class={["badge badge-sm", priority_badge_class(task.priority)]}>
-                          {String.capitalize(task.priority || "")}
+                          {translate_priority(task.priority)}
                         </span>
                         <span
                           :if={task.parent}
@@ -1423,6 +1423,12 @@ defmodule StudtasksWeb.TaskLive.Index do
   defp priority_badge_class("medium"), do: "badge-info"
   defp priority_badge_class("low"), do: "badge-ghost"
   defp priority_badge_class(_), do: "badge-ghost"
+
+  defp translate_priority("urgent"), do: gettext("urgent")
+  defp translate_priority("high"), do: gettext("high")
+  defp translate_priority("medium"), do: gettext("medium")
+  defp translate_priority("low"), do: gettext("low")
+  defp translate_priority(other), do: other
 
   defp truthy?(val), do: val in [true, "true", "on", 1, "1"]
 

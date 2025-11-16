@@ -411,15 +411,3 @@ msgstr "تاريخ الإنشاء ↑"
 
 msgid "Created ↓"
 msgstr "تاريخ الإنشاء ↓"
-
-msgid "Low"
-msgstr "منخفض"
-
-msgid "Medium"
-msgstr "متوسط"
-
-msgid "High"
-msgstr "مرتفع"
-
-msgid "Urgent"
-msgstr "عاجل"
