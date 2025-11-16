@@ -49,11 +49,6 @@ Notes:
 - Emails are delivered to the local mailbox at /dev/mailbox in dev. Use it to complete email verification.
 - Assets (Tailwind v4, esbuild) are automatically installed and watched in dev.
 
-== Running Tests
-
-```bash
-mix test
-```
 
 == Environment Configuration
 
@@ -61,20 +56,17 @@ The application uses the following environment variables (see `example.env` for 
 
 === Secrets (store in Secret Manager for production):
 
-- `SECRET_KEY_BASE` — generate with `mix phx.gen.secret`
-- `PGUSER` — PostgreSQL username
-- `PGPASSWORD` — PostgreSQL password
-- `PGDBNAME` — PostgreSQL database name
-- `PGHOST` — PostgreSQL host (e.g., Neon endpoint)
+- `SECRET_KEY_BASE` - generate with `mix phx.gen.secret`
+- `PGUSER` - PostgreSQL username
+- `PGPASSWORD` - PostgreSQL password
+- `PGDBNAME` - PostgreSQL database name
+- `PGHOST` - PostgreSQL host (e.g., Neon endpoint)
 
 === Non-Secret Environment Variables:
 
-- `PHX_SERVER` — set to `true` to start the Phoenix server (required for production)
-- `PHX_HOST` — your domain (e.g., studtasks.askardesign.com)
-- `PORT` — HTTP port the app listens on (default: 4000; Cloud Run provides this)
-- `POOL_SIZE` — Ecto connection pool size (default: 10)
-- `ECTO_IPV6` — enable IPv6 for Ecto if needed (true|1 enables)
-- `PGDEVHOST` — PostgreSQL host for development (default: localhost)
+- `PHX_HOST` - your domain (e.g., studtasks.example.com) we will use the one provided by cloud run
+- `POOL_SIZE` - Ecto connection pool size (default: 10)
+- `ECTO_IPV6` - enable IPv6 for Ecto if needed (true|1 enables)
 
 === Database Configuration:
 
@@ -103,7 +95,7 @@ The application uses the following environment variables (see `example.env` for 
 - Auth & Security: Argon2 (argon2_elixir), Phoenix/Plug sessions, email verification (Swoosh)
 - Frontend: Tailwind CSS v4, DaisyUI components, Phoenix core components
 - Containerization: Docker, Docker compose (for local dev DB), Docker Hub registry
-- Deployment: Google Cloud Run (managed containers, scale-to-zero)
+- Deployment: Google Cloud Run
 - CI/CD: GitHub Actions workflow for automated builds and deployments
 
 == Application Features
@@ -112,7 +104,7 @@ The application uses the following environment variables (see `example.env` for 
 
 - User Authentication
   - Registration and login with secure password hashing (Argon2)
-  - Email verification on sign-up (Swoosh Local in dev)
+  - Email verification on sign-up
 - Task Management (CRUD)
   - Create tasks with: title (required), description, due date, priority (Low/Medium/High)
   - Assignment to self or other course members
@@ -157,7 +149,7 @@ The application uses the following environment variables (see `example.env` for 
   - Managed operations with simple connection model (DATABASE_URL + token)
 
 - Google Cloud Run:
-  - Fully managed container runtime—no servers or Kubernetes to manage
+  - Fully managed container runtime (no servers or Kubernetes to manage)
   - Scales to zero when idle; fast scale-out on demand
   - Simple deploys from Artifact Registry with health checks, autoscaling, and request concurrency controls
   - Custom domains and TLS via Cloud Run's managed certificates
@@ -186,6 +178,7 @@ The application uses the following environment variables (see `example.env` for 
 
 == Screenshots
 
+Our application features a clean and intuitive user interface designed for ease of use and efficiency. Below are some screenshots showcasing key pages of the application:
 
 #figure(image("/Report/Screens/Homepage.png", width: 100%), caption: [Homepage])
 #figure(image("/Report/Screens/Homepage-AR.png", width: 100%), caption: [our Homepage in Arabic])
@@ -202,7 +195,7 @@ The application uses the following environment variables (see `example.env` for 
 
 = Deployment & Demo
 
-- URL: https://studtasks-run-container-1043330219835.europe-west3.run.app (deployed via GitHub Actions to Google Cloud Run)
+- URL: #link("https://studtasks-run-container-1043330219835.europe-west3.run.app")[Application] (deployed via GitHub Actions to Google Cloud Run)
 
 == Deployment
 
@@ -226,24 +219,24 @@ The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 
 ==== Required GitHub Secrets:
 
-- `DOCKERHUB_USERNAME` — Docker Hub username
-- `DOCKERHUB_TOKEN` — Docker Hub access token
-- `GCP_WORKLOAD_IDENTITY_PROVIDER` — Google Cloud Workload Identity Provider ID
-- `GCP_SERVICE_ACCOUNT_EMAIL` — Service account email for deployment
+- `DOCKERHUB_USERNAME` - Docker Hub username
+- `DOCKERHUB_TOKEN` - Docker Hub access token
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` - Google Cloud Workload Identity Provider ID
+- `GCP_SERVICE_ACCOUNT_EMAIL` - Service account email for deployment
 
 ==== Required GitHub Variables:
 
-- `GCP_REGION` — Google Cloud region (default: europe-west3)
-- `SERVICE_NAME` — Cloud Run service name (default: studtasks-service)
-- `PHX_HOST` — Application domain (default: studtasks.askardesign.com)
+- `GCP_REGION` - Google Cloud region (default: europe-west3)
+- `SERVICE_NAME` - Cloud Run service name (default: studtasks-service)
+- `PHX_HOST` - Application domain (default: studtasks.askardesign.com)
 
 ==== Required Google Secret Manager Secrets:
 
-- `SECRET_KEY_BASE` — Phoenix secret key base
-- `PGDBNAME` — PostgreSQL database name
-- `PGUSER` — PostgreSQL username
-- `PGPASSWORD` — PostgreSQL password
-- `PGHOST` — PostgreSQL host (Neon endpoint)
+- `SECRET_KEY_BASE` - Phoenix secret key base
+- `PGDBNAME` - PostgreSQL database name
+- `PGUSER` - PostgreSQL username
+- `PGPASSWORD` - PostgreSQL password
+- `PGHOST` - PostgreSQL host (Neon endpoint)
 
 ==== Deployment Configuration:
 
@@ -254,7 +247,7 @@ The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 - Platform: managed (fully managed Cloud Run)
 - Authentication: allow unauthenticated (public access) Auth is handled by the application
 
-=== Quick Deploy Notes — Google Cloud Run + Neon
+=== Quick Deploy Notes - Google Cloud Run + Neon
 
 High-level checklist:
 
@@ -322,7 +315,6 @@ Throughout this project, our team gained valuable experience across multiple dom
 - Learned the intricacies of building stateful, real-time applications without heavy JavaScript frameworks
 - Gained hands-on experience with modern deployment practices using containerization (Docker) and serverless infrastructure (Google Cloud Run)
 - Implemented secure authentication patterns using Argon2 and email verification flows
-- Developed proficiency in database design and management with PostgreSQL and Ecto
 
 === DevOps & Cloud Computing:
 - Set up automated CI/CD pipelines using GitHub Actions for continuous deployment
@@ -335,11 +327,6 @@ Throughout this project, our team gained valuable experience across multiple dom
 - Balanced trade-offs between development velocity, operational complexity, and feature requirements
 - Implemented separation of concerns through proper Phoenix context boundaries
 - Designed scalable database schemas with proper relationships and constraints
-
-*Team Collaboration*:
-- Coordinated work across multiple team members using Git and version control best practices
-- Learned to write clear documentation and setup instructions for both developers and users
-- Practiced agile development principles by iterating on features and responding to challenges
 
 == Overall Experience
 
@@ -355,7 +342,7 @@ The project reinforced the importance of proper planning, clear documentation, a
 
 == Future Work
 
-While the current implementation is fully functional, several enhancements could further improve the user experience:
+Whilst the current Application is fully functional, several Features could further improve the UX of the application:
 
 - Push Notifications for assigned tasks or upcoming deadlines
 - Comments/Discussion thread on individual tasks
