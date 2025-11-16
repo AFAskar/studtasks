@@ -48,7 +48,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       "badge badge-xs",
                       priority_badge_class(task.priority)
                     ]}>
-                      {String.capitalize(gettext(task.priority || ""))}
+                      {String.capitalize(translate_priority(task.priority))}
                     </span>
                   </div>
                   <div class="text-xs opacity-70 truncate">
@@ -93,7 +93,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       "badge badge-xs",
                       priority_badge_class(task.priority)
                     ]}>
-                      {String.capitalize(gettext(task.priority || ""))}
+                      {String.capitalize(translate_priority(task.priority))}
                     </span>
                   </div>
                   <div class="text-xs opacity-70 truncate">
@@ -247,14 +247,12 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       <span class="opacity-80">{m.user.name || m.user.email}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                      <span class="badge">{gettext(m.role)}</span>
+                      <span class="badge">{translate_role(m.role)}</span>
                       <.button
                         :if={@is_owner and m.role != "owner"}
                         phx-click="membership:set_role"
                         phx-value-user={m.user.id}
-                        phx-value-role={
-                          if m.role == "admin", do: gettext("member"), else: gettext("admin")
-                        }
+                        phx-value-role={if m.role == "admin", do: "member", else: "admin"}
                       >
                         {if m.role == "admin", do: gettext("Demote"), else: gettext("Promote")}
                       </.button>
@@ -560,4 +558,16 @@ defmodule StudtasksWeb.DashboardLive.Index do
     Courses.change_course_group(scope, group)
     |> to_form()
   end
+
+  defp translate_priority(nil), do: ""
+  defp translate_priority("urgent"), do: gettext("urgent")
+  defp translate_priority("high"), do: gettext("high")
+  defp translate_priority("medium"), do: gettext("medium")
+  defp translate_priority("low"), do: gettext("low")
+  defp translate_priority(other), do: other
+
+  defp translate_role("owner"), do: gettext("owner")
+  defp translate_role("admin"), do: gettext("admin")
+  defp translate_role("member"), do: gettext("member")
+  defp translate_role(other), do: other
 end
