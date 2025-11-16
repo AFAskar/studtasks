@@ -260,3 +260,166 @@ msgstr "إغلاق"
 
 msgid "Actions"
 msgstr "الإجراءات"
+
+# Task page strings
+msgid "Listing Tasks"
+msgstr "قائمة المهام"
+
+msgid "Tasks"
+msgstr "المهام"
+
+msgid "Plan and track work for %{name}"
+msgstr "خطط وتابع العمل لـ %{name}"
+
+msgid "Anyone"
+msgstr "أي شخص"
+
+msgid "Unassigned only"
+msgstr "غير المسندة فقط"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "List"
+msgstr "قائمة"
+
+msgid "Board"
+msgstr "لوحة"
+
+msgid "New Task"
+msgstr "مهمة جديدة"
+
+msgid "Completed tasks"
+msgstr "المهام المكتملة"
+
+msgid "By status"
+msgstr "حسب الحالة"
+
+msgid "Total: %{count}"
+msgstr "الإجمالي: %{count}"
+
+msgid "Backlog"
+msgstr "متأخرة"
+
+msgid "Todo"
+msgstr "للعمل"
+
+msgid "In Progress"
+msgstr "قيد التنفيذ"
+
+msgid "Done"
+msgstr "منجزة"
+
+msgid "Priority"
+msgstr "الأولوية"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Due"
+msgstr "الموعد"
+
+msgid "Parent"
+msgstr "الأصل"
+
+msgid "Subtasks"
+msgstr "المهام الفرعية"
+
+msgid "Assigned to"
+msgstr "مُسندة إلى"
+
+msgid "Show"
+msgstr "عرض"
+
+msgid "Are you sure?"
+msgstr "هل أنت متأكد؟"
+
+msgid "Drop here"
+msgstr "أفلت هنا"
+
+msgid "Parent task"
+msgstr "المهمة الأصلية"
+
+msgid "Open"
+msgstr "فتح"
+
+msgid "Add subtask"
+msgstr "إضافة مهمة فرعية"
+
+msgid "Assigned to: %{assignee}"
+msgstr "مُسندة إلى: %{assignee}"
+
+msgid "Unassigned"
+msgstr "غير مُسندة"
+
+msgid "Mark undone"
+msgstr "إلغاء الإنجاز"
+
+msgid "Mark done"
+msgstr "تعليم كمنجز"
+
+msgid "Edit subtask"
+msgstr "تعديل المهمة الفرعية"
+
+msgid "+%{count} more"
+msgstr "+%{count} أخرى"
+
+msgid "Edit task"
+msgstr "تعديل المهمة"
+
+msgid "Title"
+msgstr "العنوان"
+
+msgid "Due date"
+msgstr "تاريخ الاستحقاق"
+
+msgid "No parent"
+msgstr "بدون أصل"
+
+msgid "Quick create task"
+msgstr "إنشاء مهمة سريعة"
+
+msgid "Could not move task. Please try again."
+msgstr "تعذر نقل المهمة. يرجى المحاولة مرة أخرى."
+
+msgid "Could not move task. Change was reverted."
+msgstr "تعذر نقل المهمة. تم التراجع عن التغيير."
+
+msgid "Could not reorder task. Change was reverted."
+msgstr "تعذر إعادة ترتيب المهمة. تم التراجع عن التغيير."
+
+msgid "Could not update subtask. Change was reverted."
+msgstr "تعذر تحديث المهمة الفرعية. تم التراجع عن التغيير."
+
+msgid "Subtask revert failed"
+msgstr "فشل التراجع عن المهمة الفرعية"
+
+msgid "Priority ↓"
+msgstr "الأولوية ↓"
+
+msgid "Priority ↑"
+msgstr "الأولوية ↑"
+
+msgid "Due date ↑"
+msgstr "تاريخ الاستحقاق ↑"
+
+msgid "Due date ↓"
+msgstr "تاريخ الاستحقاق ↓"
+
+msgid "Created ↑"
+msgstr "تاريخ الإنشاء ↑"
+
+msgid "Created ↓"
+msgstr "تاريخ الإنشاء ↓"
+
+msgid "Low"
+msgstr "منخفض"
+
+msgid "Medium"
+msgstr "متوسط"
+
+msgid "High"
+msgstr "مرتفع"
+
+msgid "Urgent"
+msgstr "عاجل"

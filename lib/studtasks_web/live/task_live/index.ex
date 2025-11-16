@@ -10,8 +10,10 @@ defmodule StudtasksWeb.TaskLive.Index do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
-        {if @view_mode == :list, do: "Listing Tasks", else: "Tasks"}
-        <:subtitle>Plan and track work for {@course_group.name || @course_group.id}</:subtitle>
+        {if @view_mode == :list, do: gettext("Listing Tasks"), else: gettext("Tasks")}
+        <:subtitle>
+          {gettext("Plan and track work for %{name}", name: @course_group.name || @course_group.id)}
+        </:subtitle>
         <:actions>
           <div class="hidden lg:flex items-center gap-2 mr-2">
             <.form
@@ -23,13 +25,15 @@ defmodule StudtasksWeb.TaskLive.Index do
               <.input
                 type="select"
                 field={@filter_form[:assignee_id]}
-                prompt="Anyone"
+                prompt={gettext("Anyone")}
                 options={@assignee_options}
               />
               <label class="label cursor-pointer gap-1 text-xs">
-                <.input type="checkbox" field={@filter_form[:unassigned]} /> Unassigned only
+                <.input type="checkbox" field={@filter_form[:unassigned]} /> {gettext(
+                  "Unassigned only"
+                )}
               </label>
-              <.input type="search" field={@filter_form[:q]} placeholder="Search" />
+              <.input type="search" field={@filter_form[:q]} placeholder={gettext("Search")} />
               <.input type="select" field={@filter_form[:sort]} options={@sort_options} />
             </.form>
           </div>
@@ -39,21 +43,21 @@ defmodule StudtasksWeb.TaskLive.Index do
               class={["btn join-item", @view_mode == :list && "btn-active"]}
             >
               <.icon name="hero-list-bullet" />
-              <span class="ml-1 hidden md:inline">List</span>
+              <span class="ml-1 hidden md:inline">{gettext("List")}</span>
             </.link>
             <.link
               patch={~p"/groups/#{@course_group}/tasks?view=board"}
               class={["btn join-item", @view_mode == :board && "btn-active"]}
             >
               <.icon name="hero-rectangle-group" />
-              <span class="ml-1 hidden md:inline">Board</span>
+              <span class="ml-1 hidden md:inline">{gettext("Board")}</span>
             </.link>
           </div>
           <.button
             variant="primary"
             phx-click={JS.push("open_quick_new", value: %{status: "backlog"})}
           >
-            <.icon name="hero-plus" /> New Task
+            <.icon name="hero-plus" /> {gettext("New Task")}
           </.button>
         </:actions>
       </.header>
@@ -72,7 +76,7 @@ defmodule StudtasksWeb.TaskLive.Index do
               {@task_stats.percent_done}%
             </div>
             <div>
-              <div class="text-sm opacity-70">Completed tasks</div>
+              <div class="text-sm opacity-70">{gettext("Completed tasks")}</div>
               <div class="text-xl font-semibold">{@task_stats.done} / {@task_stats.total}</div>
             </div>
           </div>
@@ -81,14 +85,16 @@ defmodule StudtasksWeb.TaskLive.Index do
         <div class="card bg-base-200/60 border border-base-300 md:col-span-2">
           <div class="card-body">
             <div class="flex items-center justify-between">
-              <div class="text-sm font-medium">By status</div>
-              <div class="text-xs opacity-70">Total: {@task_stats.total}</div>
+              <div class="text-sm font-medium">{gettext("By status")}</div>
+              <div class="text-xs opacity-70">
+                {gettext("Total: %{count}", count: @task_stats.total)}
+              </div>
             </div>
             <div class="mt-3 space-y-3">
-              <%= for {label, key, color} <- [{"Backlog", :backlog, "bg-neutral/100"},
-                                              {"Todo", :todo, "bg-info/70"},
-                                              {"In Progress", :in_progress, "bg-warning/70"},
-                                              {"Done", :done, "bg-success/80"}] do %>
+              <%= for {label, key, color} <- [{gettext("Backlog"), :backlog, "bg-neutral/100"},
+                                              {gettext("Todo"), :todo, "bg-info/70"},
+                                              {gettext("In Progress"), :in_progress, "bg-warning/70"},
+                                              {gettext("Done"), :done, "bg-success/80"}] do %>
                 <div class="flex items-center gap-3">
                   <div class="w-28 shrink-0 text-xs opacity-75">{label}</div>
                   <div class="grow">
@@ -117,32 +123,34 @@ defmodule StudtasksWeb.TaskLive.Index do
           rows={@streams.tasks}
           row_click={fn {_id, task} -> JS.navigate(~p"/groups/#{@course_group}/tasks/#{task}") end}
         >
-          <:col :let={{_id, task}} label="Name">{task.name}</:col>
-          <:col :let={{_id, task}} label="Description">{task.description}</:col>
-          <:col :let={{_id, task}} label="Priority">{String.capitalize(task.priority || "")}</:col>
-          <:col :let={{_id, task}} label="Status">{format_status(task.status)}</:col>
-          <:col :let={{_id, task}} label="Due">
+          <:col :let={{_id, task}} label={gettext("Name")}>{task.name}</:col>
+          <:col :let={{_id, task}} label={gettext("Description")}>{task.description}</:col>
+          <:col :let={{_id, task}} label={gettext("Priority")}>
+            {String.capitalize(task.priority || "")}
+          </:col>
+          <:col :let={{_id, task}} label={gettext("Status")}>{format_status(task.status)}</:col>
+          <:col :let={{_id, task}} label={gettext("Due")}>
             {task.due_date && Calendar.strftime(task.due_date, "%b %-d")}
           </:col>
-          <:col :let={{_id, task}} label="Parent">
+          <:col :let={{_id, task}} label={gettext("Parent")}>
             {task.parent && (task.parent.name || task.parent.id)}
           </:col>
-          <:col :let={{_id, task}} label="Subtasks">{length(task.children)}</:col>
-          <:col :let={{_id, task}} label="Assigned to">
+          <:col :let={{_id, task}} label={gettext("Subtasks")}>{length(task.children)}</:col>
+          <:col :let={{_id, task}} label={gettext("Assigned to")}>
             {task.assignee && (task.assignee.name || task.assignee.email)}
           </:col>
           <:action :let={{_id, task}}>
             <div class="sr-only">
-              <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>Show</.link>
+              <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>{gettext("Show")}</.link>
             </div>
-            <.link phx-click={JS.push("open_edit", value: %{id: task.id})}>Edit</.link>
+            <.link phx-click={JS.push("open_edit", value: %{id: task.id})}>{gettext("Edit")}</.link>
           </:action>
           <:action :let={{id, task}}>
             <.link
               phx-click={JS.push("delete", value: %{id: task.id}) |> hide("##" <> id)}
-              data-confirm="Are you sure?"
+              data-confirm={gettext("Are you sure?")}
             >
-              Delete
+              {gettext("Delete")}
             </.link>
           </:action>
         </.table>
@@ -168,7 +176,7 @@ defmodule StudtasksWeb.TaskLive.Index do
               </div>
               <div class="p-2 min-h-64 space-y-2 flex-1" data-status={status} data-drop-zone="true">
                 <%= if column.tasks == [] do %>
-                  <div class="text-sm opacity-60 px-2 py-8 text-center">Drop here</div>
+                  <div class="text-sm opacity-60 px-2 py-8 text-center">{gettext("Drop here")}</div>
                 <% end %>
                 <%= for task <- column.tasks do %>
                   <div
@@ -187,7 +195,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                           <span
                             :if={task.parent}
                             class="badge badge-xs badge-outline"
-                            title="Parent task"
+                            title={gettext("Parent task")}
                           >
                             <.icon name="hero-arrow-up" class="size-3 mr-0.5" /> {task.parent.name ||
                               task.parent.id}
@@ -202,12 +210,12 @@ defmodule StudtasksWeb.TaskLive.Index do
                             >
                               <li>
                                 <.link navigate={~p"/groups/#{@course_group}/tasks/#{task}"}>
-                                  Open
+                                  {gettext("Open")}
                                 </.link>
                               </li>
                               <li>
                                 <button phx-click={JS.push("open_edit", value: %{id: task.id})}>
-                                  Edit
+                                  {gettext("Edit")}
                                 </button>
                               </li>
                               <li>
@@ -216,12 +224,12 @@ defmodule StudtasksWeb.TaskLive.Index do
                                     value: %{status: status, parent_id: task.id}
                                   )
                                 }>
-                                  Add subtask
+                                  {gettext("Add subtask")}
                                 </button>
                               </li>
                               <li>
                                 <button phx-click={JS.push("delete", value: %{id: task.id})}>
-                                  Delete
+                                  {gettext("Delete")}
                                 </button>
                               </li>
                             </ul>
@@ -235,18 +243,22 @@ defmodule StudtasksWeb.TaskLive.Index do
                         <span
                           :if={task.parent}
                           class="badge badge-sm badge-outline"
-                          title="Parent task"
+                          title={gettext("Parent task")}
                         >
-                          <.icon name="hero-arrow-up" class="size-3 mr-0.5" /> Parent
+                          <.icon name="hero-arrow-up" class="size-3 mr-0.5" /> {gettext("Parent")}
                         </span>
                       </div>
                       <p class="text-sm opacity-70 line-clamp-3">{task.description}</p>
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                           <span class="text-xs opacity-70 truncate max-w-36">
-                            Assigned to: {if task.assignee,
-                              do: task.assignee.name || task.assignee.email,
-                              else: "Unassigned"}
+                            {gettext("Assigned to: %{assignee}",
+                              assignee:
+                                if(task.assignee,
+                                  do: task.assignee.name || task.assignee.email,
+                                  else: gettext("Unassigned")
+                                )
+                            )}
                           </span>
                         </div>
                         <div class="flex items-center gap-2">
@@ -263,7 +275,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                       </div>
                       <div :if={task.children != []} class="mt-2 space-y-2">
                         <div class="flex items-center gap-1 text-xs font-medium opacity-70">
-                          <.icon name="hero-bars-3-bottom-left" class="size-3" /> Subtasks
+                          <.icon name="hero-bars-3-bottom-left" class="size-3" /> {gettext("Subtasks")}
                         </div>
                         <div class="flex items-center gap-2">
                           <div class="h-[6px] grow bg-base-300/70 rounded overflow-hidden">
@@ -291,7 +303,10 @@ defmodule StudtasksWeb.TaskLive.Index do
                                     "bg-primary text-primary-content border-primary",
                                   child.status != "done" && "bg-base-100 border-base-300"
                                 ]}
-                                aria-label={(child.status == "done" && "Mark undone") || "Mark done"}
+                                aria-label={
+                                  (child.status == "done" && gettext("Mark undone")) ||
+                                    gettext("Mark done")
+                                }
                               >
                                 <.icon :if={child.status == "done"} name="hero-check" class="size-4" />
                               </button>
@@ -302,7 +317,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                               <button
                                 type="button"
                                 class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Edit subtask"
+                                title={gettext("Edit subtask")}
                                 phx-click={JS.push("open_edit", value: %{id: child.id})}
                               >
                                 <.icon name="hero-pencil" class="size-4" />
@@ -313,12 +328,14 @@ defmodule StudtasksWeb.TaskLive.Index do
                             :if={length(task.children) > 3}
                             class="flex items-center justify-between text-[10px]"
                           >
-                            <span class="opacity-60">+{length(task.children) - 3} more</span>
+                            <span class="opacity-60">
+                              {gettext("+%{count} more", count: length(task.children) - 3)}
+                            </span>
                             <button
                               class="link link-hover text-[10px]"
                               phx-click={JS.navigate(~p"/groups/#{@course_group}/tasks/#{task}")}
                             >
-                              View all
+                              {gettext("View all")}
                             </button>
                           </div>
                           <button
@@ -329,7 +346,7 @@ defmodule StudtasksWeb.TaskLive.Index do
                               )
                             }
                           >
-                            <.icon name="hero-plus" class="size-3" /> Add subtask
+                            <.icon name="hero-plus" class="size-3" /> {gettext("Add subtask")}
                           </button>
                         </div>
                       </div>
@@ -480,42 +497,44 @@ defmodule StudtasksWeb.TaskLive.Index do
         <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_edit")} />
         <div class="modal modal-open">
           <div class="modal-box space-y-3">
-            <h3 class="font-bold text-lg">Edit task</h3>
+            <h3 class="font-bold text-lg">{gettext("Edit task")}</h3>
             <.form for={@edit_form} id="edit-form" phx-submit="save_edit">
-              <.input type="text" field={@edit_form[:name]} label="Title" required />
-              <.input type="textarea" field={@edit_form[:description]} label="Description" />
+              <.input type="text" field={@edit_form[:name]} label={gettext("Title")} required />
+              <.input type="textarea" field={@edit_form[:description]} label={gettext("Description")} />
               <.input
                 type="select"
                 field={@edit_form[:assignee_id]}
-                prompt="Unassigned"
+                prompt={gettext("Unassigned")}
                 options={@assignee_options}
-                label="Assigned to"
+                label={gettext("Assigned to")}
               />
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <.input
                   type="select"
                   field={@edit_form[:priority]}
                   options={priority_options()}
-                  label="Priority"
+                  label={gettext("Priority")}
                 />
-                <.input type="date" field={@edit_form[:due_date]} label="Due date" />
+                <.input type="date" field={@edit_form[:due_date]} label={gettext("Due date")} />
               </div>
               <.input
                 type="select"
                 field={@edit_form[:status]}
                 options={status_options()}
-                label="Status"
+                label={gettext("Status")}
               />
               <.input
                 type="select"
                 field={@edit_form[:parent_id]}
-                prompt="No parent"
+                prompt={gettext("No parent")}
                 options={@edit_parent_options}
-                label="Parent task"
+                label={gettext("Parent task")}
               />
               <footer class="flex gap-2 justify-end pt-2">
-                <.button phx-click={JS.push("close_edit")} type="button">Cancel</.button>
-                <.button variant="primary" phx-disable-with="Saving...">Save</.button>
+                <.button phx-click={JS.push("close_edit")} type="button">{gettext("Cancel")}</.button>
+                <.button variant="primary" phx-disable-with={gettext("Saving...")}>
+                  {gettext("Save")}
+                </.button>
               </footer>
             </.form>
           </div>
@@ -531,36 +550,44 @@ defmodule StudtasksWeb.TaskLive.Index do
         <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_quick_new")} />
         <div class="modal modal-open">
           <div class="modal-box space-y-3">
-            <h3 class="font-bold text-lg">Quick create task</h3>
+            <h3 class="font-bold text-lg">{gettext("Quick create task")}</h3>
             <.form for={@quick_form} id="quick-form" phx-submit="quick_create">
-              <.input type="text" field={@quick_form[:name]} label="Title" required />
-              <.input type="textarea" field={@quick_form[:description]} label="Description" />
+              <.input type="text" field={@quick_form[:name]} label={gettext("Title")} required />
+              <.input
+                type="textarea"
+                field={@quick_form[:description]}
+                label={gettext("Description")}
+              />
               <.input
                 type="select"
                 field={@quick_form[:assignee_id]}
-                prompt="Unassigned"
+                prompt={gettext("Unassigned")}
                 options={@assignee_options}
-                label="Assigned to"
+                label={gettext("Assigned to")}
               />
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <.input
                   type="select"
                   field={@quick_form[:priority]}
                   options={priority_options()}
-                  label="Priority"
+                  label={gettext("Priority")}
                 />
-                <.input type="date" field={@quick_form[:due_date]} label="Due date" />
+                <.input type="date" field={@quick_form[:due_date]} label={gettext("Due date")} />
               </div>
               <.input
                 type="select"
                 field={@quick_form[:parent_id]}
-                prompt="No parent"
+                prompt={gettext("No parent")}
                 options={@parent_options}
-                label="Parent task"
+                label={gettext("Parent task")}
               />
               <footer class="flex gap-2 justify-end pt-2">
-                <.button phx-click={JS.push("close_quick_new")} type="button">Cancel</.button>
-                <.button variant="primary" phx-disable-with="Creating...">Create</.button>
+                <.button phx-click={JS.push("close_quick_new")} type="button">
+                  {gettext("Cancel")}
+                </.button>
+                <.button variant="primary" phx-disable-with={gettext("Creating...")}>
+                  {gettext("Create")}
+                </.button>
               </footer>
             </.form>
           </div>
@@ -593,7 +620,7 @@ defmodule StudtasksWeb.TaskLive.Index do
 
     {:ok,
      socket
-     |> assign(:page_title, "Listing Tasks")
+     |> assign(:page_title, gettext("Listing Tasks"))
      |> assign(:course_group, course_group)
      |> assign(:members, members)
      |> assign(:assignee_options, assignee_options(members))
@@ -969,7 +996,7 @@ defmodule StudtasksWeb.TaskLive.Index do
 
     case move_task_between_columns(columns, id, old_status, nil) do
       {:no_change, _} ->
-        {:noreply, put_flash(socket, :error, "Could not move task. Please try again.")}
+        {:noreply, put_flash(socket, :error, gettext("Could not move task. Please try again."))}
 
       {:moved, reverted_columns, _from_status, _old_position} ->
         tasks = flatten_board_tasks(reverted_columns)
@@ -977,7 +1004,7 @@ defmodule StudtasksWeb.TaskLive.Index do
 
         {:noreply,
          socket
-         |> put_flash(:error, "Could not move task. Change was reverted.")
+         |> put_flash(:error, gettext("Could not move task. Change was reverted."))
          |> assign(:board_columns, reverted_columns)
          |> assign(:task_stats, stats)}
     end
@@ -992,7 +1019,7 @@ defmodule StudtasksWeb.TaskLive.Index do
 
     {:noreply,
      socket
-     |> put_flash(:error, "Could not reorder task. Change was reverted.")
+     |> put_flash(:error, gettext("Could not reorder task. Change was reverted."))
      |> assign(:task_stats, stats)
      |> assign_board(tasks_filtered)
      |> stream(:tasks, tasks_filtered, reset: true)}
@@ -1010,13 +1037,13 @@ defmodule StudtasksWeb.TaskLive.Index do
 
         {:noreply,
          socket
-         |> put_flash(:error, "Could not update subtask. Change was reverted.")
+         |> put_flash(:error, gettext("Could not update subtask. Change was reverted."))
          |> assign(:board_columns, new_columns)
          |> assign(:task_stats, stats)
          |> stream(:tasks, filtered, reset: true)}
 
       :not_found ->
-        {:noreply, put_flash(socket, :error, "Subtask revert failed")}
+        {:noreply, put_flash(socket, :error, gettext("Subtask revert failed"))}
     end
   end
 
@@ -1288,17 +1315,22 @@ defmodule StudtasksWeb.TaskLive.Index do
 
   defp sort_options do
     [
-      {"Priority ↓", "priority_desc"},
-      {"Priority ↑", "priority_asc"},
-      {"Due date ↑", "due_date_asc"},
-      {"Due date ↓", "due_date_desc"},
-      {"Created ↑", "created_asc"},
-      {"Created ↓", "created_desc"}
+      {gettext("Priority ↓"), "priority_desc"},
+      {gettext("Priority ↑"), "priority_asc"},
+      {gettext("Due date ↑"), "due_date_asc"},
+      {gettext("Due date ↓"), "due_date_desc"},
+      {gettext("Created ↑"), "created_asc"},
+      {gettext("Created ↓"), "created_desc"}
     ]
   end
 
   defp priority_options(),
-    do: [{"Low", "low"}, {"Medium", "medium"}, {"High", "high"}, {"Urgent", "urgent"}]
+    do: [
+      {gettext("Low"), "low"},
+      {gettext("Medium"), "medium"},
+      {gettext("High"), "high"},
+      {gettext("Urgent"), "urgent"}
+    ]
 
   defp status_options(),
     do: Enum.map(["backlog", "todo", "in_progress", "done"], &{format_status(&1), &1})
@@ -1380,10 +1412,10 @@ defmodule StudtasksWeb.TaskLive.Index do
   defp priority_rank("urgent"), do: 3
   defp priority_rank(_), do: 1
 
-  defp format_status("in_progress"), do: "In Progress"
-  defp format_status("todo"), do: "Todo"
-  defp format_status("backlog"), do: "Backlog"
-  defp format_status("done"), do: "Done"
+  defp format_status("in_progress"), do: gettext("In Progress")
+  defp format_status("todo"), do: gettext("Todo")
+  defp format_status("backlog"), do: gettext("Backlog")
+  defp format_status("done"), do: gettext("Done")
   defp format_status(other) when is_binary(other), do: String.capitalize(other)
 
   defp priority_badge_class("urgent"), do: "badge-error"
