@@ -5,6 +5,18 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0?0:n==1?1:n==2?2:n%100>=3 && n%100<=10?3:n%100>=11 && n%100<=99?4:5;\n"
 
 # Homepage strings
+msgid "nadhem"
+msgstr "نظِّم"
+
+msgid "the Nadhem Logo"
+msgstr "شعار نظِّم"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Go to dashboard"
+msgstr "اذهب الى لوحة التحكم"
+
 msgid "Organize your course projects and assignments"
 msgstr "نظِّم مشاريعك الجامعية والواجبات"
 
@@ -69,3 +81,151 @@ msgstr "العربية"
 
 msgid "Save language"
 msgstr "حفظ اللغة"
+
+# Dashboard strings
+msgid "Overview of your work and groups"
+msgstr "نظرة عامة على عملك ومجموعاتك"
+
+msgid "Assigned Tasks"
+msgstr "المهام المُسندة"
+
+msgid "New Group"
+msgstr "مجموعة جديدة"
+
+msgid "Assigned to me"
+msgstr "المُسندة إليّ"
+
+msgid "View all"
+msgstr "عرض الكل"
+
+msgid "No assigned tasks."
+msgstr "لا توجد مهام مُسندة."
+
+msgid "Recent tasks"
+msgstr "المهام الأخيرة"
+
+msgid "No recent tasks."
+msgstr "لا توجد مهام حديثة."
+
+msgid "Your groups"
+msgstr "مجموعاتك"
+
+msgid "Create a new group"
+msgstr "إنشاء مجموعة جديدة"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Creating..."
+msgstr "جارٍ الإنشاء..."
+
+msgid "Create"
+msgstr "إنشاء"
+
+msgid "Group details"
+msgstr "تفاصيل المجموعة"
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Edit"
+msgstr "تعديل"
+
+msgid "Saving..."
+msgstr "جارٍ الحفظ..."
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Invite"
+msgstr "دعوة"
+
+msgid "Generate link"
+msgstr "إنشاء رابط"
+
+msgid "Copy link"
+msgstr "نسخ الرابط"
+
+msgid "Invite link:"
+msgstr "رابط الدعوة:"
+
+msgid "No invite generated yet. Click "Generate link"."
+msgstr "لم يتم إنشاء دعوة بعد. انقر \"إنشاء رابط\"."
+
+msgid "Members"
+msgstr "الأعضاء"
+
+msgid "owner"
+msgstr "المالك"
+
+msgid "admin"
+msgstr "مشرف"
+
+msgid "member"
+msgstr "عضو"
+
+msgid "Demote"
+msgstr "خفض الرتبة"
+
+msgid "Promote"
+msgstr "ترقية"
+
+msgid "Remove"
+msgstr "إزالة"
+
+msgid "Delete group"
+msgstr "حذف المجموعة"
+
+msgid "Are you sure you want to delete"
+msgstr "هل أنت متأكد من حذف"
+
+msgid "This action cannot be undone."
+msgstr "لا يمكن التراجع عن هذا الإجراء."
+
+msgid "Deleting..."
+msgstr "جارٍ الحذف..."
+
+msgid "Delete"
+msgstr "حذف"
+
+# Priority levels
+msgid "urgent"
+msgstr "عاجل"
+
+msgid "high"
+msgstr "مرتفع"
+
+msgid "medium"
+msgstr "متوسط"
+
+msgid "low"
+msgstr "منخفض"
+
+# Layout strings
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+msgid "We can't find the internet"
+msgstr "لا يمكننا العثور على الإنترنت"
+
+msgid "Attempting to reconnect"
+msgstr "جارٍ إعادة الاتصال"
+
+msgid "Something went wrong!"
+msgstr "حدث خطأ ما!"
+
+# Core component strings
+msgid "close"
+msgstr "إغلاق"
+
+msgid "Actions"
+msgstr "الإجراءات"

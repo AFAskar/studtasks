@@ -69,3 +69,151 @@ msgstr "Arabic"
 
 msgid "Save language"
 msgstr "Save language"
+
+# Dashboard strings
+msgid "Overview of your work and groups"
+msgstr "Overview of your work and groups"
+
+msgid "Assigned Tasks"
+msgstr "Assigned Tasks"
+
+msgid "New Group"
+msgstr "New Group"
+
+msgid "Assigned to me"
+msgstr "Assigned to me"
+
+msgid "View all"
+msgstr "View all"
+
+msgid "No assigned tasks."
+msgstr "No assigned tasks."
+
+msgid "Recent tasks"
+msgstr "Recent tasks"
+
+msgid "No recent tasks."
+msgstr "No recent tasks."
+
+msgid "Your groups"
+msgstr "Your groups"
+
+msgid "Create a new group"
+msgstr "Create a new group"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Creating..."
+msgstr "Creating..."
+
+msgid "Create"
+msgstr "Create"
+
+msgid "Group details"
+msgstr "Group details"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Saving..."
+msgstr "Saving..."
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Invite"
+msgstr "Invite"
+
+msgid "Generate link"
+msgstr "Generate link"
+
+msgid "Copy link"
+msgstr "Copy link"
+
+msgid "Invite link:"
+msgstr "Invite link:"
+
+msgid "No invite generated yet. Click "Generate link"."
+msgstr "No invite generated yet. Click "Generate link"."
+
+msgid "Members"
+msgstr "Members"
+
+msgid "owner"
+msgstr "owner"
+
+msgid "admin"
+msgstr "admin"
+
+msgid "member"
+msgstr "member"
+
+msgid "Demote"
+msgstr "Demote"
+
+msgid "Promote"
+msgstr "Promote"
+
+msgid "Remove"
+msgstr "Remove"
+
+msgid "Delete group"
+msgstr "Delete group"
+
+msgid "Are you sure you want to delete"
+msgstr "Are you sure you want to delete"
+
+msgid "This action cannot be undone."
+msgstr "This action cannot be undone."
+
+msgid "Deleting..."
+msgstr "Deleting..."
+
+msgid "Delete"
+msgstr "Delete"
+
+# Priority levels
+msgid "urgent"
+msgstr "urgent"
+
+msgid "high"
+msgstr "high"
+
+msgid "medium"
+msgstr "medium"
+
+msgid "low"
+msgstr "low"
+
+# Layout strings
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Log out"
+msgstr "Log out"
+
+msgid "We can't find the internet"
+msgstr "We can't find the internet"
+
+msgid "Attempting to reconnect"
+msgstr "Attempting to reconnect"
+
+msgid "Something went wrong!"
+msgstr "Something went wrong!"
+
+# Core component strings
+msgid "close"
+msgstr "close"
+
+msgid "Actions"
+msgstr "Actions"

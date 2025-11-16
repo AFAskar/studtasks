@@ -38,8 +38,8 @@ defmodule StudtasksWeb.Layouts do
     <header class="navbar px-4 sm:px-6 lg:px-8 border-b">
       <div class="flex-1">
         <.link navigate={~p"/"} class="flex-1 flex w-fit items-center gap-3">
-          <img src={~p"/images/logo.svg"} alt="the Nadhem Logo" width="36" />
-          <span class="text-lg font-semibold">nadhem</span>
+          <img src={~p"/images/logo.svg"} alt={gettext("the Nadhem Logo")} width="36" />
+          <span class="text-lg font-semibold">{gettext("nadhem")}</span>
         </.link>
       </div>
       <div class="flex-none">
