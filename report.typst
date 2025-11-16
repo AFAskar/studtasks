@@ -1,5 +1,5 @@
 #set text(lang: "en")
-
+#set page("a4", margin: 1in)
 #import "Report/lib.typ": project
 
 #show: project.with(
@@ -136,6 +136,7 @@ The application uses the following environment variables (see `example.env` for 
 - Elixir/Phoenix + LiveView
 - PostgreSQL for all environments (Neon serverless in production, local instance for development)
 - Google Cloud Run (fully managed container runtime with autoscaling and scale-to-zero)
+// #image(image("/Report/Architecture/CurrentArchitecture.png", width: 100%), caption: [Current Application Architecture])
 
 === Why This Architecture?
 
@@ -160,16 +161,19 @@ The application uses the following environment variables (see `example.env` for 
   - Production: Neon (serverless PostgreSQL over network)
   - Development: Local PostgreSQL instance
 - Live updates flow through PubSub; forms/components use Phoenix core components
+// #image(image("/Report/Architecture/ArchetictureDiagram.png", width: 100%), caption: [Application Architecture Diagram])
 
 == Other Proposed Architectures
 
 === Stack 1 (Containerized, FE/BE split)
 
 - Docker, Redis, Node.js/Express, PostgreSQL, React
+// #image(image("/Report/Architecture/Stack1.png", width: 100%), caption: [Proposed Stack 1 Architecture])
 
 === Stack 2 (Serverless-leaning)
 
 - Firebase, Next.js, Vercel
+// #image(image("/Report/Architecture/Stack2.png", width: 100%), caption: [Proposed Stack 2 Architecture])
 
 === Why Not These for MVP?
 
@@ -180,10 +184,10 @@ The application uses the following environment variables (see `example.env` for 
 
 Our application features a clean and intuitive user interface designed for ease of use and efficiency. Below are some screenshots showcasing key pages of the application:
 
-#figure(image("/Report/Screens/Homepage.png", width: 100%), caption: [Homepage])
-#figure(image("/Report/Screens/Homepage-AR.png", width: 100%), caption: [our Homepage in Arabic])
+#figure(image("/Report/Screens/Homepage.png", width: 100%), caption: [The Nadhem Homepage])
+#figure(image("/Report/Screens/Homepage-AR.png", width: 100%), caption: [The Nadhem Homepage in Arabic])
 
-#figure(image("/Report/Screens/dashboard.png", width: 100%), caption: [Dashboard overview])
+#figure(image("/Report/Screens/dashboard.png", width: 100%), caption: [User Dashboard overview])
 #figure(image("/Report/Screens/tasks.png", width: 100%), caption: [Course/group Kanban task view])
 #figure(image("/Report/Screens/tasks-ListView.png", width: 100%), caption: [Course/group List task view])
 #figure(image("/Report/Screens/login.png", width: 100%), caption: [Login page])
@@ -355,4 +359,4 @@ Whilst the current Application is fully functional, several Features could furth
 
 == Final Thoughts
 
-Studtasks represents a successful collaboration between team members with diverse skills and backgrounds. The project has prepared us for real-world software development by exposing us to production-grade tools, deployment strategies, and architectural patterns. We are proud of what we accomplished and confident that the skills and knowledge gained will serve us well in our future careers.
+The project has prepared us for real-world software development by exposing us to production-grade tools, deployment strategies, and architectural patterns. We are proud of what we accomplished and confident that the skills and knowledge gained will serve us well in our future careers.
