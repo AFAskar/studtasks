@@ -143,8 +143,8 @@ msgstr "Copy link"
 msgid "Invite link:"
 msgstr "Invite link:"
 
-msgid "No invite generated yet. Click "Generate link"."
-msgstr "No invite generated yet. Click "Generate link"."
+msgid "No invite generated yet. Click \"Generate link\"."
+msgstr "No invite generated yet. Click \"Generate link\"."
 
 msgid "Members"
 msgstr "Members"
