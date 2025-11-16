@@ -113,7 +113,6 @@ The application uses the following environment variables (see `example.env` for 
 - User Authentication
   - Registration and login with secure password hashing (Argon2)
   - Email verification on sign-up (Swoosh Local in dev)
-  - Forgot password (reset flow via email)
 - Task Management (CRUD)
   - Create tasks with: title (required), description, due date, priority (Low/Medium/High)
   - Assignment to self or other course members
@@ -132,7 +131,12 @@ The application uses the following environment variables (see `example.env` for 
   - Course view: tasks for a specific course/group only
   - Forms for creating/editing tasks using Phoenix `<.form>` / `<.input>` components
   - Clear completed vs pending indicators with Tailwind/DaisyUI styles
-  - Drag-and-drop task ordering (kanban)
+
+=== Implemented Bonus Features
+- Multi-language support (i18n) with English and Arabic locales
+- Forgot password (reset flow via email)
+- Data Visualization
+- Drag-and-drop task ordering (kanban)
 
 = Project Architecture
 == Current Architecture
@@ -147,7 +151,6 @@ The application uses the following environment variables (see `example.env` for 
   - Excellent concurrency and fault tolerance
   - LiveView for first-class realtime UX without heavy client JS
   - Built-in Pub/Sub for efficient live synchronization
-  - Consistent PostgreSQL usage across all environments
 
 - Neon (PostgreSQL):
   - Serverless, globally distributed PostgreSQL with low-latency edge access
@@ -307,7 +310,6 @@ gcloud run deploy studtasks-service \
 ```
 
 = Conclusion
-// write a brief Conclusion about the project, what was learned, and the overall experience.
 == Future Work
 - Push Notifications for assigned tasks or upcoming deadlines
 - Comments/Discussion thread on individual tasks.

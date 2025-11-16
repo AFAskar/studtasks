@@ -151,7 +151,11 @@
     #h(1fr)
     #box(height: IMAGE_BOX_MAX_HEIGHT, width: IMAGE_BOX_MAX_WIDTH)[
       #align(end + horizon)[
-        #Department-logo
+        #if Department-logo == none {
+          image("images/CCIS_Logo.png")
+        } else {
+          Department-logo
+        }
       ]
     ]
   ]
@@ -243,10 +247,16 @@
     }
   ]
 
-  pagebreak()
 
-  // Table of contents.
-  outline(depth: 3, indent: auto)
+  // Table of contents: render only if more than 3 headings exist.
+  context {
+    let heading-count = query(heading).len()
+    if heading-count > 3 {
+      pagebreak()
+
+      outline(depth: 3, indent: auto)
+    }
+  }
 
   // Conditionally enable fancy code blocks and codly show rules
   let fancy = features.contains("fancy-codeblocks")
