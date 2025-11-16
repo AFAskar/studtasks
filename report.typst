@@ -184,10 +184,18 @@ The application uses the following environment variables (see `example.env` for 
 == Screenshots
 
 
-// Uncomment the following lines after adding images under /Report/screens/
-// #figure(image("/Report/screens/login.png", width: 100%), caption: [Login page])
-// #figure(image("/Report/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
-// #figure(image("/Report/screens/tasks.png", width: 100%), caption: [Course/group task view])
+#figure(image("/Report/Screens/Homepage.png", width: 100%), caption: [Homepage])
+#figure(image("/Report/Screens/Homepage-AR.png", width: 100%), caption: [our Homepage in Arabic])
+
+#figure(image("/Report/Screens/dashboard.png", width: 100%), caption: [Dashboard overview])
+#figure(image("/Report/Screens/tasks.png", width: 100%), caption: [Course/group Kanban task view])
+#figure(image("/Report/Screens/tasks-ListView.png", width: 100%), caption: [Course/group List task view])
+#figure(image("/Report/Screens/login.png", width: 100%), caption: [Login page])
+#figure(image("/Report/Screens/register.png", width: 100%), caption: [Register page])
+#figure(image("/Report/Screens/AccountSettings.png", width: 100%), caption: [Account settings Page])
+
+
+
 
 = Deployment & Demo
 
