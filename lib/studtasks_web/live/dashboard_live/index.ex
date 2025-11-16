@@ -126,11 +126,13 @@ defmodule StudtasksWeb.DashboardLive.Index do
           rows={@streams.course_groups}
           row_click={fn {_id, course_group} -> JS.navigate(~p"/groups/#{course_group}/tasks") end}
         >
-          <:col :let={{_id, course_group}} label="Name">{course_group.name}</:col>
-          <:col :let={{_id, course_group}} label="Description">{course_group.description}</:col>
+          <:col :let={{_id, course_group}} label={gettext("Name")}>{course_group.name}</:col>
+          <:col :let={{_id, course_group}} label={gettext("Description")}>
+            {course_group.description}
+          </:col>
           <:action :let={{_id, course_group}}>
             <.link phx-click={JS.push("open_group", value: %{id: course_group.id})}>
-              Details
+              {gettext("Details")}
             </.link>
           </:action>
           <:action :let={{_id, course_group}}>
@@ -138,7 +140,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
               :if={Courses.group_owner?(@current_scope, course_group)}
               phx-click={JS.push("delete:open", value: %{id: course_group.id})}
             >
-              Delete
+              {gettext("Delete")}
             </.link>
           </:action>
         </.table>

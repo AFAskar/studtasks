@@ -147,6 +147,9 @@ msgstr "الاسم"
 msgid "Description"
 msgstr "الوصف"
 
+msgid "Details"
+msgstr "تفاصيل"
+
 msgid "Cancel"
 msgstr "إلغاء"
 
