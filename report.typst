@@ -183,7 +183,7 @@ The application uses the following environment variables (see `example.env` for 
 
 - Stack 1: Adds operational complexity (Redis, Docker, FE/BE split) with less out-of-the-box realtime ergonomics vs Phoenix LiveView.
 - Stack 2: Great serverless velocity, but less control/customization and tight coupling to vendor services compared to a cloud-agnostic Phoenix stack.
-- Stack 3: More Expensive than Cloud run with little benifet for this MVP. We Would have used it if it had the same cost as cloud run.
+- Stack 3: More expensive than Cloud Run with little benefit for this MVP. We would have used it if it had the same cost as Cloud Run.
 
 == Screenshots
 
