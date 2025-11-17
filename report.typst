@@ -358,7 +358,7 @@ Whilst the current Application is fully functional, several Features could furth
 - Integration with external calendar services (e.g., Google Calendar)
 - File attachments for tasks (e.g., upload PDFs, images)
 - Offline support with local caching and sync when online using Service Workers
-- more Data Visualization
+- More data visualization
   - Advanced analytics and productivity insights
   - Team performance metrics and reporting
 
