@@ -102,6 +102,18 @@ msgstr "Account Settings"
 msgid "Overview of your work and groups"
 msgstr "Overview of your work and groups"
 
+msgid "nadhem"
+msgstr "nadhem"
+
+msgid "the Nadhem Logo"
+msgstr "the Nadhem Logo"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Go to dashboard"
+msgstr "Go to dashboard"
+
 msgid "Assigned Tasks"
 msgstr "Assigned Tasks"
 
