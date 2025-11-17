@@ -186,7 +186,7 @@ msgstr "نسخ الرابط"
 msgid "Invite link:"
 msgstr "رابط الدعوة:"
 
-msgid "No invite generated yet. Click \"Generate link\"."
+msgid "No invite generated yet."
 msgstr "لم يتم إنشاء دعوة بعد. انقر \"إنشاء رابط\"."
 
 msgid "Members"

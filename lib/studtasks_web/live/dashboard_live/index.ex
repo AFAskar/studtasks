@@ -235,7 +235,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                   <div class="border rounded p-3 bg-base-200">{@invite_qr_svg}</div>
                 <% else %>
                   <p class="text-sm opacity-70">
-                    {gettext("No invite generated yet. Click “Generate link”.")}
+                    {gettext("No invite generated yet.")}
                   </p>
                 <% end %>
               </div>
