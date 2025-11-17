@@ -127,6 +127,7 @@ The application uses the following environment variables (see `example.env` for 
 - Forgot password (reset flow via email)
 - Data Visualization
 - Drag-and-drop task ordering (kanban)
+- Optimistic UI updates for better responsiveness
 
 = Project Architecture
 == Current Architecture
