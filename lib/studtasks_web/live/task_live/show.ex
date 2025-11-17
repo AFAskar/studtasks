@@ -165,8 +165,16 @@ defmodule StudtasksWeb.TaskLive.Show do
     task = socket.assigns.task
 
     case Courses.update_task(socket.assigns.current_scope, task, params) do
-      {:ok, task} ->
-        {:noreply, socket |> assign(:task, task) |> assign(:show_edit, false)}
+      {:ok, updated_task} ->
+        # Reload the task with all associations to avoid NotLoaded errors
+        reloaded_task =
+          Courses.get_task_in_group!(
+            socket.assigns.current_scope,
+            updated_task.id,
+            socket.assigns.course_group.id
+          )
+
+        {:noreply, socket |> assign(:task, reloaded_task) |> assign(:show_edit, false)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :edit_form, to_form(changeset))}
