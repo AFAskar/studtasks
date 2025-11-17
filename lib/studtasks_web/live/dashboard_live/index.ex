@@ -310,7 +310,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
               )}
             </p>
             <footer class="flex gap-2 justify-end pt-2">
-              <.button type="button" phx-click={JS.push("delete:close")}>Cancel</.button>
+              <.button type="button" phx-click={JS.push("delete:close")}>{gettext("Cancel")}</.button>
               <.button
                 variant="primary"
                 phx-click={JS.push("delete:confirm")}
