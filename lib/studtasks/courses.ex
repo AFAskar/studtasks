@@ -4,10 +4,10 @@ defmodule Studtasks.Courses do
   """
 
   import Ecto.Query, warn: false
+  alias Ecto.Multi
   alias Studtasks.Repo
-
-  alias Studtasks.Courses.CourseGroup
-  alias Studtasks.Accounts.Scope
+  alias Studtasks.Courses.{CourseGroup, GroupMembership, Task}
+  alias Studtasks.Accounts.{Scope, User}
 
   @doc """
   Subscribes to scoped notifications about any course_group changes.
@@ -41,8 +41,6 @@ defmodule Studtasks.Courses do
 
   """
   def list_course_groups(%Scope{} = scope) do
-    import Ecto.Query
-
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
@@ -67,8 +65,6 @@ defmodule Studtasks.Courses do
 
   """
   def get_course_group!(%Scope{} = scope, id) do
-    import Ecto.Query
-
     from(g in CourseGroup,
       left_join: m in Studtasks.Courses.GroupMembership,
       on: m.course_group_id == g.id and m.user_id == ^scope.user.id,
@@ -91,8 +87,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is the owner of the group.
   """
   def group_owner?(%Scope{} = scope, %CourseGroup{} = group) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "owner",
       select: m.id
@@ -105,8 +99,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is a member (or owner) of the group.
   """
   def group_member?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id,
       select: m.id
@@ -119,8 +111,6 @@ defmodule Studtasks.Courses do
   Lists memberships for a given group with the associated users preloaded.
   """
   def list_group_memberships(group_id) do
-    alias Studtasks.Courses.GroupMembership
-
     GroupMembership
     |> where([m], m.course_group_id == ^group_id)
     |> preload(:user)
@@ -131,8 +121,6 @@ defmodule Studtasks.Courses do
   Sets the role of a membership. Only the group owner can change roles.
   """
   def set_group_membership_role(%Scope{} = scope, group_id, user_id, role) do
-    alias Studtasks.Courses.GroupMembership
-
     true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
@@ -149,8 +137,6 @@ defmodule Studtasks.Courses do
   The owner cannot remove themselves via membership (owners are not members).
   """
   def remove_group_member(%Scope{} = scope, group_id, user_id) do
-    alias Studtasks.Courses.GroupMembership
-
     true = owner_membership?(scope, group_id)
 
     with %GroupMembership{} = mem <-
@@ -165,8 +151,6 @@ defmodule Studtasks.Courses do
   Ensures the given user is a member of the group. Idempotent.
   """
   def ensure_group_membership(%Scope{} = scope, group_id, role \\ "member") do
-    alias Studtasks.Courses.GroupMembership
-
     %GroupMembership{}
     |> GroupMembership.changeset(%{
       user_id: scope.user.id,
@@ -278,10 +262,6 @@ defmodule Studtasks.Courses do
   Returns the owner user for a group, or nil if not set.
   """
   def get_group_owner_user(group_id) do
-    import Ecto.Query
-    alias Studtasks.Courses.GroupMembership
-    alias Studtasks.Accounts.User
-
     from(m in GroupMembership,
       join: u in User,
       on: u.id == m.user_id,
@@ -292,8 +272,6 @@ defmodule Studtasks.Courses do
   end
 
   defp owner_membership?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group_id and m.user_id == ^scope.user.id and m.role == "owner",
       select: m.id
@@ -306,8 +284,6 @@ defmodule Studtasks.Courses do
   Returns true if the given scope's user is an admin of the group.
   """
   def group_admin?(%Scope{} = scope, %CourseGroup{} = group) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where: m.course_group_id == ^group.id and m.user_id == ^scope.user.id and m.role == "admin",
       select: m.id
@@ -317,8 +293,6 @@ defmodule Studtasks.Courses do
   end
 
   defp owner_or_admin_membership?(%Scope{} = scope, group_id) do
-    import Ecto.Query
-
     from(m in Studtasks.Courses.GroupMembership,
       where:
         m.course_group_id == ^group_id and m.user_id == ^scope.user.id and
@@ -328,9 +302,6 @@ defmodule Studtasks.Courses do
     |> Repo.one()
     |> is_binary()
   end
-
-  alias Studtasks.Courses.Task
-  alias Studtasks.Accounts.Scope
 
   @doc """
   Subscribes to scoped notifications about any task changes.
@@ -393,7 +364,8 @@ defmodule Studtasks.Courses do
 
     from(t in Task,
       where: t.course_group_id == ^course_group_id,
-      preload: [:assignee, :creator, :children]
+      preload: [:assignee, :creator, :children, :parent],
+      order_by: [asc: t.position, desc: t.inserted_at]
     )
     |> Repo.all()
   end
@@ -405,8 +377,6 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_assigned_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -424,8 +394,6 @@ defmodule Studtasks.Courses do
   Defaults to 5 items.
   """
   def list_recent_tasks(%Scope{} = scope, limit \\ 5) when is_integer(limit) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -440,8 +408,6 @@ defmodule Studtasks.Courses do
   Returns all tasks assigned to the current user across all groups, newest first.
   """
   def list_assigned_tasks_all(%Scope{} = scope) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -456,8 +422,6 @@ defmodule Studtasks.Courses do
   Returns all tasks for the current user across all groups, newest first.
   """
   def list_recent_tasks_all(%Scope{} = scope) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -482,8 +446,6 @@ defmodule Studtasks.Courses do
 
   """
   def get_task!(%Scope{} = scope, id) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
@@ -498,15 +460,13 @@ defmodule Studtasks.Courses do
   Raises `Ecto.NoResultsError` if not found or not owned by user.
   """
   def get_task_in_group!(%Scope{} = scope, id, course_group_id) do
-    alias Studtasks.Courses.GroupMembership
-
     from(t in Task,
       join: m in GroupMembership,
       on: m.course_group_id == t.course_group_id and m.user_id == ^scope.user.id,
       where: t.id == ^id and t.course_group_id == ^course_group_id
     )
     |> Repo.one!()
-    |> Repo.preload([:assignee])
+    |> Repo.preload([:assignee, :children, :parent])
   end
 
   @doc """
@@ -522,7 +482,12 @@ defmodule Studtasks.Courses do
 
   """
   def create_task(%Scope{} = scope, attrs) do
-    changeset = Task.changeset(%Task{}, attrs, scope)
+    changeset =
+      %Task{}
+      |> Task.changeset(attrs, scope)
+      |> validate_parent_same_group()
+      |> validate_parent_depth()
+
     group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
 
     # Only enforce membership when we actually have a group_id present in the changeset
@@ -556,9 +521,107 @@ defmodule Studtasks.Courses do
     with {:ok, task = %Task{}} <-
            task
            |> Task.changeset(attrs, scope)
+           |> validate_parent_same_group()
+           |> validate_parent_depth()
            |> Repo.update() do
       broadcast_task(scope, {:updated, task})
       {:ok, task}
+    end
+  end
+
+  @doc """
+  Reorders tasks within a column by updating their positions.
+
+  Takes a list of task IDs in the desired order and updates their positions accordingly.
+  """
+  def reorder_tasks(%Scope{} = scope, task_ids, status, course_group_id) when is_list(task_ids) do
+    true = group_member?(scope, course_group_id)
+
+    # Build updates for each task with its new position
+    updates =
+      task_ids
+      |> Enum.with_index()
+      |> Enum.map(fn {id, index} ->
+        from(t in Task,
+          where: t.id == ^id and t.course_group_id == ^course_group_id and t.status == ^status
+        )
+        |> Repo.update_all(set: [position: index])
+      end)
+
+    # Return :ok if all updates succeeded
+    if Enum.all?(updates, fn {count, _} -> count > 0 end) do
+      :ok
+    else
+      {:error, :invalid_reorder}
+    end
+  end
+
+  @doc """
+  Atomically moves a task to a new column (status) and sets its position.
+  This combines status update and reordering in a single transaction to avoid race conditions.
+  """
+  def move_task_to_column(
+        %Scope{} = scope,
+        task_id,
+        new_status,
+        task_ids_in_order,
+        course_group_id
+      ) do
+    true = group_member?(scope, course_group_id)
+
+    multi =
+      Multi.new()
+      # Step 1: Update the moved task's status and position atomically
+      |> Multi.run(:update_moved_task, fn repo, _changes ->
+        # Find the position of the moved task in the new ordering
+        new_position =
+          Enum.find_index(task_ids_in_order, fn id -> to_string(id) == to_string(task_id) end)
+
+        if is_nil(new_position) do
+          {:error, :task_not_in_order}
+        else
+          query =
+            from(t in Task,
+              where: t.id == ^task_id and t.course_group_id == ^course_group_id
+            )
+
+          case repo.update_all(query, set: [status: new_status, position: new_position]) do
+            {1, _} -> {:ok, new_position}
+            {0, _} -> {:error, :task_not_found}
+            _ -> {:error, :unexpected_count}
+          end
+        end
+      end)
+      # Step 2: Update positions for all other tasks in the new column
+      |> Multi.run(:reorder_column, fn repo, %{update_moved_task: _moved_position} ->
+        # Update all tasks in the new status column (except the moved one) with their correct positions
+        results =
+          task_ids_in_order
+          |> Enum.with_index()
+          |> Enum.reject(fn {id, _idx} -> to_string(id) == to_string(task_id) end)
+          |> Enum.map(fn {id, index} ->
+            query =
+              from(t in Task,
+                where:
+                  t.id == ^id and t.course_group_id == ^course_group_id and
+                    t.status == ^new_status
+              )
+
+            repo.update_all(query, set: [position: index])
+          end)
+
+        {:ok, results}
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, _} ->
+        # Broadcast the update so other clients see the change
+        task = get_task!(scope, task_id)
+        broadcast_task(scope, {:updated, task})
+        :ok
+
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
     end
   end
 
@@ -576,11 +639,29 @@ defmodule Studtasks.Courses do
   """
   def delete_task(%Scope{} = scope, %Task{} = task) do
     true = group_member?(scope, task.course_group_id)
+    # Deletion strategy: we do NOT cascade delete children. Instead we
+    # orphan them by setting their parent_id to nil prior to deleting the
+    # parent task. This preserves child tasks and avoids accidental loss
+    # of work items.
 
-    with {:ok, task = %Task{}} <-
-           Repo.delete(task) do
-      broadcast_task(scope, {:deleted, task})
-      {:ok, task}
+    multi =
+      Multi.new()
+      |> Multi.run(:orphan_children, fn repo, _changes ->
+        # Orphan all children by nullifying their parent_id in a single statement.
+        children_query = from(t in Task, where: t.parent_id == ^task.id)
+
+        {count, _} = repo.update_all(children_query, set: [parent_id: nil])
+        {:ok, count}
+      end)
+      |> Multi.delete(:delete_task, task)
+
+    case Repo.transaction(multi) do
+      {:ok, %{delete_task: task}} ->
+        broadcast_task(scope, {:deleted, task})
+        {:ok, task}
+
+      {:error, _op, reason, _changes} ->
+        {:error, reason}
     end
   end
 
@@ -597,5 +678,99 @@ defmodule Studtasks.Courses do
     true = is_nil(task.id) or group_member?(scope, task.course_group_id)
 
     Task.changeset(task, attrs, scope)
+  end
+
+  @doc """
+  Returns all root tasks (tasks without a parent) for the given course group.
+  Includes their immediate children.
+  """
+  def list_root_tasks(%Scope{} = scope, course_group_id) do
+    true = group_member?(scope, course_group_id)
+
+    from(t in Task,
+      where: t.course_group_id == ^course_group_id and is_nil(t.parent_id),
+      preload: [:children, :assignee, :creator]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns child tasks for a given parent task id (only immediate children).
+  Ensures membership in the parent's course group.
+  """
+  def list_child_tasks(%Scope{} = scope, parent_id) do
+    parent = get_task!(scope, parent_id)
+
+    from(t in Task,
+      where: t.parent_id == ^parent.id,
+      preload: [:children, :assignee, :creator]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns a simple task tree for a course group (one level of children preloaded).
+  """
+  def task_tree(%Scope{} = scope, course_group_id) do
+    list_root_tasks(scope, course_group_id)
+  end
+
+  # Private helpers
+  defp validate_parent_same_group(%Ecto.Changeset{} = changeset) do
+    parent_id = Ecto.Changeset.get_field(changeset, :parent_id)
+    course_group_id = Ecto.Changeset.get_field(changeset, :course_group_id)
+    task_id = changeset.data.id
+
+    cond do
+      is_nil(parent_id) ->
+        changeset
+
+      task_id && parent_id == task_id ->
+        Ecto.Changeset.add_error(changeset, :parent_id, "cannot reference itself")
+
+      true ->
+        case Repo.get(Task, parent_id) do
+          nil ->
+            Ecto.Changeset.add_error(changeset, :parent_id, "parent does not exist")
+
+          %Task{course_group_id: ^course_group_id} ->
+            changeset
+
+          %Task{} ->
+            Ecto.Changeset.add_error(
+              changeset,
+              :parent_id,
+              "parent must belong to the same course group"
+            )
+        end
+    end
+  end
+
+  # Ensures there is only one level of parent-child depth.
+  # If the chosen parent itself has a parent, we reject the change.
+  defp validate_parent_depth(%Ecto.Changeset{} = changeset) do
+    parent_id = Ecto.Changeset.get_field(changeset, :parent_id)
+
+    cond do
+      is_nil(parent_id) ->
+        changeset
+
+      true ->
+        case Repo.get(Task, parent_id) do
+          nil ->
+            # Let the foreign_key_constraint handle non-existent parent normally; keep explicit error for clarity.
+            Ecto.Changeset.add_error(changeset, :parent_id, "parent does not exist")
+
+          %Task{parent_id: grandparent_id} when not is_nil(grandparent_id) ->
+            Ecto.Changeset.add_error(
+              changeset,
+              :parent_id,
+              "parent task already has a parent; only one level allowed"
+            )
+
+          _ ->
+            changeset
+        end
+    end
   end
 end

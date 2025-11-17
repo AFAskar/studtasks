@@ -9,14 +9,14 @@ defmodule StudtasksWeb.DashboardLive.Index do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
-        Dashboard
-        <:subtitle>Overview of your work and groups</:subtitle>
+        {gettext("Dashboard")}
+        <:subtitle>{gettext("Overview of your work and groups")}</:subtitle>
         <:actions>
           <div class="flex items-center gap-2">
-            <span class="badge badge-ghost">Groups: {@group_count}</span>
-            <span class="badge badge-ghost">Assigned Tasks: {@assigned_count}</span>
+            <span class="badge badge-ghost">{gettext("Groups")}: {@group_count}</span>
+            <span class="badge badge-ghost">{gettext("Assigned Tasks")}: {@assigned_count}</span>
             <.button variant="primary" phx-click={JS.push("open_new_group")}>
-              <.icon name="hero-plus" /> New Group
+              <.icon name="hero-plus" /> {gettext("New Group")}
             </.button>
           </div>
         </:actions>
@@ -26,12 +26,14 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <div class="card bg-base-200/60 border border-base-300">
           <div class="card-body">
             <div class="flex items-center justify-between">
-              <h3 class="card-title text-base">Assigned to me</h3>
+              <h3 class="card-title text-base">{gettext("Assigned to me")}</h3>
               <.link navigate={~p"/dashboard/tasks?type=assigned"} class="link link-primary text-sm">
-                View all
+                {gettext("View all")}
               </.link>
             </div>
-            <div :if={@assigned_tasks == []} class="text-sm opacity-70">No assigned tasks.</div>
+            <div :if={@assigned_tasks == []} class="text-sm opacity-70">
+              {gettext("No assigned tasks.")}
+            </div>
             <ul class="divide-y divide-base-300">
               <li :for={task <- @assigned_tasks} class="py-3 flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -46,7 +48,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       "badge badge-xs",
                       priority_badge_class(task.priority)
                     ]}>
-                      {String.capitalize(task.priority || "")}
+                      {String.capitalize(translate_priority(task.priority))}
                     </span>
                   </div>
                   <div class="text-xs opacity-70 truncate">
@@ -69,12 +71,14 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <div class="card bg-base-200/60 border border-base-300">
           <div class="card-body">
             <div class="flex items-center justify-between">
-              <h3 class="card-title text-base">Recent tasks</h3>
+              <h3 class="card-title text-base">{gettext("Recent tasks")}</h3>
               <.link navigate={~p"/dashboard/tasks?type=recent"} class="link link-primary text-sm">
-                View all
+                {gettext("View all")}
               </.link>
             </div>
-            <div :if={@recent_tasks == []} class="text-sm opacity-70">No recent tasks.</div>
+            <div :if={@recent_tasks == []} class="text-sm opacity-70">
+              {gettext("No recent tasks.")}
+            </div>
             <ul class="divide-y divide-base-300">
               <li :for={task <- @recent_tasks} class="py-3 flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -89,7 +93,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       "badge badge-xs",
                       priority_badge_class(task.priority)
                     ]}>
-                      {String.capitalize(task.priority || "")}
+                      {String.capitalize(translate_priority(task.priority))}
                     </span>
                   </div>
                   <div class="text-xs opacity-70 truncate">
@@ -114,7 +118,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
 
       <div class="mt-8">
         <.header>
-          Your groups
+          {gettext("Your groups")}
         </.header>
 
         <.table
@@ -122,11 +126,13 @@ defmodule StudtasksWeb.DashboardLive.Index do
           rows={@streams.course_groups}
           row_click={fn {_id, course_group} -> JS.navigate(~p"/groups/#{course_group}/tasks") end}
         >
-          <:col :let={{_id, course_group}} label="Name">{course_group.name}</:col>
-          <:col :let={{_id, course_group}} label="Description">{course_group.description}</:col>
+          <:col :let={{_id, course_group}} label={gettext("Name")}>{course_group.name}</:col>
+          <:col :let={{_id, course_group}} label={gettext("Description")}>
+            {course_group.description}
+          </:col>
           <:action :let={{_id, course_group}}>
             <.link phx-click={JS.push("open_group", value: %{id: course_group.id})}>
-              Details
+              {gettext("Details")}
             </.link>
           </:action>
           <:action :let={{_id, course_group}}>
@@ -134,7 +140,7 @@ defmodule StudtasksWeb.DashboardLive.Index do
               :if={Courses.group_owner?(@current_scope, course_group)}
               phx-click={JS.push("delete:open", value: %{id: course_group.id})}
             >
-              Delete
+              {gettext("Delete")}
             </.link>
           </:action>
         </.table>
@@ -150,13 +156,22 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("close_new_group")} />
         <div class="modal modal-open">
           <div class="modal-box space-y-3">
-            <h3 class="font-bold text-lg">Create a new group</h3>
+            <h3 class="font-bold text-lg">{gettext("Create a new group")}</h3>
             <.form for={@group_form} id="group-form" phx-submit="create_group">
-              <.input type="text" field={@group_form[:name]} label="Name" required />
-              <.input type="textarea" field={@group_form[:description]} label="Description" required />
+              <.input type="text" field={@group_form[:name]} label={gettext("Name")} required />
+              <.input
+                type="textarea"
+                field={@group_form[:description]}
+                label={gettext("Description")}
+                required
+              />
               <footer class="flex gap-2 justify-end pt-2">
-                <.button type="button" phx-click={JS.push("close_new_group")}>Cancel</.button>
-                <.button variant="primary" phx-disable-with="Creating...">Create</.button>
+                <.button type="button" phx-click={JS.push("close_new_group")}>
+                  {gettext("Cancel")}
+                </.button>
+                <.button variant="primary" phx-disable-with={gettext("Creating...")}>
+                  {gettext("Create")}
+                </.button>
               </footer>
             </.form>
           </div>
@@ -173,56 +188,60 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <div class="modal modal-open">
           <div class="modal-box space-y-3 max-w-3xl">
             <div class="flex items-center justify-between">
-              <h3 class="font-bold text-lg">Group details</h3>
-              <.button type="button" phx-click={JS.push("close_group")}>Close</.button>
+              <h3 class="font-bold text-lg">{gettext("Group details")}</h3>
+              <.button type="button" phx-click={JS.push("close_group")}>{gettext("Close")}</.button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
-                <h4 class="font-semibold">Edit</h4>
+                <h4 class="font-semibold">{gettext("Edit")}</h4>
                 <.form for={@group_edit_form} id="group-edit-form" phx-submit="group:update">
                   <.input
                     type="text"
                     field={@group_edit_form[:name]}
-                    label="Name"
+                    label={gettext("Name")}
                     disabled={!@can_edit}
                   />
                   <.input
                     type="textarea"
                     field={@group_edit_form[:description]}
-                    label="Description"
+                    label={gettext("Description")}
                     disabled={!@can_edit}
                   />
                   <footer class="flex gap-2 justify-end pt-2">
-                    <.button :if={@can_edit} variant="primary" phx-disable-with="Saving...">
-                      Save
+                    <.button :if={@can_edit} variant="primary" phx-disable-with={gettext("Saving...")}>
+                      {gettext("Save")}
                     </.button>
                   </footer>
                 </.form>
               </div>
               <div class="space-y-2">
-                <h4 class="font-semibold">Invite</h4>
+                <h4 class="font-semibold">{gettext("Invite")}</h4>
                 <div class="flex items-center gap-2">
                   <.button phx-click={JS.push("group:generate_invite")} disabled={!@can_edit}>
-                    Generate link
+                    {gettext("Generate link")}
                   </.button>
                   <.button
                     phx-hook=".CopyLink"
                     disabled={is_nil(@invite_url)}
                     data-clipboard-text={@invite_url}
                   >
-                    <.icon name="hero-clipboard" /> Copy link
+                    <.icon name="hero-clipboard" /> {gettext("Copy link")}
                   </.button>
                 </div>
                 <%= if @invite_url do %>
-                  <p class="text-sm break-all"><strong>Invite link:</strong> {@invite_url}</p>
+                  <p class="text-sm break-all">
+                    <strong>{gettext("Invite link:")}</strong> {@invite_url}
+                  </p>
                   <div class="border rounded p-3 bg-base-200">{@invite_qr_svg}</div>
                 <% else %>
-                  <p class="text-sm opacity-70">No invite generated yet. Click “Generate link”.</p>
+                  <p class="text-sm opacity-70">
+                    {gettext("No invite generated yet.")}
+                  </p>
                 <% end %>
               </div>
             </div>
             <div class="space-y-2">
-              <h4 class="font-semibold">Members</h4>
+              <h4 class="font-semibold">{gettext("Members")}</h4>
               <div class="space-y-2">
                 <%= for m <- @memberships do %>
                   <div class="flex items-center justify-between">
@@ -230,21 +249,21 @@ defmodule StudtasksWeb.DashboardLive.Index do
                       <span class="opacity-80">{m.user.name || m.user.email}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                      <span class="badge">{m.role}</span>
+                      <span class="badge">{translate_role(m.role)}</span>
                       <.button
                         :if={@is_owner and m.role != "owner"}
                         phx-click="membership:set_role"
                         phx-value-user={m.user.id}
                         phx-value-role={if m.role == "admin", do: "member", else: "admin"}
                       >
-                        {if m.role == "admin", do: "Demote", else: "Promote"}
+                        {if m.role == "admin", do: gettext("Demote"), else: gettext("Promote")}
                       </.button>
                       <.button
                         :if={@is_owner and m.role != "owner"}
                         phx-click="membership:remove"
                         phx-value-user={m.user.id}
                       >
-                        Remove
+                        {gettext("Remove")}
                       </.button>
                     </div>
                   </div>
@@ -284,19 +303,20 @@ defmodule StudtasksWeb.DashboardLive.Index do
         <div class="absolute inset-0 bg-base-300/40" phx-click={JS.push("delete:close")} />
         <div class="modal modal-open">
           <div class="modal-box space-y-4">
-            <h3 class="font-bold text-lg">Delete group</h3>
+            <h3 class="font-bold text-lg">{gettext("Delete group")}</h3>
             <p class="text-sm">
-              Are you sure you want to delete <strong>{@group_to_delete && (@group_to_delete.name || @group_to_delete.id)}</strong>?
-              This action cannot be undone.
+              {gettext("Are you sure you want to delete")} <strong>{@group_to_delete && (@group_to_delete.name || @group_to_delete.id)}</strong>? {gettext(
+                "This action cannot be undone."
+              )}
             </p>
             <footer class="flex gap-2 justify-end pt-2">
-              <.button type="button" phx-click={JS.push("delete:close")}>Cancel</.button>
+              <.button type="button" phx-click={JS.push("delete:close")}>{gettext("Cancel")}</.button>
               <.button
                 variant="primary"
                 phx-click={JS.push("delete:confirm")}
-                phx-disable-with="Deleting..."
+                phx-disable-with={gettext("Deleting...")}
               >
-                Delete
+                {gettext("Delete")}
               </.button>
             </footer>
           </div>
@@ -540,4 +560,16 @@ defmodule StudtasksWeb.DashboardLive.Index do
     Courses.change_course_group(scope, group)
     |> to_form()
   end
+
+  defp translate_priority(nil), do: ""
+  defp translate_priority("urgent"), do: gettext("urgent")
+  defp translate_priority("high"), do: gettext("high")
+  defp translate_priority("medium"), do: gettext("medium")
+  defp translate_priority("low"), do: gettext("low")
+  defp translate_priority(other), do: other
+
+  defp translate_role("owner"), do: gettext("owner")
+  defp translate_role("admin"), do: gettext("admin")
+  defp translate_role("member"), do: gettext("member")
+  defp translate_role(other), do: other
 end

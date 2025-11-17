@@ -69,3 +69,354 @@ msgstr "Arabic"
 
 msgid "Save language"
 msgstr "Save language"
+
+msgid "Save Password"
+msgstr "Save Password"
+
+msgid "Change name"
+msgstr "Change name"
+
+msgid "Change Email"
+msgstr "Change Email"
+
+msgid "Changing..."
+msgstr "Changing..."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "New password"
+msgstr "New password"
+
+msgid "Confirm new password"
+msgstr "Confirm new password"
+
+msgid "Manage your account email address, name and password settings"
+msgstr "Manage your account email address, name and password settings"
+
+msgid "Account Settings"
+msgstr "Account Settings"
+
+
+# Dashboard strings
+msgid "Overview of your work and groups"
+msgstr "Overview of your work and groups"
+
+msgid "nadhem"
+msgstr "nadhem"
+
+msgid "the Nadhem Logo"
+msgstr "the Nadhem Logo"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Go to dashboard"
+msgstr "Go to dashboard"
+
+msgid "Assigned Tasks"
+msgstr "Assigned Tasks"
+
+msgid "New Group"
+msgstr "New Group"
+
+msgid "Assigned to me"
+msgstr "Assigned to me"
+
+msgid "View all"
+msgstr "View all"
+
+msgid "No assigned tasks."
+msgstr "No assigned tasks."
+
+msgid "Recent tasks"
+msgstr "Recent tasks"
+
+msgid "No recent tasks."
+msgstr "No recent tasks."
+
+msgid "Your groups"
+msgstr "Your groups"
+
+msgid "Create a new group"
+msgstr "Create a new group"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Creating..."
+msgstr "Creating..."
+
+msgid "Create"
+msgstr "Create"
+
+msgid "Group details"
+msgstr "Group details"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Saving..."
+msgstr "Saving..."
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Invite"
+msgstr "Invite"
+
+msgid "Generate link"
+msgstr "Generate link"
+
+msgid "Copy link"
+msgstr "Copy link"
+
+msgid "Invite link:"
+msgstr "Invite link:"
+
+msgid "No invite generated yet."
+msgstr "No invite generated yet. Click \"Generate link\"."
+
+msgid "Members"
+msgstr "Members"
+
+msgid "owner"
+msgstr "owner"
+
+msgid "admin"
+msgstr "admin"
+
+msgid "member"
+msgstr "member"
+
+msgid "Demote"
+msgstr "Demote"
+
+msgid "Promote"
+msgstr "Promote"
+
+msgid "Remove"
+msgstr "Remove"
+
+msgid "Delete group"
+msgstr "Delete group"
+
+msgid "Are you sure you want to delete"
+msgstr "Are you sure you want to delete"
+
+msgid "This action cannot be undone."
+msgstr "This action cannot be undone."
+
+msgid "Deleting..."
+msgstr "Deleting..."
+
+msgid "Delete"
+msgstr "Delete"
+
+# Priority levels
+msgid "urgent"
+msgstr "urgent"
+
+msgid "high"
+msgstr "high"
+
+msgid "medium"
+msgstr "medium"
+
+msgid "low"
+msgstr "low"
+
+# Layout strings
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Log out"
+msgstr "Log out"
+
+msgid "We can't find the internet"
+msgstr "We can't find the internet"
+
+msgid "Attempting to reconnect"
+msgstr "Attempting to reconnect"
+
+msgid "Something went wrong!"
+msgstr "Something went wrong!"
+
+# Core component strings
+msgid "close"
+msgstr "close"
+
+msgid "Actions"
+msgstr "Actions"
+
+# Task page strings
+msgid "Listing Tasks"
+msgstr "Listing Tasks"
+
+msgid "Tasks"
+msgstr "Tasks"
+
+msgid "Plan and track work for %{name}"
+msgstr "Plan and track work for %{name}"
+
+msgid "Anyone"
+msgstr "Anyone"
+
+msgid "Unassigned only"
+msgstr "Unassigned only"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "List"
+msgstr "List"
+
+msgid "Board"
+msgstr "Board"
+
+msgid "New Task"
+msgstr "New Task"
+
+msgid "Completed tasks"
+msgstr "Completed tasks"
+
+msgid "By status"
+msgstr "By status"
+
+msgid "Total: %{count}"
+msgstr "Total: %{count}"
+
+msgid "Backlog"
+msgstr "Backlog"
+
+msgid "Todo"
+msgstr "Todo"
+
+msgid "In Progress"
+msgstr "In Progress"
+
+msgid "Done"
+msgstr "Done"
+
+msgid "Priority"
+msgstr "Priority"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Due"
+msgstr "Due"
+
+msgid "Parent"
+msgstr "Parent"
+
+msgid "Subtasks"
+msgstr "Subtasks"
+
+msgid "Assigned to"
+msgstr "Assigned to"
+
+msgid "Show"
+msgstr "Show"
+
+msgid "Are you sure?"
+msgstr "Are you sure?"
+
+msgid "Drop here"
+msgstr "Drop here"
+
+msgid "Parent task"
+msgstr "Parent task"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Add subtask"
+msgstr "Add subtask"
+
+msgid "Assigned to: %{assignee}"
+msgstr "Assigned to: %{assignee}"
+
+msgid "Unassigned"
+msgstr "Unassigned"
+
+msgid "Mark undone"
+msgstr "Mark undone"
+
+msgid "Mark done"
+msgstr "Mark done"
+
+msgid "Edit subtask"
+msgstr "Edit subtask"
+
+msgid "+%{count} more"
+msgstr "+%{count} more"
+
+msgid "Edit task"
+msgstr "Edit task"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "Due date"
+msgstr "Due date"
+
+msgid "No parent"
+msgstr "No parent"
+
+msgid "Quick create task"
+msgstr "Quick create task"
+
+msgid "Could not move task. Please try again."
+msgstr "Could not move task. Please try again."
+
+msgid "Could not move task. Change was reverted."
+msgstr "Could not move task. Change was reverted."
+
+msgid "Could not reorder task. Change was reverted."
+msgstr "Could not reorder task. Change was reverted."
+
+msgid "Could not update subtask. Change was reverted."
+msgstr "Could not update subtask. Change was reverted."
+
+msgid "Subtask revert failed"
+msgstr "Subtask revert failed"
+
+msgid "Priority ↓"
+msgstr "Priority ↓"
+
+msgid "Priority ↑"
+msgstr "Priority ↑"
+
+msgid "Due date ↑"
+msgstr "Due date ↑"
+
+msgid "Due date ↓"
+msgstr "Due date ↓"
+
+msgid "Created ↑"
+msgstr "Created ↑"
+
+msgid "Created ↓"
+msgstr "Created ↓"
+
+msgid "Low"
+msgstr "Low"
+
+msgid "Medium"
+msgstr "Medium"
+
+msgid "High"
+msgstr "High"
+
+msgid "Urgent"
+msgstr "Urgent"

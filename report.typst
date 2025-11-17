@@ -1,22 +1,24 @@
-#import "@preview/ilm:1.4.1": *
 #set text(lang: "en")
-#show: ilm.with(
-  title: [Studtasks (nadhem) – Shared Academic Task Manager],
-  author: "Abdulaziz Fahad BinAskar, Saud Mishari Aldalbahy, Naif Salman Aldrees, Abdulaziz Mohammed Alkthiri",
-  abstract: [Description: A course-centric, real-time task manager for student groups. Each course/group has a shared task list where members can add, assign, or complete tasks tied to homework, projects, and exams. Live synchronization keeps everyone on the same page without manual refreshes.],
-  date: datetime(year: 2025, month: 11, day: 9),
-  figure-index: (enabled: true),
-  table-index: (enabled: true),
-  listing-index: (enabled: true),
-)
-// todo add Doctoral Advisor info "Dr. Imran Qureshi"
-// todo add University info "Imam Mohammed ibn Saud Islamic University" and Logo
-// todo add Department info "Computer Science Department" and Logo
-// todo add Course info "CS 335 - Cloud Computing"
+#set page("a4", margin: 1in)
+#import "Report/lib.typ": project
 
-// implemented bonus features:
-// - Forgot password flow with email reset link
-// - drag-and-drop task ordering (kanban style) with LiveView hooks and JS library
+#show: project.with(
+  title: "Studtasks (nadhem) – Shared Academic Task Manager",
+  authors: (
+    "Abdulaziz Fahad BinAskar",
+    "Saud Mishari Aldalbahy",
+    "Naif Salman Aldrees",
+    "Abdulaziz Mohammed Alkthiri",
+  ),
+  mentors: (
+    "Dr. Imran Qureshi",
+  ),
+  branch: "College of Computer and Information Sciences (CCIS)",
+  academic-year: "2025-2026",
+  features: "fancy-codeblocks",
+  footer-text: "IMSIU",
+)
+
 
 = Setup Instructions
 
@@ -24,8 +26,7 @@
 
 - Elixir ~> 1.15 and Erlang/OTP (compatible)
 - PostgreSQL (local instance for development)
-- A modern browser (Chrome/Firefox/Safari/Edge)
-
+- Docker and Docker Compose (for local DB in development)
 == Local Development (Dev)
 
 1. Install dependencies and set up the database:
@@ -45,13 +46,7 @@ mix phx.server
 
 Notes:
 - Emails are delivered to the local mailbox at /dev/mailbox in dev. Use it to complete email verification.
-- Assets (Tailwind v4, esbuild) are automatically installed and watched in dev.
 
-== Running Tests
-
-```bash
-mix test
-```
 
 == Environment Configuration
 
@@ -59,20 +54,17 @@ The application uses the following environment variables (see `example.env` for 
 
 === Secrets (store in Secret Manager for production):
 
-- `SECRET_KEY_BASE` — generate with `mix phx.gen.secret`
-- `PGUSER` — PostgreSQL username
-- `PGPASSWORD` — PostgreSQL password
-- `PGDBNAME` — PostgreSQL database name
-- `PGHOST` — PostgreSQL host (e.g., Neon endpoint)
+- `SECRET_KEY_BASE` - generate with `mix phx.gen.secret`
+- `PGUSER` - PostgreSQL username
+- `PGPASSWORD` - PostgreSQL password
+- `PGDBNAME` - PostgreSQL database name
+- `PGHOST` - PostgreSQL host (e.g., Neon endpoint)
 
 === Non-Secret Environment Variables:
 
-- `PHX_SERVER` — set to `true` to start the Phoenix server (required for production)
-- `PHX_HOST` — your domain (e.g., studtasks.askardesign.com)
-- `PORT` — HTTP port the app listens on (default: 4000; Cloud Run provides this)
-- `POOL_SIZE` — Ecto connection pool size (default: 10)
-- `ECTO_IPV6` — enable IPv6 for Ecto if needed (true|1 enables)
-- `PGDEVHOST` — PostgreSQL host for development (default: localhost)
+- `PHX_HOST` - your domain (e.g., studtasks.example.com) we will use the one provided by cloud run
+- `POOL_SIZE` - Ecto connection pool size (default: 10)
+- `ECTO_IPV6` - enable IPv6 for Ecto if needed (true|1 enables)
 
 === Database Configuration:
 
@@ -99,15 +91,10 @@ The application uses the following environment variables (see `example.env` for 
 - Realtime: Phoenix PubSub + LiveView
 - Database: PostgreSQL (Neon in production, local instance in development)
 - Auth & Security: Argon2 (argon2_elixir), Phoenix/Plug sessions, email verification (Swoosh)
-- Email: Swoosh (dev: Local adapter at /dev/mailbox; prod: configure provider), delivered via Req client
-- HTTP Client: Req (preferred)
 - Frontend: Tailwind CSS v4, DaisyUI components, Phoenix core components
-- Build Tooling: esbuild, Tailwind (via Mix tasks)
-- Server Adapter: Bandit
-- I18n: Gettext
-- Deployment: Google Cloud Run (managed containers, scale-to-zero) via GitHub Actions
+- Containerization: Docker, Docker compose (for local dev DB), Docker Hub registry
+- Deployment: Google Cloud Run
 - CI/CD: GitHub Actions workflow for automated builds and deployments
-- Container Registry: Docker Hub
 
 == Application Features
 
@@ -115,14 +102,16 @@ The application uses the following environment variables (see `example.env` for 
 
 - User Authentication
   - Registration and login with secure password hashing (Argon2)
-  - Email verification on sign-up (Swoosh Local in dev)
-  - Forgot password (reset flow via email)
+  - Email verification on sign-up
 - Task Management (CRUD)
   - Create tasks with: title (required), description, due date, priority (Low/Medium/High)
   - Assignment to self or other course members
   - Read: list with filtering (status, assignee, priority) and sorting (e.g., due date)
   - Update: edit details, mark complete/incomplete
   - Delete tasks
+
+// to avoid splitting sections awkwardly
+#pagebreak()
 - Real-time Synchronization
   - All task operations are reflected live across connected clients via LiveView/PubSub
   - Data model aligns with Users → Courses → Tasks
@@ -132,7 +121,13 @@ The application uses the following environment variables (see `example.env` for 
   - Course view: tasks for a specific course/group only
   - Forms for creating/editing tasks using Phoenix `<.form>` / `<.input>` components
   - Clear completed vs pending indicators with Tailwind/DaisyUI styles
-  - Drag-and-drop task ordering (kanban)
+
+=== Implemented Bonus Features
+- Multi-language support (i18n) with English and Arabic locales
+- Forgot password (reset flow via email)
+- Data Visualization
+- Drag-and-drop task ordering (kanban)
+- Optimistic UI updates for better responsiveness
 
 = Project Architecture
 == Current Architecture
@@ -140,6 +135,7 @@ The application uses the following environment variables (see `example.env` for 
 - Elixir/Phoenix + LiveView
 - PostgreSQL for all environments (Neon serverless in production, local instance for development)
 - Google Cloud Run (fully managed container runtime with autoscaling and scale-to-zero)
+// #image(image("/Report/Architecture/CurrentArchitecture.png", width: 100%), caption: [Current Application Architecture])
 
 === Why This Architecture?
 
@@ -147,51 +143,68 @@ The application uses the following environment variables (see `example.env` for 
   - Excellent concurrency and fault tolerance
   - LiveView for first-class realtime UX without heavy client JS
   - Built-in Pub/Sub for efficient live synchronization
-  - Consistent PostgreSQL usage across all environments
 
 - Neon (PostgreSQL):
   - Serverless, globally distributed PostgreSQL with low-latency edge access
   - Managed operations with simple connection model (DATABASE_URL + token)
+  - Generous free tier
 
 - Google Cloud Run:
-  - Fully managed container runtime—no servers or Kubernetes to manage
+  - Fully managed container runtime (no servers or Kubernetes to manage)
   - Scales to zero when idle; fast scale-out on demand
   - Simple deploys from Artifact Registry with health checks, autoscaling, and request concurrency controls
   - Custom domains and TLS via Cloud Run's managed certificates
+  - Generous free tier
 
 === Diagram (High-Level)
 
-- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ PostgreSQL
+- Browser (LiveView) ⇄ LiveView ⇄ DB
   - Production: Neon (serverless PostgreSQL over network)
   - Development: Local PostgreSQL instance
 - Live updates flow through PubSub; forms/components use Phoenix core components
+// #image(image("/Report/Architecture/ArchetictureDiagram.png", width: 100%), caption: [Application Architecture Diagram])
 
 == Other Proposed Architectures
 
 === Stack 1 (Containerized, FE/BE split)
 
 - Docker, Redis, Node.js/Express, PostgreSQL, React
+// #image(image("/Report/Architecture/Stack1.png", width: 100%), caption: [Proposed Stack 1 Architecture])
 
 === Stack 2 (Serverless-leaning)
 
 - Firebase, Next.js, Vercel
+// #image(image("/Report/Architecture/Stack2.png", width: 100%), caption: [Proposed Stack 2 Architecture])
 
+=== Stack 3 (Clustered Elixir)
+- Elixir/Phoenix Kubernetes, PostgreSQL
+// #image(image("/Report/Architecture/Stack3.png", width: 100%), caption: [Proposed Stack 3 Architecture])
 === Why Not These for MVP?
 
 - Stack 1: Adds operational complexity (Redis, Docker, FE/BE split) with less out-of-the-box realtime ergonomics vs Phoenix LiveView.
 - Stack 2: Great serverless velocity, but less control/customization and tight coupling to vendor services compared to a cloud-agnostic Phoenix stack.
+- Stack 3: More expensive than Cloud Run with little benefit for this MVP. We would have used it if it had the same cost as Cloud Run.
 
 == Screenshots
 
+Our application features a clean and intuitive user interface designed for ease of use and efficiency. Below are some screenshots showcasing key pages of the application:
 
-// Uncomment the following lines after adding images under /Report/screens/
-// #figure(image("/Report/screens/login.png", width: 100%), caption: [Login page])
-// #figure(image("/Report/screens/dashboard.png", width: 100%), caption: [Dashboard overview])
-// #figure(image("/Report/screens/tasks.png", width: 100%), caption: [Course/group task view])
+#figure(image("/Report/Screens/Homepage.png", width: 100%), caption: [The Nadhem Homepage])
+#figure(image("/Report/Screens/Homepage-AR.png", width: 100%), caption: [The Nadhem Homepage in Arabic])
+
+#figure(image("/Report/Screens/dashboard.png", width: 100%), caption: [User Dashboard overview])
+#figure(image("/Report/Screens/tasks.png", width: 100%), caption: [Course/group Kanban task view])
+#figure(image("/Report/Screens/tasks-ListView.png", width: 100%), caption: [Course/group List task view])
+#figure(image("/Report/Screens/login.png", width: 100%), caption: [Login page])
+#figure(image("/Report/Screens/register.png", width: 100%), caption: [Register page])
+#figure(image("/Report/Screens/AccountSettings.png", width: 100%), caption: [Account settings Page])
+
+
+
 
 = Deployment & Demo
 
-- URL: https://studtasks-run-container-1043330219835.europe-west3.run.app (deployed via GitHub Actions to Google Cloud Run)
+- URL: #link("https://studtasks-run-container-1043330219835.europe-west3.run.app")[Application] (deployed via GitHub Actions to Google Cloud Run)
 
 == Deployment
 
@@ -215,24 +228,24 @@ The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 
 ==== Required GitHub Secrets:
 
-- `DOCKERHUB_USERNAME` — Docker Hub username
-- `DOCKERHUB_TOKEN` — Docker Hub access token
-- `GCP_WORKLOAD_IDENTITY_PROVIDER` — Google Cloud Workload Identity Provider ID
-- `GCP_SERVICE_ACCOUNT_EMAIL` — Service account email for deployment
+- `DOCKERHUB_USERNAME` - Docker Hub username
+- `DOCKERHUB_TOKEN` - Docker Hub access token
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` - Google Cloud Workload Identity Provider ID
+- `GCP_SERVICE_ACCOUNT_EMAIL` - Service account email for deployment
 
 ==== Required GitHub Variables:
 
-- `GCP_REGION` — Google Cloud region (default: europe-west3)
-- `SERVICE_NAME` — Cloud Run service name (default: studtasks-service)
-- `PHX_HOST` — Application domain (default: studtasks.askardesign.com)
+- `GCP_REGION` - Google Cloud region (default: europe-west3)
+- `SERVICE_NAME` - Cloud Run service name (default: studtasks-service)
+- `PHX_HOST` - Application domain (default: studtasks.askardesign.com)
 
 ==== Required Google Secret Manager Secrets:
 
-- `SECRET_KEY_BASE` — Phoenix secret key base
-- `PGDBNAME` — PostgreSQL database name
-- `PGUSER` — PostgreSQL username
-- `PGPASSWORD` — PostgreSQL password
-- `PGHOST` — PostgreSQL host (Neon endpoint)
+- `SECRET_KEY_BASE` - Phoenix secret key base
+- `PGDBNAME` - PostgreSQL database name
+- `PGUSER` - PostgreSQL username
+- `PGPASSWORD` - PostgreSQL password
+- `PGHOST` - PostgreSQL host (Neon endpoint)
 
 ==== Deployment Configuration:
 
@@ -243,7 +256,7 @@ The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) 
 - Platform: managed (fully managed Cloud Run)
 - Authentication: allow unauthenticated (public access) Auth is handled by the application
 
-=== Quick Deploy Notes — Google Cloud Run + Neon
+=== Quick Deploy Notes - Google Cloud Run + Neon
 
 High-level checklist:
 
@@ -274,7 +287,6 @@ Notes:
 === Manual Deployment (Alternative)
 
 If you need to deploy manually instead of using the GitHub Actions workflow:
-
 ```bash
 # Build & push to Docker Hub
 IMAGE="docker.io/abo3skr/studtasks:$(git rev-parse --short HEAD)"
@@ -289,12 +301,67 @@ gcloud run deploy studtasks-service \
   --allow-unauthenticated \
   --set-env-vars PHX_HOST=studtasks.askardesign.com,PHX_SERVER=true \
   --set-env-vars POOL_SIZE=10 \
-  --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
-  --min-instances=0 --max-instances=5 \
+  --set-secrets \
+    SECRET_KEY_BASE=SECRET_KEY_BASE:latest \
+    PGDBNAME=PGDBNAME:latest \
+    PGUSER=PGUSER:latest \
+    PGPASSWORD=PGPASSWORD:latest \
+    PGHOST=PGHOST:latest \
+  --min-instances=0 \
+  --max-instances=5
 ```
-= Future Work
+
+= Conclusion
+
+Studtasks (nadhem) has been successfully developed as a fully functional shared academic task manager, demonstrating the power of modern web technologies in creating real-time collaborative applications. The project achieved all core MVP features including user authentication, comprehensive task management with CRUD operations, and real-time synchronization across multiple users.
+
+== What We Learned
+
+Throughout this project, our team gained valuable experience across multiple domains:
+
+=== Technical Skills:
+- Mastered Elixir/Phoenix framework and its real-time capabilities through Phoenix LiveView
+- Learned the intricacies of building stateful, real-time applications without heavy JavaScript frameworks
+- Gained hands-on experience with modern deployment practices using containerization (Docker) and serverless infrastructure (Google Cloud Run)
+- Implemented secure authentication patterns using Argon2 and email verification flows
+
+=== DevOps & Cloud Computing:
+- Set up automated CI/CD pipelines using GitHub Actions for continuous deployment
+- Learned to work with Google Cloud Platform services including Cloud Run, Secret Manager, and Workload Identity Federation
+- Implemented production-grade infrastructure with autoscaling, health checks, and zero-downtime deployments
+- Managed secrets and environment configuration across development and production environments
+
+=== Software Architecture:
+- Evaluated multiple technology stacks and made informed architectural decisions
+- Balanced trade-offs between development velocity, operational complexity, and feature requirements
+- Implemented separation of concerns through proper Phoenix context boundaries
+- Designed scalable database schemas with proper relationships and constraints
+
+== Overall Experience
+
+The development of Studtasks was both challenging and rewarding. Starting with a clear vision for an academic task manager, we navigated through various technical decisions and implementation challenges to deliver a polished, production-ready application.
+
+The choice of Phoenix LiveView proved excellent for our use case, providing real-time synchronization with minimal client-side complexity. The learning curve for Elixir was steep initially, but the framework's conventions and excellent documentation made it manageable. We particularly appreciated how LiveView's pub/sub architecture elegantly solved the real-time collaboration requirements without requiring complex WebSocket management.
+
+Deploying to Google Cloud Run taught us about modern serverless architectures and the benefits of managed infrastructure. The scale-to-zero capability and automatic scaling gave us confidence that the application could handle varying loads efficiently while minimizing costs during low-traffic periods.
+
+Implementing internationalization (i18n) for English and Arabic was particularly meaningful, as it made the application accessible to a broader user base and demonstrated our commitment to inclusivity. The forgot password feature and data visualization capabilities added polish beyond the MVP requirements.
+
+The project reinforced the importance of proper planning, clear documentation, and automated testing. Our investment in GitHub Actions CI/CD pipeline paid dividends by enabling rapid iteration and confident deployments throughout the development cycle.
+
+== Future Work
+
+Whilst the current Application is fully functional, several Features could further improve the UX of the application:
+
 - Push Notifications for assigned tasks or upcoming deadlines
-- Comments/Discussion thread on individual tasks.
-- Integration with external calendar services (e.g., Google Calendar).
-- File attachments for tasks (e.g., upload PDFs, images).
-- Offline support with local caching and sync when online using Service Workers.
+- Comments/Discussion thread on individual tasks
+- Integration with external calendar services (e.g., Google Calendar)
+- File attachments for tasks (e.g., upload PDFs, images)
+- Offline support with local caching and sync when online using Service Workers
+- More data visualization
+  - Advanced analytics and productivity insights
+  - Team performance metrics and reporting
+
+== Final Thoughts
+
+The project has prepared us for real-world software development by exposing us to production-grade tools, deployment strategies, and architectural patterns. We are proud of what we accomplished and confident that the skills and knowledge gained will serve us well in our future careers.

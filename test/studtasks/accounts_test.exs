@@ -69,11 +69,26 @@ defmodule Studtasks.AccountsTest do
 
     test "validates email uniqueness" do
       %{email: email} = user_fixture()
-      {:error, changeset} = Accounts.register_user(%{email: email})
+      # Attempt to register only with duplicate email should fail validation for email uniqueness
+      {:error, changeset} =
+        Accounts.register_user(%{
+          email: email,
+          name: valid_user_name(),
+          password: valid_user_password(),
+          password_confirmation: valid_user_password()
+        })
+
       assert "has already been taken" in errors_on(changeset).email
 
-      # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
+      # Upper-cased duplicate should also fail (collation is nocase)
+      {:error, changeset} =
+        Accounts.register_user(%{
+          email: String.upcase(email),
+          name: valid_user_name(),
+          password: valid_user_password(),
+          password_confirmation: valid_user_password()
+        })
+
       assert "has already been taken" in errors_on(changeset).email
     end
 

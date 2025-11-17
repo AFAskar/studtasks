@@ -10,10 +10,10 @@ config :argon2_elixir, t_cost: 1, m_cost: 8
 # Run `mix help test` for more information.
 config :studtasks, Studtasks.Repo,
   username: System.get_env("PGUSER", "nadhm"),
-  password: System.get_env("PGPASSWORD"),
-  hostname: System.get_env("PGDEVHOST"),
+  password: System.get_env("PGPASSWORD", "password"),
+  hostname: System.get_env("PGTESTHOST", "localhost"),
   database: System.get_env("PGDBNAME", "nadhm"),
-  ssl: [cacerts: :public_key.cacerts_get()],
+  pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 # We don't run a server during test. If one is required,
