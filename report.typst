@@ -16,7 +16,7 @@
   branch: "College of Computer and Information Sciences (CCIS)",
   academic-year: "2025-2026",
   features: "fancy-codeblocks",
-  footer-text: "IMSIU", // Text used in left side of the footer
+  footer-text: "IMSIU",
 )
 
 
@@ -26,8 +26,7 @@
 
 - Elixir ~> 1.15 and Erlang/OTP (compatible)
 - PostgreSQL (local instance for development)
-- A modern browser (Chrome/Firefox/Safari/Edge)
-
+- Docker and Docker Compose (for local DB in development)
 == Local Development (Dev)
 
 1. Install dependencies and set up the database:
@@ -47,7 +46,6 @@ mix phx.server
 
 Notes:
 - Emails are delivered to the local mailbox at /dev/mailbox in dev. Use it to complete email verification.
-- Assets (Tailwind v4, esbuild) are automatically installed and watched in dev.
 
 
 == Environment Configuration
@@ -148,16 +146,18 @@ The application uses the following environment variables (see `example.env` for 
 - Neon (PostgreSQL):
   - Serverless, globally distributed PostgreSQL with low-latency edge access
   - Managed operations with simple connection model (DATABASE_URL + token)
+  - Generous free tier
 
 - Google Cloud Run:
   - Fully managed container runtime (no servers or Kubernetes to manage)
   - Scales to zero when idle; fast scale-out on demand
   - Simple deploys from Artifact Registry with health checks, autoscaling, and request concurrency controls
   - Custom domains and TLS via Cloud Run's managed certificates
+  - Generous free tier
 
 === Diagram (High-Level)
 
-- Browser (LiveView) ⇄ StudtasksWeb.Endpoint ⇄ Ecto (Repo) ⇄ PostgreSQL
+- Browser (LiveView) ⇄ LiveView ⇄ DB
   - Production: Neon (serverless PostgreSQL over network)
   - Development: Local PostgreSQL instance
 - Live updates flow through PubSub; forms/components use Phoenix core components
@@ -175,10 +175,14 @@ The application uses the following environment variables (see `example.env` for 
 - Firebase, Next.js, Vercel
 // #image(image("/Report/Architecture/Stack2.png", width: 100%), caption: [Proposed Stack 2 Architecture])
 
+=== Stack 3 (Clustered Elixir)
+- Elixir/Phoenix Kubernetes, PostgreSQL
+// #image(image("/Report/Architecture/Stack3.png", width: 100%), caption: [Proposed Stack 3 Architecture])
 === Why Not These for MVP?
 
 - Stack 1: Adds operational complexity (Redis, Docker, FE/BE split) with less out-of-the-box realtime ergonomics vs Phoenix LiveView.
 - Stack 2: Great serverless velocity, but less control/customization and tight coupling to vendor services compared to a cloud-agnostic Phoenix stack.
+- Stack 3: More Expensive than Cloud run with little benifet for this MVP. We Would have used it if it had the same cost as cloud run.
 
 == Screenshots
 
