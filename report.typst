@@ -1,5 +1,6 @@
 #set text(lang: "en")
 #set page("a4", margin: 1in)
+
 #import "Report/lib.typ": project
 
 #show: project.with(
@@ -162,6 +163,7 @@ The application uses the following environment variables (see `example.env` for 
 
 == Other Proposed Architectures
 
+Before we Went with the current Elixir/Phoenix + Cloud Run + Neon stack, we considered several alternative architectures to evaluate their suitability for our MVP requirements. Below are three other proposed stacks along with their respective diagrams and reasons for not choosing them for the MVP.
 === Stack 1 (Containerized, FE/BE split)
 
 #figure(
@@ -205,7 +207,7 @@ Our application features a clean and intuitive user interface designed for ease 
 
 = Deployment & Demo
 
-- URL: #link("https://studtasks-run-container-1043330219835.europe-west3.run.app")[Application] (deployed via GitHub Actions to Google Cloud Run)
+URL: #link("https://studtasks-run-container-1043330219835.europe-west3.run.app")[Application] (deployed via GitHub Actions to Google Cloud Run)
 
 == Deployment
 
