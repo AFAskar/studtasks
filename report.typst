@@ -158,27 +158,28 @@ The application uses the following environment variables (see `example.env` for 
 
 === Diagram (High-Level)
 
-- Browser (LiveView) ⇄ LiveView ⇄ DB
-  - Production: Neon (serverless PostgreSQL over network)
-  - Development: Local PostgreSQL instance
-- Live updates flow through PubSub; forms/components use Phoenix core components
-// #image(image("/Report/Architecture/ArchetictureDiagram.png", width: 100%), caption: [Application Architecture Diagram])
+#figure(image("/Report/Architecture/ArchetictureDiagram.png", width: 100%), caption: [Application Architecture Diagram])
 
 == Other Proposed Architectures
 
 === Stack 1 (Containerized, FE/BE split)
 
-- Docker, Redis, Node.js/Express, PostgreSQL, React
-// #image(image("/Report/Architecture/Stack1.png", width: 100%), caption: [Proposed Stack 1 Architecture])
+#figure(
+  image("/Report/Architecture/Stack1.png", width: 100%),
+  caption: [Proposed Stack 1 Architecture, React Frontend, Node.js Backend, Redis],
+)
 
 === Stack 2 (Serverless-leaning)
 
-- Firebase, Next.js, Vercel
-// #image(image("/Report/Architecture/Stack2.png", width: 100%), caption: [Proposed Stack 2 Architecture])
-
+#figure(
+  image("/Report/Architecture/Stack2.png", width: 100%),
+  caption: [Proposed Stack 2 Architecture , Next.js Vercel, Firebase],
+)
 === Stack 3 (Clustered Elixir)
-- Elixir/Phoenix Kubernetes, PostgreSQL
-// #image(image("/Report/Architecture/Stack3.png", width: 100%), caption: [Proposed Stack 3 Architecture])
+#figure(
+  image("/Report/Architecture/Stack3.png", width: 100%),
+  caption: [Proposed Stack 3 Architecture , Elixir/Phoenix Kubernetes, PostgreSQL],
+)
 === Why Not These for MVP?
 
 - Stack 1: Adds operational complexity (Redis, Docker, FE/BE split) with less out-of-the-box realtime ergonomics vs Phoenix LiveView.
@@ -211,6 +212,7 @@ Our application features a clean and intuitive user interface designed for ease 
 === Automated Deployment via GitHub Actions
 
 The application uses a GitHub Actions workflow (`.github/workflows/deploy.yml`) for continuous deployment to Google Cloud Run on every push to the `main` branch.
+#figure(image("/Report/Architecture/Workflow.png", width: 100%), caption: [Github Actions Workflow for CI/CD])
 
 ==== Workflow Overview:
 
