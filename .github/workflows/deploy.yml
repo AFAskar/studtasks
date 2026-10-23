@@ -1,12 +1,11 @@
 name: Deploy to Cloud Run
 
 on:
-  pull_request:
   push:
     branches: ["main"]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: deploy-main
   cancel-in-progress: true
 
 permissions:
@@ -21,16 +20,7 @@ env:
   PHX_HOST: ${{ vars.PHX_HOST || 'studtasks.askardesign.com' }}
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test configuration migration
-        run: python3 -m unittest discover -s .github/scripts -v
-
   deploy:
-    if: github.event_name == 'push'
-    needs: validate
     name: Build, Push, and Deploy
     runs-on: ubuntu-latest
 
@@ -79,8 +69,26 @@ jobs:
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v3
 
-      - name: Deploy to Cloud Run and verify configuration
+      - name: Deploy to Cloud Run
+        shell: bash
         env:
           IMAGE: ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.SHORT_SHA }}
-          NON_SECRET_CONFIG: '{"PGDBNAME": "PGDBNAME", "PGUSER": "PGUSER", "PGHOST": "PGHOST"}'
-        run: python3 .github/scripts/prepare-deploy.py
+        run: |
+          if [[ -z "${SERVICE_NAME}" ]]; then
+            echo "SERVICE_NAME variable is not set (Repository variable)." >&2
+            exit 1
+          fi
+          if [[ -z "${PHX_HOST}" ]]; then
+            echo "PHX_HOST variable is not set (Repository variable)." >&2
+            exit 1
+          fi
+
+          gcloud run deploy "${SERVICE_NAME}" \
+            --image "$IMAGE" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars PHX_HOST="${PHX_HOST}",PHX_SERVER=true \
+            --set-env-vars POOL_SIZE=10 \
+            --set-secrets SECRET_KEY_BASE=SECRET_KEY_BASE:latest,PGDBNAME=PGDBNAME:latest,PGUSER=PGUSER:latest,PGPASSWORD=PGPASSWORD:latest,PGHOST=PGHOST:latest \
+            --min-instances=0 --max-instances=2
